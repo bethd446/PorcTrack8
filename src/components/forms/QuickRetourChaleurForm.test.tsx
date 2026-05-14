@@ -222,9 +222,10 @@ describe('QuickRetourChaleurForm', () => {
       await Promise.resolve();
     });
 
-    // Le callback est déclenché dans le setTimeout de fin (1200ms).
+    // Le callback est déclenché dans le closeTimerRef de fin (1500ms,
+    // pattern FORM_CONTRACT — anti double-clic, ex-1200ms).
     await act(async () => {
-      vi.advanceTimersByTime(1300);
+      vi.advanceTimersByTime(1600);
     });
 
     expect(onResaillir).toHaveBeenCalledWith('T07');

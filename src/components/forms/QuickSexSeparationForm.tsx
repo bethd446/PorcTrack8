@@ -12,6 +12,7 @@ import { Button, Input, Textarea } from '@/design-system';
 import { bandesAEligibleSeparation } from '../../services/bandesAggregator';
 import type { BandePorcelets } from '../../types/farm';
 import { kvGet } from '../../services/kvStore';
+import { todayIso } from './_formHelpers';
 
 /* ═════════════════════════════════════════════════════════════════════════
    QuickSexSeparationForm · Séparation par sexe d'une bande d'engraissement
@@ -48,11 +49,6 @@ interface SeparationFormState {
   nbFemelles: string;
   dateSeparation: string;
   observation: string;
-}
-
-/** Retourne la date du jour au format YYYY-MM-DD (ISO court). */
-function todayIso(): string {
-  return new Date().toISOString().slice(0, 10);
 }
 
 function initialFormState(): SeparationFormState {

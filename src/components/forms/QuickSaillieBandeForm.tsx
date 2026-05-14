@@ -11,9 +11,18 @@
  *
  * Submit → INSERT N rows dans `saillies` (1 par truie, même verrat,
  * même date, même notes). Best-effort : log les échecs sans bloquer.
+ *
+ * MIGRATION FORM_CONTRACT Phase 2 (batch A) — PARTIELLE :
+ *  - helpers date partagés `_formHelpers` (todayIso / formatFr) ✓
+ *  - garde double-clic propre : `closeTimerRef` + cleanup `useEffect` ✓
+ *  - reset-on-open render-phase (déjà conforme) ✓
+ *  - shell `<QuickActionSheet>` NON appliqué : ce form est un wizard 3-step
+ *    navigable (boutons Retour / Suivant / Enregistrer dynamiques) que le
+ *    footer fixe du shell (Annuler + 1 submit) ne peut pas porter. Le
+ *    `BottomSheet` + footer wizard custom sont conservés (cf. section SPEC).
  */
 
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { IonToast } from '@ionic/react';
 import {
   ArrowRight,
@@ -32,6 +41,7 @@ import {
 import { useEscapeKey } from './useFormA11y';
 import { normaliseStatut } from '../../lib/truieStatut';
 import type { Truie, Verrat } from '../../types/farm';
+import { todayIso, formatFr } from './_formHelpers';
 
 export interface QuickSaillieBandeFormProps {
   isOpen: boolean;
@@ -41,23 +51,13 @@ export interface QuickSaillieBandeFormProps {
 
 type Step = 1 | 2 | 3;
 
-function todayIsoLocal(): string {
-  const d = new Date();
-  const tz = d.getTimezoneOffset() * 60_000;
-  return new Date(d.getTime() - tz).toISOString().slice(0, 10);
-}
-
 function addDays(iso: string, n: number): string {
   const d = new Date(iso);
   d.setDate(d.getDate() + n);
-  return d.toISOString().slice(0, 10);
-}
-
-function formatDateFr(iso: string): string {
-  if (!iso) return '';
-  const d = new Date(iso);
-  if (!Number.isFinite(d.getTime())) return iso;
-  return d.toLocaleDateString('fr-FR');
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  return `${yyyy}-${mm}-${dd}`;
 }
 
 function isTruieDispo(t: Truie): boolean {
@@ -76,7 +76,7 @@ const QuickSaillieBandeForm: React.FC<QuickSaillieBandeFormProps> = ({
   const [step, setStep] = useState<Step>(1);
   const [selectedTruieIds, setSelectedTruieIds] = useState<string[]>([]);
   const [selectedVerratId, setSelectedVerratId] = useState<string>('');
-  const [dateIso, setDateIso] = useState<string>(todayIsoLocal());
+  const [dateIso, setDateIso] = useState<string>(todayIso());
   const [notes, setNotes] = useState<string>('');
   const [saving, setSaving] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -86,6 +86,8 @@ const QuickSaillieBandeForm: React.FC<QuickSaillieBandeFormProps> = ({
     message: '',
   });
 
+  const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   const [lastIsOpen, setLastIsOpen] = useState(isOpen);
   if (lastIsOpen !== isOpen) {
     setLastIsOpen(isOpen);
@@ -93,13 +95,22 @@ const QuickSaillieBandeForm: React.FC<QuickSaillieBandeFormProps> = ({
       setStep(1);
       setSelectedTruieIds([]);
       setSelectedVerratId('');
-      setDateIso(todayIsoLocal());
+      setDateIso(todayIso());
       setNotes('');
       setSaving(false);
       setSuccess(false);
       setError('');
     }
   }
+
+  useEffect(() => {
+    return () => {
+      if (closeTimerRef.current) {
+        clearTimeout(closeTimerRef.current);
+        closeTimerRef.current = null;
+      }
+    };
+  }, []);
 
   useEscapeKey(isOpen && !saving, onClose);
 
@@ -215,7 +226,7 @@ const QuickSaillieBandeForm: React.FC<QuickSaillieBandeFormProps> = ({
     } else {
       setToast({
         open: true,
-        message: `${selectedTruieIds.length} saillies enregistrées · MB prévue ${formatDateFr(dateMBPrevue)}`,
+        message: `${selectedTruieIds.length} saillies enregistrées · MB prévue ${formatFr(dateMBPrevue)}`,
       });
     }
 
@@ -226,7 +237,10 @@ const QuickSaillieBandeForm: React.FC<QuickSaillieBandeFormProps> = ({
       /* noop */
     }
     onSuccess?.();
-    setTimeout(() => {
+    // Garde double-clic : `saving` reste true jusqu'au onClose, timer suivi
+    // par closeTimerRef + cleanup useEffect (FORM_CONTRACT).
+    closeTimerRef.current = setTimeout(() => {
+      closeTimerRef.current = null;
       setSuccess(false);
       setSaving(false);
       onClose();
@@ -343,7 +357,7 @@ const QuickSaillieBandeForm: React.FC<QuickSaillieBandeFormProps> = ({
           Étape 3 / 3 — Date & notes
         </p>
         <p className="mt-1 font-heading text-[16px] uppercase tracking-wide tabular-nums">
-          {selectedTruieIds.length} saillies · MB prévue {formatDateFr(dateMBPrevue)}
+          {selectedTruieIds.length} saillies · MB prévue {formatFr(dateMBPrevue)}
         </p>
       </div>
 
@@ -389,7 +403,7 @@ const QuickSaillieBandeForm: React.FC<QuickSaillieBandeFormProps> = ({
               key={id}
               className="ft-code tabular-nums text-[12px] text-text-0"
             >
-              {id} × {selectedVerratId} · {formatDateFr(dateIso)}
+              {id} × {selectedVerratId} · {formatFr(dateIso)}
             </li>
           ))}
         </ul>
@@ -421,7 +435,7 @@ const QuickSaillieBandeForm: React.FC<QuickSaillieBandeFormProps> = ({
               {selectedTruieIds.length} saillies enregistrées
             </p>
             <p className="mt-2 text-[12px] uppercase tracking-wide text-text-2">
-              MB prévue {formatDateFr(dateMBPrevue)}
+              MB prévue {formatFr(dateMBPrevue)}
             </p>
           </div>
         ) : (

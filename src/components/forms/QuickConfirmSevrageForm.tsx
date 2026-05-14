@@ -4,16 +4,28 @@
  * Ouvert depuis /today (cards "Confirmations en attente · CONFIRM SEVRAGE").
  * Délègue à `confirmAction()` du confirmationQueue ; le shell saving/error/
  * toast est factorisé via `useConfirmFlow`.
+ *
+ * Conforme au contrat (FORM_CONTRACT) :
+ *  - shell `<QuickActionSheet>` (form onSubmit + bouton type=submit)
+ *  - rendu d'erreur via `<FieldError>` (poids invalide)
+ *  - helpers date partagés `_formHelpers` (todayIso)
+ *  - reset-on-open via `lastOpenKey` render-phase
+ *
+ * Note SPEC : le toast transactionnel reste géré par `useConfirmFlow`
+ * (hook partagé, hors zone) via son `IonToast` local — la bascule vers
+ * `useToast()` exigerait de modifier `useConfirmFlow.ts`.
  */
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { IonToast } from '@ionic/react';
 import { Lightbulb } from 'lucide-react';
 
-import { BottomSheet } from '../agritech';
-import { FormField, Input, Button } from '@/design-system';
+import { FormField, Input } from '@/design-system';
 import type { PendingConfirmation } from '../../services/confirmationQueue';
 import { setBandePoidsInitial } from '../../services/supabaseWrites';
 import { useConfirmFlow } from './useConfirmFlow';
+import { FieldError } from './_formFields';
+import { todayIso } from './_formHelpers';
+import QuickActionSheet from './QuickActionSheet';
 
 export interface QuickConfirmSevrageFormProps {
   isOpen: boolean;
@@ -21,8 +33,6 @@ export interface QuickConfirmSevrageFormProps {
   pending: PendingConfirmation | null;
   onSuccess?: () => void;
 }
-
-const todayIso = (): string => new Date().toISOString().slice(0, 10);
 
 const QuickConfirmSevrageForm: React.FC<QuickConfirmSevrageFormProps> = ({
   isOpen,
@@ -51,7 +61,12 @@ const QuickConfirmSevrageForm: React.FC<QuickConfirmSevrageFormProps> = ({
     onSuccess,
   });
 
-  useEffect(() => {
+  // Reset-on-open : pattern lastOpenKey render-phase (FORM_CONTRACT).
+  const [lastOpenKey, setLastOpenKey] = useState<{ isOpen: boolean; pendingId: string | undefined }>({
+    isOpen, pendingId: pending?.id,
+  });
+  if (lastOpenKey.isOpen !== isOpen || lastOpenKey.pendingId !== pending?.id) {
+    setLastOpenKey({ isOpen, pendingId: pending?.id });
     if (isOpen) {
       setDateSevrage(todayIso());
       setNbSevres(sevresDefault);
@@ -59,11 +74,10 @@ const QuickConfirmSevrageForm: React.FC<QuickConfirmSevrageFormProps> = ({
       setPoidsError('');
       resetError();
     }
-    // sevresDefault est dérivé de [pending?.id, isOpen] donc retiré des deps.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isOpen, pending?.id]);
+  }
 
-  const handleConfirm = async (): Promise<void> => {
+  const handleSubmit = async (e: React.FormEvent): Promise<void> => {
+    e.preventDefault();
     const poids = parseFloat(poidsKg.replace(',', '.'));
     if (!Number.isFinite(poids) || poids < 0.5 || poids > 50) {
       setPoidsError('Poids invalide');
@@ -75,8 +89,8 @@ const QuickConfirmSevrageForm: React.FC<QuickConfirmSevrageFormProps> = ({
     if (bandeId) {
       try {
         await setBandePoidsInitial(bandeId, poids);
-      } catch (e) {
-        console.warn('[sevrage] poids initial échoué', e);
+      } catch (err) {
+        console.warn('[sevrage] poids initial échoué', err);
       }
     }
   };
@@ -85,11 +99,17 @@ const QuickConfirmSevrageForm: React.FC<QuickConfirmSevrageFormProps> = ({
 
   return (
     <>
-      <BottomSheet
+      <QuickActionSheet
         isOpen={isOpen}
         onClose={onClose}
+        eyebrow="Confirmation en attente"
         title={`Confirmer le sevrage de ${bandeId}`}
-        height="auto"
+        ariaLabel={`Confirmer le sevrage de ${bandeId}`}
+        saving={saving}
+        isValid={!!poidsKg}
+        onSubmit={handleSubmit}
+        submitLabel="Confirmer le sevrage"
+        submitAriaLabel="Confirmer le sevrage"
       >
         <div className="space-y-5">
           <div className="card-dense !p-4 space-y-1">
@@ -123,7 +143,7 @@ const QuickConfirmSevrageForm: React.FC<QuickConfirmSevrageFormProps> = ({
               </p>
               <a
                 href="/reglages/encyclopedie?slug=05-sevrage-timing-conditions"
-                style={{ fontSize: 10, color: 'var(--color-accent, #c2662b)', textDecoration: 'underline' }}
+                style={{ fontSize: 10, color: 'var(--pt-accent)', textDecoration: 'underline' }}
               >
                 En savoir plus ›
               </a>
@@ -139,6 +159,7 @@ const QuickConfirmSevrageForm: React.FC<QuickConfirmSevrageFormProps> = ({
               value={dateSevrage}
               onChange={e => setDateSevrage(e.target.value)}
               max={todayIso()}
+              disabled={saving}
             />
           </FormField>
 
@@ -153,6 +174,7 @@ const QuickConfirmSevrageForm: React.FC<QuickConfirmSevrageFormProps> = ({
               min={0}
               value={nbSevres}
               onChange={e => setNbSevres(Math.max(0, Number(e.target.value) || 0))}
+              disabled={saving}
             />
           </FormField>
 
@@ -160,7 +182,6 @@ const QuickConfirmSevrageForm: React.FC<QuickConfirmSevrageFormProps> = ({
             label="Poids moyen sevrage (kg)"
             required
             hint="5-7 kg cible"
-            error={poidsError}
           >
             <Input
               id="sevrage-poids"
@@ -175,7 +196,9 @@ const QuickConfirmSevrageForm: React.FC<QuickConfirmSevrageFormProps> = ({
               value={poidsKg}
               onChange={e => setPoidsKg(e.target.value)}
               placeholder="6.0"
+              disabled={saving}
             />
+            <FieldError message={poidsError} />
             {(() => {
               const p = parseFloat(poidsKg.replace(',', '.'));
               if (!Number.isFinite(p) || poidsKg.trim() === '') return null;
@@ -198,19 +221,8 @@ const QuickConfirmSevrageForm: React.FC<QuickConfirmSevrageFormProps> = ({
               {error}
             </p>
           )}
-
-          <Button
-            variant="primary"
-            fullWidth
-            onClick={handleConfirm}
-            disabled={saving || !poidsKg}
-            aria-busy={saving}
-            ariaLabel="Confirmer le sevrage"
-          >
-            {saving ? 'Enregistrement…' : 'Confirmer le sevrage'}
-          </Button>
         </div>
-      </BottomSheet>
+      </QuickActionSheet>
 
       <IonToast
         isOpen={toast.show}

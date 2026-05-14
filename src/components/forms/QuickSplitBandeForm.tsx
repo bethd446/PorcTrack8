@@ -8,12 +8,20 @@
  *
  * Cas d'usage : bande "ADDM" (117 porcelets dont 22 mâles) sans loge → on
  * répartit dans plusieurs loges sans tout re-saisir.
+ *
+ * Migration partielle FORM_CONTRACT (Phase 2 · Batch C) :
+ *   - toast canonique `useToast()` (remplace useAppToast + <AppToast> local)
+ *   - garde double-clic : `closeTimerRef` + cleanup `useEffect`
+ *   - reset-on-open déjà en render-phase (`lastKey`)
+ *   Le shell `<QuickActionSheet>` n'est PAS applicable : ce form est un
+ *   wizard 3 étapes (`Wizard` DS) ; il reste sur `<BottomSheet>`.
  */
 
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import { AppToast, BottomSheet, useAppToast } from '../agritech';
+import { BottomSheet } from '../agritech';
 import { Button, Select, Wizard, type WizardStep } from '@/design-system';
+import { useToast } from '../../context/ToastContext';
 import {
   getLogeContents,
   listLoges,
@@ -83,7 +91,15 @@ const QuickSplitBandeForm: React.FC<QuickSplitBandeFormProps> = ({
   const [step1Error, setStep1Error] = useState<string>('');
   const [step2Error, setStep2Error] = useState<string>('');
   const [saving, setSaving] = useState(false);
-  const { show: showToast, toastProps } = useAppToast();
+  const { showToast } = useToast();
+
+  const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (closeTimerRef.current) { clearTimeout(closeTimerRef.current); closeTimerRef.current = null; }
+    };
+  }, []);
 
   // Reset à l'ouverture / changement bande
   const [lastKey, setLastKey] = useState<{ open: boolean; bid: string }>({
@@ -217,17 +233,22 @@ const QuickSplitBandeForm: React.FC<QuickSplitBandeFormProps> = ({
         `Split OK · ${res.movedCount} porcelets › ${res.newCodeId}` +
           (res.sourceArchivedAsRecap ? ' · source archivée' : ''),
         'success',
-        { duration: 2400 },
+        2400,
       );
       onSuccess();
-      onClose();
+      // Garder saving=true jusqu'au onClose pour empêcher le double-clic dans
+      // la fenêtre 1.5s entre toast success et fermeture (FORM_CONTRACT).
+      closeTimerRef.current = setTimeout(() => {
+        closeTimerRef.current = null;
+        setSaving(false);
+        onClose();
+      }, 1500);
     } catch (err) {
       showToast(
         err instanceof Error ? `Erreur : ${err.message}` : 'Erreur split',
         'error',
-        { duration: 2400 },
+        2400,
       );
-    } finally {
       setSaving(false);
     }
   }, [
@@ -499,22 +520,24 @@ const QuickSplitBandeForm: React.FC<QuickSplitBandeFormProps> = ({
     },
   ];
 
-  return (
-    <>
-      <BottomSheet isOpen={isOpen} onClose={onClose} height="full">
-        <Wizard
-          id={`split-bande-${bandeId}`}
-          steps={steps}
-          eyebrow={`Splitter · ${bandeCodeId ?? bandeId}`}
-          onCancel={onClose}
-          onComplete={handleComplete}
-          completeLabel="Splitter"
-          busy={saving}
-        />
-      </BottomSheet>
+  const handleClose = useCallback(() => {
+    if (saving) return;
+    if (closeTimerRef.current) { clearTimeout(closeTimerRef.current); closeTimerRef.current = null; }
+    onClose();
+  }, [onClose, saving]);
 
-      <AppToast {...toastProps} />
-    </>
+  return (
+    <BottomSheet isOpen={isOpen} onClose={handleClose} height="full">
+      <Wizard
+        id={`split-bande-${bandeId}`}
+        steps={steps}
+        eyebrow={`Splitter · ${bandeCodeId ?? bandeId}`}
+        onCancel={handleClose}
+        onComplete={handleComplete}
+        completeLabel="Splitter"
+        busy={saving}
+      />
+    </BottomSheet>
   );
 };
 

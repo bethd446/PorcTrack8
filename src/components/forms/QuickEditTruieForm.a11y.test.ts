@@ -3,8 +3,13 @@
  * ═══════════════════════════════════════════════════════════════════════════
  * Mêmes contraintes que les autres suites a11y : Vitest tourne en `node`,
  * pas de jsdom. On vérifie donc statiquement la présence des attributs
- * `aria-*` et l'intégration des hooks `useEscapeKey` + `useFocusFirstInput`,
- * plus le contrat pur de la fonction `shouldCloseOnKey`.
+ * `aria-*` et l'intégration du hook `useFocusFirstInput`, plus le contrat
+ * pur de la fonction `shouldCloseOnKey`.
+ *
+ * FORM_CONTRACT : le form a été migré vers le shell `<QuickActionSheet>`.
+ * `useEscapeKey` et `aria-busy` du bouton submit sont désormais câblés PAR
+ * le shell — le form ne les porte plus lui-même. Les assertions
+ * correspondantes ciblent donc QuickActionSheet (`submitAriaLabel`).
  */
 
 import { readFileSync } from 'node:fs';
@@ -18,14 +23,19 @@ const SRC = readFileSync(
   'utf-8',
 );
 
+const SHELL = readFileSync(
+  resolve(__dirname, 'QuickActionSheet.tsx'),
+  'utf-8',
+);
+
 describe('QuickEditTruieForm · accessibilité', () => {
-  it('importe les hooks a11y partagés', () => {
-    expect(SRC).toMatch(/useEscapeKey/);
+  it('utilise le shell QuickActionSheet + le hook focus-first', () => {
+    expect(SRC).toMatch(/QuickActionSheet/);
     expect(SRC).toMatch(/useFocusFirstInput/);
   });
 
-  it('monte le listener Escape sur ouverture (useEscapeKey(isOpen, handleClose))', () => {
-    expect(SRC).toMatch(/useEscapeKey\(\s*isOpen[^,]*,\s*handleClose\s*\)/);
+  it('le shell QuickActionSheet câble le listener Escape', () => {
+    expect(SHELL).toMatch(/useEscapeKey\(\s*isOpen\s*&&\s*!saving\s*,\s*onClose\s*\)/);
   });
 
   it('Escape key ferme le form (contrat shouldCloseOnKey)', () => {
@@ -48,11 +58,12 @@ describe('QuickEditTruieForm · accessibilité', () => {
     expect(SRC).toMatch(
       /id="edit-truie-ration"[^]*?aria-label="Ration alimentaire en kilogrammes par jour"/,
     );
-    // annuler / submit
-    expect(SRC).toMatch(/aria-label="Annuler et fermer"/);
+    // submit : aria-label transmis au shell via submitAriaLabel
     expect(SRC).toMatch(
-      /aria-label="Enregistrer les modifications de la truie"/,
+      /submitAriaLabel="Enregistrer les modifications de la truie"/,
     );
+    // le shell rend le bouton Annuler avec son aria-label
+    expect(SHELL).toMatch(/aria-label="Annuler et fermer"/);
   });
 
   it('gère aria-describedby pour hint + error sur les deux champs', () => {
@@ -71,7 +82,7 @@ describe('QuickEditTruieForm · accessibilité', () => {
     expect(SRC).toMatch(/aria-invalid=\{!!errors\.ration\}/);
   });
 
-  it('submit button expose aria-busy={saving}', () => {
-    expect(SRC).toMatch(/aria-busy=\{saving\}/);
+  it('le shell expose aria-busy sur le bouton submit', () => {
+    expect(SHELL).toMatch(/aria-busy=\{saving\}/);
   });
 });

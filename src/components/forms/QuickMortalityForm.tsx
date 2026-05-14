@@ -2,10 +2,11 @@ import React, { useMemo, useRef, useState, useCallback } from 'react';
 import { useIonAlert } from '@ionic/react';
 import { CheckCircle2, Search, ChevronRight, ArrowLeft } from 'lucide-react';
 
-import { AppToast, BottomSheet, DataRow, useAppToast } from '../agritech';
+import { BottomSheet, DataRow } from '../agritech';
 import { Button, FormField, Input, Section, Segment, Select, Textarea } from '@/design-system';
 import { useFarm } from '../../context/FarmContext';
 import { useToast } from '../../context/ToastContext';
+import { todayIso, isoDaysAgo } from './_formHelpers';
 import { filterRealPortees } from '../../services/bandesAggregator';
 import {
   insertHealthLog,
@@ -41,18 +42,14 @@ const CAUSE_LABEL: Record<string, string> = Object.fromEntries(
 // Saisie d'une mort passée jusqu'à 60 jours en arrière (cas terrain :
 // éleveur qui rentre des mortalités du carnet papier).
 const MORTALITY_BACKDATE_MAX_DAYS = 60;
-const todayISO = (): string => new Date().toISOString().slice(0, 10);
-const minDateISO = (days: number): string => {
-  const d = new Date();
-  d.setDate(d.getDate() - days);
-  return d.toISOString().slice(0, 10);
-};
 
 /**
  * QuickMortalityForm — Déclaration rapide d'une mortalité (V44 archétype 5).
  *
  * Refonte V44 :
- *  - 0 IonSelect / IonSegment / IonToast / IonLabel : Select + Segment + AppToast DS
+ *  - 0 IonSelect / IonSegment / IonToast / IonLabel : Select + Segment DS
+ *  - toast canonique `useToast()` (context global, remplace useAppToast local)
+ *  - helpers date partagés `_formHelpers` (todayIso / isoDaysAgo)
  *  - Sections UPPERCASE (INFORMATIONS PRINCIPALES / DÉCÈS / NOTES)
  *  - useIonAlert conservé pour la confirmation (modal natif iOS/Android)
  *  - Logique métier intacte : insertHealthLog + updateBatchByCode/updateSowByCode/updateBoarByCode
@@ -183,11 +180,10 @@ const QuickMortalityForm: React.FC<QuickMortalityFormProps> = ({
   const [nbMorts, setNbMorts] = useState<number>(MIN_DEATHS);
   const [cause, setCause] = useState<string>('INCONNUE');
   const [observation, setObservation] = useState<string>('');
-  const [dateMort, setDateMort] = useState<string>(todayISO);
+  const [dateMort, setDateMort] = useState<string>(todayIso);
   const [saving, setSaving] = useState(false);
   const [, setSuccess] = useState(false);
   const [impactFCFA, setImpactFCFA] = useState<number>(0);
-  const { toastProps } = useAppToast();
   const [error, setError] = useState<string>('');
 
   const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -248,7 +244,7 @@ const QuickMortalityForm: React.FC<QuickMortalityFormProps> = ({
     setSelectedBandeId(defaultBandeId ?? '');
     setNbMorts(MIN_DEATHS);
     setObservation('');
-    setDateMort(todayISO());
+    setDateMort(todayIso());
     setSuccess(false);
     setError('');
     onClose();
@@ -300,8 +296,8 @@ const QuickMortalityForm: React.FC<QuickMortalityFormProps> = ({
       setImpactFCFA(totalImpact);
 
       const author = kvGet('user_name') || 'Anonyme';
-      const logDate = dateMort || todayISO();
-      const isBackdated = logDate !== todayISO();
+      const logDate = dateMort || todayIso();
+      const isBackdated = logDate !== todayIso();
       const baseNotes = `[CAUSE: ${cause}] ${observation}`.trim();
       const notesWithBackdate = isBackdated
         ? `${baseNotes} [Date réelle: ${logDate}]`
@@ -471,15 +467,15 @@ const QuickMortalityForm: React.FC<QuickMortalityFormProps> = ({
               <FormField
                 label="Date du décès"
                 required
-                hint={dateMort !== todayISO() ? 'Mortalité rétro-saisie' : undefined}
+                hint={dateMort !== todayIso() ? 'Mortalité rétro-saisie' : undefined}
               >
                 <Input
                   id="mortality-date"
                   type="date"
                   aria-label="Date du décès"
                   value={dateMort}
-                  min={minDateISO(MORTALITY_BACKDATE_MAX_DAYS)}
-                  max={todayISO()}
+                  min={isoDaysAgo(MORTALITY_BACKDATE_MAX_DAYS)}
+                  max={todayIso()}
                   onChange={e => setDateMort(e.target.value)}
                   disabled={saving}
                 />
@@ -586,8 +582,6 @@ const QuickMortalityForm: React.FC<QuickMortalityFormProps> = ({
           )}
         </div>
       </BottomSheet>
-
-      <AppToast {...toastProps} />
     </>
   );
 };

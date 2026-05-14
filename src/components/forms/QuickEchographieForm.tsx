@@ -1,10 +1,24 @@
 /* eslint-disable react-refresh/only-export-components */
+/**
+ * QuickEchographieForm — Saisie d'un résultat d'échographie (J28-J35).
+ * ════════════════════════════════════════════════════════════════════════
+ * Migré FORM_CONTRACT Phase 2 (batch A) :
+ *  - shell `<QuickActionSheet>` (form onSubmit + bouton type=submit)
+ *  - toast canonique `useToast()` (remplace l'IonToast local)
+ *  - helpers date partagés `_formHelpers` (todayIso)
+ *  - validation `validateEchographie` → { ok, errors, normalized },
+ *    rendu d'erreur via `<FieldError>`
+ *  - reset-on-open via `lastOpenKey` render-phase
+ *  - garde double-clic : `saving` maintenu jusqu'au `onClose`, `closeTimerRef`
+ *    + cleanup `useEffect`
+ *
+ * La sélection porte sur une SAILLIE (pas une truie/verrat) → `<select>`
+ * natif conservé : `EntityPicker` est réservé aux entités truie/verrat.
+ */
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { IonToast } from '@ionic/react';
-import { Stethoscope, Check, CheckCircle2 } from 'lucide-react';
+import { Stethoscope } from 'lucide-react';
 
-import { BottomSheet } from '../agritech';
-import { FormField, Input, Select, Textarea, Button, Section, RadioGroup } from '@/design-system';
+import { FormField, Input, Select, Textarea, Section, RadioGroup } from '@/design-system';
 import {
   listPendingEchographies,
   updateSaillie,
@@ -12,7 +26,11 @@ import {
   type PendingSaillie,
 } from '../../services/supabaseWrites';
 import { useFarm } from '../../context/FarmContext';
-import { useEscapeKey, useFocusFirstInput } from './useFormA11y';
+import { useToast } from '../../context/ToastContext';
+import { useFocusFirstInput } from './useFormA11y';
+import { todayIso } from './_formHelpers';
+import { FieldError } from './_formFields';
+import QuickActionSheet from './QuickActionSheet';
 import {
   validateEchographie,
   sowStatusFromEcho,
@@ -44,13 +62,6 @@ const STATUT_OPTIONS: ReadonlyArray<{ value: EchoStatut; label: string; help: st
   { value: 'DOUTEUSE', label: 'Douteuse', help: 'À recontrôler J35' },
 ];
 
-function todayIsoLocal(d: Date = new Date()): string {
-  const yyyy = d.getFullYear();
-  const mm = String(d.getMonth() + 1).padStart(2, '0');
-  const dd = String(d.getDate()).padStart(2, '0');
-  return `${yyyy}-${mm}-${dd}`;
-}
-
 const QuickEchographieForm: React.FC<QuickEchographieFormProps> = ({
   isOpen,
   onClose,
@@ -58,24 +69,21 @@ const QuickEchographieForm: React.FC<QuickEchographieFormProps> = ({
   onSuccess,
 }) => {
   const { refreshData } = useFarm();
+  const { showToast } = useToast();
 
   const [pending, setPending] = useState<PendingSaillie[]>([]);
   const [pendingLoading, setPendingLoading] = useState(false);
 
   const [saillieId, setSaillieId] = useState<string>('');
   const [statut, setStatut] = useState<EchoStatut | ''>('');
-  const [dateEchoIso, setDateEchoIso] = useState<string>(todayIsoLocal());
+  const [dateEchoIso, setDateEchoIso] = useState<string>(todayIso());
   const [notes, setNotes] = useState<string>('');
   const [errors, setErrors] = useState<EchographieValidationErrors>({});
   const [saving, setSaving] = useState(false);
-  const [success, setSuccess] = useState(false);
-  const [toast, setToast] = useState<{ show: boolean; message: string }>({
-    show: false,
-    message: '',
-  });
 
   const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // Reset-on-open : pattern lastOpenKey render-phase (FORM_CONTRACT).
   const [lastOpenKey, setLastOpenKey] = useState<{
     isOpen: boolean;
     defaultTruieDisplayId: string | undefined;
@@ -88,10 +96,9 @@ const QuickEchographieForm: React.FC<QuickEchographieFormProps> = ({
     if (isOpen) {
       setSaillieId('');
       setStatut('');
-      setDateEchoIso(todayIsoLocal());
+      setDateEchoIso(todayIso());
       setNotes('');
       setErrors({});
-      setSuccess(false);
       setSaving(false);
     }
   }
@@ -142,15 +149,16 @@ const QuickEchographieForm: React.FC<QuickEchographieFormProps> = ({
     onClose();
   }, [onClose, saving]);
 
-  useEscapeKey(isOpen && !saving, handleClose);
   const firstFieldRef = useFocusFirstInput<HTMLSelectElement>(
-    isOpen && !success,
+    isOpen,
   ) as unknown as React.RefObject<HTMLSelectElement>;
 
   const selectedSaillie = useMemo(
     () => pending.find(p => p.saillie_id === saillieId) ?? null,
     [pending, saillieId],
   );
+
+  const isValid = !!saillieId && !!statut;
 
   const handleSubmit = async (e: React.FormEvent): Promise<void> => {
     e.preventDefault();
@@ -183,11 +191,11 @@ const QuickEchographieForm: React.FC<QuickEchographieFormProps> = ({
         await updateSowByCode(selectedSaillie.sow_code_id, { statut: newSowStatut });
       }
 
-      setSuccess(true);
-      setToast({
-        show: true,
-        message: `Échographie ${result.normalized.statut.toLowerCase()} enregistrée`,
-      });
+      showToast(
+        `Échographie ${result.normalized.statut.toLowerCase()} enregistrée`,
+        'success',
+        2400,
+      );
 
       try {
         await refreshData(true);
@@ -197,200 +205,135 @@ const QuickEchographieForm: React.FC<QuickEchographieFormProps> = ({
 
       if (onSuccess) onSuccess();
 
+      // Garder saving=true jusqu'au onClose pour empêcher le double-clic
+      // pendant la fenêtre 1.5s de toast success (FORM_CONTRACT).
       closeTimerRef.current = setTimeout(() => {
         closeTimerRef.current = null;
-        setSuccess(false);
+        setSaving(false);
         onClose();
       }, 1500);
     } catch (err) {
       console.error('[QuickEchographieForm] enregistrement échoué:', err);
-      setToast({
-        show: true,
-        message:
-          err instanceof Error
-            ? `Erreur : ${err.message}`
-            : 'Erreur enregistrement échographie',
-      });
-    } finally {
+      showToast(
+        err instanceof Error
+          ? `Erreur : ${err.message}`
+          : 'Erreur enregistrement échographie',
+        'error',
+        4000,
+      );
       setSaving(false);
     }
   };
 
   return (
-    <>
-      <BottomSheet
-        isOpen={isOpen}
-        onClose={handleClose}
-        title="Saisir une échographie"
-        height="full"
+    <QuickActionSheet
+      isOpen={isOpen}
+      onClose={handleClose}
+      eyebrow="Échographie"
+      title="Saisir une échographie"
+      ariaLabel="Saisie d'une échographie"
+      saving={saving}
+      isValid={isValid}
+      onSubmit={handleSubmit}
+      submitLabel="Enregistrer"
+      submitAriaLabel="Enregistrer l'échographie"
+    >
+      <div className="flex items-center gap-3">
+        <div className="inline-flex h-10 w-10 items-center justify-center rounded-md bg-bg-2 text-accent">
+          <Stethoscope size={18} aria-hidden="true" />
+        </div>
+        <div>
+          <p className="text-mono-label text-text-1">
+            Confirmer la gestation (J28-J35)
+          </p>
+          <p className="text-mono-micro text-text-2 mt-0.5">
+            Une saillie « VIDE » libère la truie
+          </p>
+        </div>
+      </div>
+
+      <Section label="INFORMATIONS PRINCIPALES" />
+
+      <FormField
+        label="Truie (saillie ≥ 21 j)"
+        hint={pending.length === 0 && !pendingLoading ? "Aucune saillie en attente d'écho." : undefined}
+        error={errors.saillieId}
       >
-        {success ? (
-          <div
-            className="flex flex-col items-center justify-center py-20 animate-scale-in"
-            role="status"
-            aria-live="polite"
-          >
-            <CheckCircle2
-              size={38}
-              className="text-accent mb-4"
-              aria-hidden="true"
-              strokeWidth={2}
-            />
-            <p className="agritech-heading text-[18px] uppercase tracking-wide">
-              Échographie enregistrée
-            </p>
-            {selectedSaillie?.sow_code_id ? (
-              <p className="mt-2 text-[12px] uppercase tracking-wide text-text-2 tabular-nums">
-                {selectedSaillie.sow_code_id} · {statut}
-              </p>
-            ) : null}
-          </div>
-        ) : (
-          <form
-            onSubmit={handleSubmit}
-            className="space-y-5"
-            noValidate
-            aria-label="Saisie d'une échographie"
-          >
-            <div className="flex items-center gap-3">
-              <div className="inline-flex h-10 w-10 items-center justify-center rounded-md bg-bg-2 text-accent">
-                <Stethoscope size={18} aria-hidden="true" />
-              </div>
-              <div>
-                <p className="text-mono-label text-text-1">
-                  Confirmer la gestation (J28-J35)
-                </p>
-                <p className="text-mono-micro text-text-2 mt-0.5">
-                  Une saillie « VIDE » libère la truie
-                </p>
-              </div>
-            </div>
+        <Select
+          id="echo-saillie"
+          ref={firstFieldRef}
+          aria-label="Sélectionner la truie à confirmer"
+          aria-required="true"
+          aria-invalid={!!errors.saillieId}
+          aria-describedby={errors.saillieId ? 'echo-saillie-error' : undefined}
+          value={saillieId}
+          onChange={e => setSaillieId(e.target.value)}
+          disabled={saving || pendingLoading}
+        >
+          <option value="">—</option>
+          {pending.map(p => {
+            const code = p.sow_code_id ?? '?';
+            const verrat = p.boar_code_id ? ` × ${p.boar_code_id}` : '';
+            return (
+              <option key={p.saillie_id} value={p.saillie_id}>
+                {code}{verrat} · J+{p.days_since}
+              </option>
+            );
+          })}
+        </Select>
+      </FormField>
 
-            <Section label="INFORMATIONS PRINCIPALES" />
+      <FormField label="Date écho" error={errors.dateEchoIso}>
+        <Input
+          id="echo-date"
+          type="date"
+          aria-label="Date de l'échographie"
+          aria-required="true"
+          aria-invalid={!!errors.dateEchoIso}
+          aria-describedby={errors.dateEchoIso ? 'echo-date-error' : undefined}
+          className="font-mono tabular-nums"
+          value={dateEchoIso}
+          max={todayIso()}
+          onChange={e => setDateEchoIso(e.target.value)}
+          disabled={saving}
+          invalid={!!errors.dateEchoIso}
+        />
+      </FormField>
 
-            <FormField
-              label="Truie (saillie ≥ 21 j)"
-              hint={pending.length === 0 && !pendingLoading ? "Aucune saillie en attente d'écho." : undefined}
-              error={errors.saillieId}
-            >
-              <Select
-                id="echo-saillie"
-                ref={firstFieldRef}
-                aria-label="Sélectionner la truie à confirmer"
-                aria-required="true"
-                aria-invalid={!!errors.saillieId}
-                aria-describedby={errors.saillieId ? 'echo-saillie-error' : undefined}
-                value={saillieId}
-                onChange={e => setSaillieId(e.target.value)}
-                disabled={saving || pendingLoading}
-              >
-                <option value="">—</option>
-                {pending.map(p => {
-                  const code = p.sow_code_id ?? '?';
-                  const verrat = p.boar_code_id ? ` × ${p.boar_code_id}` : '';
-                  return (
-                    <option key={p.saillie_id} value={p.saillie_id}>
-                      {code}{verrat} · J+{p.days_since}
-                    </option>
-                  );
-                })}
-              </Select>
-            </FormField>
+      <Section label="RÉSULTAT" />
 
-            <FormField label="Date écho" error={errors.dateEchoIso}>
-              <Input
-                id="echo-date"
-                type="date"
-                aria-label="Date de l'échographie"
-                aria-required="true"
-                aria-invalid={!!errors.dateEchoIso}
-                aria-describedby={errors.dateEchoIso ? 'echo-date-error' : undefined}
-                className="font-mono tabular-nums"
-                value={dateEchoIso}
-                max={todayIsoLocal()}
-                onChange={e => setDateEchoIso(e.target.value)}
-                disabled={saving}
-                invalid={!!errors.dateEchoIso}
-              />
-            </FormField>
-
-            <Section label="RÉSULTAT" />
-
-            {/* V70.9 : Radio DS dédié — remplace le radiogroup custom */}
-            <RadioGroup
-              label="Résultat"
-              value={statut}
-              onChange={(v) => setStatut(v as typeof statut)}
-              disabled={saving}
-              options={STATUT_OPTIONS.map(opt => ({
-                value: opt.value,
-                label: opt.label,
-                ariaLabel: `${opt.label} — ${opt.help}`,
-              }))}
-            />
-            <div className="hidden">{/* placeholder pour fermer ancien wrapper supprimé */}
-              {errors.statut ? (
-                <p role="alert" className="text-[10px] text-red">
-                  {errors.statut}
-                </p>
-              ) : null}
-            </div>
-
-            <Section label="DÉTAILS" />
-
-            <FormField
-              label={`Note (${notes.length}/${ECHO_BOUNDS.maxNotes})`}
-              error={errors.notes}
-            >
-              <Textarea
-                id="echo-notes"
-                aria-label="Note libre sur l'échographie"
-                aria-invalid={!!errors.notes}
-                aria-describedby={errors.notes ? 'echo-notes-error' : undefined}
-                rows={2}
-                maxLength={ECHO_BOUNDS.maxNotes}
-                value={notes}
-                onChange={e => setNotes(e.target.value)}
-                disabled={saving}
-              />
-            </FormField>
-
-            <div className="flex gap-3 justify-end pt-2 border-t border-border">
-              <Button
-                variant="ghost"
-                onClick={handleClose}
-                disabled={saving}
-                ariaLabel="Annuler et fermer"
-              >
-                Annuler
-              </Button>
-              <Button
-                type="submit"
-                variant="primary"
-                disabled={saving || !saillieId || !statut}
-                aria-busy={saving}
-                ariaLabel="Enregistrer l'échographie"
-              >
-                {saving ? 'Enregistrement…' : (
-                  <span className="inline-flex items-center gap-2">
-                    <Check size={16} aria-hidden="true" />
-                    Enregistrer
-                  </span>
-                )}
-              </Button>
-            </div>
-          </form>
-        )}
-      </BottomSheet>
-
-      <IonToast
-        isOpen={toast.show}
-        message={toast.message}
-        duration={2400}
-        onDidDismiss={() => setToast({ show: false, message: '' })}
-        position="bottom"
+      <RadioGroup
+        label="Résultat"
+        value={statut}
+        onChange={(v) => setStatut(v as typeof statut)}
+        disabled={saving}
+        options={STATUT_OPTIONS.map(opt => ({
+          value: opt.value,
+          label: opt.label,
+          ariaLabel: `${opt.label} — ${opt.help}`,
+        }))}
       />
-    </>
+      <FieldError message={errors.statut} />
+
+      <Section label="DÉTAILS" />
+
+      <FormField
+        label={`Note (${notes.length}/${ECHO_BOUNDS.maxNotes})`}
+        error={errors.notes}
+      >
+        <Textarea
+          id="echo-notes"
+          aria-label="Note libre sur l'échographie"
+          aria-invalid={!!errors.notes}
+          aria-describedby={errors.notes ? 'echo-notes-error' : undefined}
+          rows={2}
+          maxLength={ECHO_BOUNDS.maxNotes}
+          value={notes}
+          onChange={e => setNotes(e.target.value)}
+          disabled={saving}
+        />
+      </FormField>
+    </QuickActionSheet>
   );
 };
 

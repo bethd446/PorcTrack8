@@ -1,16 +1,25 @@
 /**
- * QuickAddLogeForm — Création rapide d'une loge (Sprint 5 v76)
+ * QuickAddLogeForm — Création rapide d'une loge.
  * ════════════════════════════════════════════════════════════════════════
- * Sheet bottom v76 · Type radio-chips · Code auto-gen · Capacité stepper ·
- * Position libre.
+ * Migré au FORM_CONTRACT (Phase 2 · Batch C) :
+ *  - shell `<QuickActionSheet>` (form onSubmit + bouton type=submit)
+ *  - toast canonique `useToast()` (context global, remplace IonToast local)
+ *  - rendu d'erreur via `<FieldError>` (remplace `errMsg()` inline)
+ *  - reset-on-open via `lastOpen` render-phase
+ *  - garde double-clic : `saving` maintenu jusqu'au `onClose`, `closeTimerRef`
+ *    + cleanup `useEffect`
+ *
+ * Champs : Type radio-chips · Code auto-gen · Capacité stepper · Position libre.
  */
 
-import React, { useCallback, useEffect, useState } from 'react';
-import { IonModal, IonToast } from '@ionic/react';
-import { Check, Minus, Plus, X } from 'lucide-react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { Minus, Plus } from 'lucide-react';
 
+import { useToast } from '../../context/ToastContext';
 import { createLoge, listLoges } from '../../services/supabaseWrites';
-import { useEscapeKey, useFocusFirstInput } from './useFormA11y';
+import { useFocusFirstInput } from './useFormA11y';
+import { FieldError } from './_formFields';
+import QuickActionSheet from './QuickActionSheet';
 import type { Loge, LogeType } from '../../types/farm';
 
 interface QuickAddLogeFormProps {
@@ -27,6 +36,7 @@ const TYPE_CHOICES: ReadonlyArray<{ value: ChipType; label: string; prefix: stri
 ];
 
 const QuickAddLogeForm: React.FC<QuickAddLogeFormProps> = ({ isOpen, onClose, onSuccess }) => {
+  const { showToast } = useToast();
   const [type, setType] = useState<ChipType>('MATERNITE');
   const [code, setCode] = useState('');
   const [codeManuallyEdited, setCodeManuallyEdited] = useState(false);
@@ -34,8 +44,9 @@ const QuickAddLogeForm: React.FC<QuickAddLogeFormProps> = ({ isOpen, onClose, on
   const [position, setPosition] = useState('');
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
-  const [toast, setToast] = useState('');
   const [existingLoges, setExistingLoges] = useState<Loge[]>([]);
+
+  const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -45,6 +56,12 @@ const QuickAddLogeForm: React.FC<QuickAddLogeFormProps> = ({ isOpen, onClose, on
       .catch(() => { if (!cancelled) setExistingLoges([]); });
     return () => { cancelled = true; };
   }, [isOpen]);
+
+  useEffect(() => {
+    return () => {
+      if (closeTimerRef.current) { clearTimeout(closeTimerRef.current); closeTimerRef.current = null; }
+    };
+  }, []);
 
   const suggestCode = useCallback((t: ChipType): string => {
     const prefix = TYPE_CHOICES.find(c => c.value === t)?.prefix ?? 'X';
@@ -72,8 +89,11 @@ const QuickAddLogeForm: React.FC<QuickAddLogeFormProps> = ({ isOpen, onClose, on
     setCode(suggestCode(type));
   }, [isOpen, type, suggestCode, codeManuallyEdited]);
 
-  const handleClose = useCallback(() => { if (!saving) onClose(); }, [onClose, saving]);
-  useEscapeKey(isOpen && !saving, handleClose);
+  const handleClose = useCallback(() => {
+    if (saving) return;
+    if (closeTimerRef.current) { clearTimeout(closeTimerRef.current); closeTimerRef.current = null; }
+    onClose();
+  }, [onClose, saving]);
   const firstFieldRef = useFocusFirstInput<HTMLButtonElement>(isOpen);
 
   const adjustCapacite = (delta: number): void => {
@@ -99,8 +119,8 @@ const QuickAddLogeForm: React.FC<QuickAddLogeFormProps> = ({ isOpen, onClose, on
 
   const isValid = !!code.trim();
 
-  const handleSubmit = async (e?: React.FormEvent | React.MouseEvent): Promise<void> => {
-    if (e) e.preventDefault();
+  const handleSubmit = async (e: React.FormEvent): Promise<void> => {
+    e.preventDefault();
     const errs = validate();
     if (Object.keys(errs).length > 0) { setErrors(errs); return; }
     setErrors({}); setSaving(true);
@@ -111,72 +131,63 @@ const QuickAddLogeForm: React.FC<QuickAddLogeFormProps> = ({ isOpen, onClose, on
         batiment: position.trim() || undefined,
         capaciteMax: capacite ? Number(capacite) : undefined,
       });
-      setToast('Loge créée');
+      showToast('Loge créée', 'success');
       onSuccess?.(created);
-      onClose();
+      // Garder saving=true jusqu'au onClose pour empêcher le double-clic dans
+      // la fenêtre 1.5s entre toast success et fermeture (FORM_CONTRACT).
+      closeTimerRef.current = setTimeout(() => {
+        closeTimerRef.current = null;
+        setSaving(false);
+        onClose();
+      }, 1500);
     } catch (err) {
-      setToast(err instanceof Error ? `Erreur : ${err.message}` : 'Erreur enregistrement');
-    } finally { setSaving(false); }
+      showToast(err instanceof Error ? `Erreur : ${err.message}` : 'Erreur enregistrement', 'error');
+      setSaving(false);
+    }
   };
 
-  const errMsg = (msg?: string): React.ReactNode =>
-    msg ? <span role="alert" style={{ fontFamily: 'var(--pt-font-mono)', fontSize: 11, color: 'var(--pt-danger)' }}>{msg}</span> : null;
-
   return (
-    <>
-      <IonModal isOpen={isOpen} onDidDismiss={handleClose} breakpoints={[0, 1]} initialBreakpoint={1} className="agritech-bottom-sheet pt-sheet-modal pt-screen" aria-label="Ajouter une loge">
-        <div className="ion-page pt-screen" style={{ position: 'relative', overflow: 'auto' }}>
-          <form className="sheet" onSubmit={handleSubmit} noValidate aria-label="Création d'une loge" style={{ position: 'relative', height: '100%', maxHeight: '100%' }}>
-            <span className="sheet__handle" />
-            <header className="sheet__head">
-              <div>
-                <div className="eyebrow">Nouvelle loge</div>
-                <h2 className="sheet__title">Ajouter une loge</h2>
-              </div>
-              <button type="button" className="sheet__close" onClick={handleClose} aria-label="Fermer" disabled={saving}>
-                <X size={14} aria-hidden="true" />
-              </button>
-            </header>
-            <div className="sheet__body">
-              <div className="field">
-                <label className="label--v77">CATÉGORIE</label>
-                <div className="radio-chips--cards" role="radiogroup" aria-label="Catégorie">
-                  {TYPE_CHOICES.map((t, i) => (
-                    <button key={t.value} ref={i === 0 ? firstFieldRef : undefined} type="button" className={`radio-chip--card${type === t.value ? ' is-selected' : ''}`} role="radio" aria-checked={type === t.value} onClick={() => { setType(t.value); setCodeManuallyEdited(false); }} disabled={saving}>{t.label}</button>
-                  ))}
-                </div>
-              </div>
-              <div className="field">
-                <label className="label--v77" htmlFor="add-loge-code">CODE <span className="hint">auto selon type</span></label>
-                <input id="add-loge-code" className={`field__input mono${code ? ' filled' : ' field__input--ghost'}`} type="text" maxLength={20} aria-label="Code de la loge" aria-required="true" aria-invalid={!!errors.numero} placeholder="M-04" value={code} onChange={e => { setCode(e.target.value); setCodeManuallyEdited(true); }} disabled={saving} autoComplete="off" />
-                {errMsg(errors.numero)}
-              </div>
-              <div className="field">
-                <label className="label--v77" htmlFor="add-loge-capacite">CAPACITÉ MAX</label>
-                <div className="stepper">
-                  <button type="button" onClick={() => adjustCapacite(-1)} aria-label="Diminuer capacité" disabled={saving}><Minus size={14} aria-hidden="true" /></button>
-                  <input id="add-loge-capacite" type="number" inputMode="numeric" min={0} max={500} step={1} aria-label="Capacité max" aria-invalid={!!errors.capaciteMax} placeholder="0" value={capacite} onChange={e => setCapacite(e.target.value)} disabled={saving} />
-                  <span className="stepper-label">animaux</span>
-                  <button type="button" onClick={() => adjustCapacite(1)} aria-label="Augmenter capacité" disabled={saving}><Plus size={14} aria-hidden="true" /></button>
-                </div>
-                {errMsg(errors.capaciteMax)}
-              </div>
-              <div className="field">
-                <label className="label--v77" htmlFor="add-loge-position">POSITION <span className="hint">libre</span></label>
-                <input id="add-loge-position" className={`field__input${position ? ' filled' : ' field__input--ghost'}`} type="text" maxLength={50} aria-label="Position" placeholder="ex. bâtiment A · case 4" value={position} onChange={e => setPosition(e.target.value)} disabled={saving} autoComplete="off" />
-              </div>
-            </div>
-            <footer className="sheet__foot">
-              <button type="button" className="btn btn--ghost" onClick={handleClose} disabled={saving} aria-label="Annuler et fermer">Annuler</button>
-              <button type="submit" className="btn btn--primary btn--lg btn--block" disabled={saving || !isValid} aria-busy={saving} aria-label="Créer la loge">
-                {saving ? 'Création…' : <><Check size={14} aria-hidden="true" /> Enregistrer la loge</>}
-              </button>
-            </footer>
-          </form>
+    <QuickActionSheet
+      isOpen={isOpen}
+      onClose={handleClose}
+      eyebrow="Nouvelle loge"
+      title="Ajouter une loge"
+      ariaLabel="Ajouter une loge"
+      saving={saving}
+      isValid={isValid}
+      onSubmit={handleSubmit}
+      submitLabel="Enregistrer la loge"
+      savingLabel="Création…"
+      submitAriaLabel="Créer la loge"
+    >
+      <div className="field">
+        <label className="label--v77">CATÉGORIE</label>
+        <div className="radio-chips--cards" role="radiogroup" aria-label="Catégorie">
+          {TYPE_CHOICES.map((t, i) => (
+            <button key={t.value} ref={i === 0 ? firstFieldRef : undefined} type="button" className={`radio-chip--card${type === t.value ? ' is-selected' : ''}`} role="radio" aria-checked={type === t.value} onClick={() => { setType(t.value); setCodeManuallyEdited(false); }} disabled={saving}>{t.label}</button>
+          ))}
         </div>
-      </IonModal>
-      <IonToast isOpen={toast !== ''} message={toast} duration={1800} onDidDismiss={() => setToast('')} position="bottom" />
-    </>
+      </div>
+      <div className="field">
+        <label className="label--v77" htmlFor="add-loge-code">CODE <span className="hint">auto selon type</span></label>
+        <input id="add-loge-code" className={`field__input mono${code ? ' filled' : ' field__input--ghost'}`} type="text" maxLength={20} aria-label="Code de la loge" aria-required="true" aria-invalid={!!errors.numero} placeholder="M-04" value={code} onChange={e => { setCode(e.target.value); setCodeManuallyEdited(true); }} disabled={saving} autoComplete="off" />
+        <FieldError message={errors.numero} />
+      </div>
+      <div className="field">
+        <label className="label--v77" htmlFor="add-loge-capacite">CAPACITÉ MAX</label>
+        <div className="stepper">
+          <button type="button" onClick={() => adjustCapacite(-1)} aria-label="Diminuer capacité" disabled={saving}><Minus size={14} aria-hidden="true" /></button>
+          <input id="add-loge-capacite" type="number" inputMode="numeric" min={0} max={500} step={1} aria-label="Capacité max" aria-invalid={!!errors.capaciteMax} placeholder="0" value={capacite} onChange={e => setCapacite(e.target.value)} disabled={saving} />
+          <span className="stepper-label">animaux</span>
+          <button type="button" onClick={() => adjustCapacite(1)} aria-label="Augmenter capacité" disabled={saving}><Plus size={14} aria-hidden="true" /></button>
+        </div>
+        <FieldError message={errors.capaciteMax} />
+      </div>
+      <div className="field">
+        <label className="label--v77" htmlFor="add-loge-position">POSITION <span className="hint">libre</span></label>
+        <input id="add-loge-position" className={`field__input${position ? ' filled' : ' field__input--ghost'}`} type="text" maxLength={50} aria-label="Position" placeholder="ex. bâtiment A · case 4" value={position} onChange={e => setPosition(e.target.value)} disabled={saving} autoComplete="off" />
+      </div>
+    </QuickActionSheet>
   );
 };
 

@@ -14,12 +14,16 @@
  * du seuil d'alerte.
  *
  * - ID auto-suggéré = "V" + max(id numérique existant) + 1 (fallback "V01")
- * - Validation :
- *     · produit non vide (trim, max 80)
- *     · unité non vide (trim)
- *     · stockActuel ≥ 0
- *     · seuilAlerte ≥ 0
- * - Toast online/offline + refreshData() au succès
+ * - Validation : pure `validateAddVeto` → { ok, errors, row }
+ * - Toast online/offline canonique `useToast()` + refreshData() au succès
+ *
+ * Conforme FORM_CONTRACT Phase 1 :
+ *  - shell `<QuickActionSheet>` (form onSubmit + bouton type=submit)
+ *  - toast canonique `useToast()` (context global, remplace IonToast local)
+ *  - validation `{ ok, errors, row }` + rendu erreur via `<FieldError>`
+ *  - reset-on-open via `lastOpenKey` render-phase
+ *  - garde double-clic : `saving` maintenu jusqu'au `onClose`, `closeTimerRef`
+ *    + cleanup `useEffect`
  *
  * Compagnon tests : QuickAddVetoForm.test.tsx
  *
@@ -30,15 +34,14 @@
  *   - TYPE_SUGGESTIONS / USAGE_SUGGESTIONS / UNITE_SUGGESTIONS
  */
 
-import React, { useCallback, useMemo, useState } from 'react';
-import { IonToast } from '@ionic/react';
-import { Plus, Save } from 'lucide-react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import { BottomSheet } from '../agritech';
-import { FormField, Input, Textarea, Button } from '@/design-system';
 import { insertProduitVeto } from '../../services/supabaseWrites';
 import { useFarm } from '../../context/FarmContext';
-import { useEscapeKey, useFocusFirstInput } from './useFormA11y';
+import { useToast } from '../../context/ToastContext';
+import { useFocusFirstInput } from './useFormA11y';
+import { FieldError } from './_formFields';
+import QuickActionSheet from './QuickActionSheet';
 import {
   TYPE_SUGGESTIONS,
   USAGE_SUGGESTIONS,
@@ -63,6 +66,7 @@ const QuickAddVetoForm: React.FC<QuickAddVetoFormProps> = ({
   onSuccess,
 }) => {
   const { stockVeto, refreshData } = useFarm();
+  const { showToast } = useToast();
 
   const suggestedId = useMemo(() => suggestNextVetoId(stockVeto), [stockVeto]);
 
@@ -76,12 +80,15 @@ const QuickAddVetoForm: React.FC<QuickAddVetoFormProps> = ({
   const [notes, setNotes] = useState<string>('');
   const [errors, setErrors] = useState<AddVetoValidation['errors']>({});
   const [saving, setSaving] = useState(false);
-  const [toast, setToast] = useState<string>('');
 
-  // Render-time sync: reset on (re)open (avoids setState-in-effect cascading renders).
-  const [lastOpen, setLastOpen] = useState<boolean>(isOpen);
-  if (lastOpen !== isOpen) {
-    setLastOpen(isOpen);
+  const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Reset-on-open : pattern lastOpenKey render-phase (FORM_CONTRACT).
+  const [lastOpenKey, setLastOpenKey] = useState<{ isOpen: boolean; suggestedId: string }>({
+    isOpen, suggestedId,
+  });
+  if (lastOpenKey.isOpen !== isOpen || lastOpenKey.suggestedId !== suggestedId) {
+    setLastOpenKey({ isOpen, suggestedId });
     if (isOpen) {
       setId(suggestedId);
       setProduit('');
@@ -96,13 +103,18 @@ const QuickAddVetoForm: React.FC<QuickAddVetoFormProps> = ({
     }
   }
 
+  useEffect(() => {
+    return () => {
+      if (closeTimerRef.current) { clearTimeout(closeTimerRef.current); closeTimerRef.current = null; }
+    };
+  }, []);
+
   const handleClose = useCallback(() => {
     if (saving) return;
+    if (closeTimerRef.current) { clearTimeout(closeTimerRef.current); closeTimerRef.current = null; }
     onClose();
   }, [onClose, saving]);
 
-  // A11y : Esc ferme + focus auto sur premier champ
-  useEscapeKey(isOpen && !saving, handleClose);
   const firstFieldRef = useFocusFirstInput<HTMLInputElement>(isOpen);
 
   const handleSubmit = async (e: React.FormEvent): Promise<void> => {
@@ -137,17 +149,29 @@ const QuickAddVetoForm: React.FC<QuickAddVetoFormProps> = ({
         notes: (row[8] as string) || null,
       });
       const online = typeof navigator !== 'undefined' && navigator.onLine;
-      setToast(online ? 'Produit ajouté' : 'Produit en file · sync auto');
+      showToast(
+        online ? 'Produit ajouté' : 'Produit en file · sync auto',
+        online ? 'success' : 'info',
+        1800,
+      );
       try {
         await refreshData(true);
       } catch {
         /* non-bloquant : queue offline applique déjà */
       }
       if (onSuccess) onSuccess();
-      onClose();
+      // Garder saving=true jusqu'au onClose pour empêcher le double-clic
+      // pendant la fenêtre 1.5s de toast (FORM_CONTRACT).
+      closeTimerRef.current = setTimeout(() => {
+        closeTimerRef.current = null;
+        setSaving(false);
+        onClose();
+      }, 1500);
     } catch (err) {
-      setToast(err instanceof Error ? `Erreur : ${err.message}` : 'Erreur enregistrement');
-    } finally {
+      showToast(
+        err instanceof Error ? `Erreur : ${err.message}` : 'Erreur enregistrement',
+        'error', 4000,
+      );
       setSaving(false);
     }
   };
@@ -165,247 +189,204 @@ const QuickAddVetoForm: React.FC<QuickAddVetoFormProps> = ({
       : previewStatut === 'BAS' ? 'text-amber'
         : 'text-accent';
 
+  const isValid = produit.trim() !== '' && unite.trim() !== '';
+
   return (
-    <>
-      <BottomSheet
-        isOpen={isOpen}
-        onClose={handleClose}
-        title="Nouveau produit véto"
-        height="full"
-      >
-        <form
-          onSubmit={handleSubmit}
-          className="space-y-5"
-          noValidate
-          aria-label="Création d'un nouveau produit vétérinaire"
-        >
-          {/* Header */}
-          <div className="flex items-center gap-3">
-            <div className="inline-flex h-10 w-10 items-center justify-center rounded-md bg-bg-2 text-accent">
-              <Plus size={18} aria-hidden="true" />
-            </div>
-            <p className="text-mono-label text-text-1">
-              Ajouter un produit à la pharmacie
-            </p>
-          </div>
+    <QuickActionSheet
+      isOpen={isOpen}
+      onClose={handleClose}
+      eyebrow="Nouveau produit"
+      title="Nouveau produit véto"
+      ariaLabel="Création d'un nouveau produit vétérinaire"
+      saving={saving}
+      isValid={isValid}
+      onSubmit={handleSubmit}
+      submitLabel="Ajouter"
+      submitAriaLabel="Ajouter le produit à la pharmacie"
+    >
+      {/* Datalists pour suggestions */}
+      <datalist id="add-veto-types">
+        {TYPE_SUGGESTIONS.map(t => (
+          <option key={t} value={t} />
+        ))}
+      </datalist>
+      <datalist id="add-veto-usages">
+        {USAGE_SUGGESTIONS.map(u => (
+          <option key={u} value={u} />
+        ))}
+      </datalist>
+      <datalist id="add-veto-unites">
+        {UNITE_SUGGESTIONS.map(u => (
+          <option key={u} value={u} />
+        ))}
+      </datalist>
 
-          {/* Datalists pour suggestions */}
-          <datalist id="add-veto-types">
-            {TYPE_SUGGESTIONS.map(t => (
-              <option key={t} value={t} />
-            ))}
-          </datalist>
-          <datalist id="add-veto-usages">
-            {USAGE_SUGGESTIONS.map(u => (
-              <option key={u} value={u} />
-            ))}
-          </datalist>
-          <datalist id="add-veto-unites">
-            {UNITE_SUGGESTIONS.map(u => (
-              <option key={u} value={u} />
-            ))}
-          </datalist>
+      <div className="field">
+        <label className="label--v77" htmlFor="add-veto-id">
+          ID <span className="hint">auto</span>
+        </label>
+        <input
+          id="add-veto-id"
+          ref={firstFieldRef}
+          type="text"
+          maxLength={10}
+          autoCapitalize="characters"
+          className={`field__input mono${id ? ' filled' : ' field__input--ghost'}`}
+          aria-label="Identifiant du produit vétérinaire"
+          aria-required="true"
+          aria-invalid={!!errors.id}
+          placeholder="V01"
+          value={id}
+          onChange={e => setId(e.target.value)}
+          disabled={saving}
+          autoComplete="off"
+        />
+        <FieldError message={errors.id} />
+      </div>
 
-          <FormField
-            label="ID"
-            hint={errors.id ? undefined : 'Format V suivi de chiffres (ex: V01)'}
-            error={errors.id}
+      <div className="field">
+        <label className="label--v77" htmlFor="add-veto-produit">
+          PRODUIT <span className="req">requis</span>
+        </label>
+        <input
+          id="add-veto-produit"
+          type="text"
+          maxLength={80}
+          className={`field__input${produit ? ' mono filled' : ' field__input--ghost'}`}
+          aria-label="Nom du produit vétérinaire"
+          aria-required="true"
+          aria-invalid={!!errors.produit}
+          placeholder="Ex: Ivermectine 1%"
+          value={produit}
+          onChange={e => setProduit(e.target.value)}
+          disabled={saving}
+          autoComplete="off"
+        />
+        <FieldError message={errors.produit} />
+      </div>
+
+      <div className="field--inline">
+        <div className="field">
+          <label className="label--v77" htmlFor="add-veto-type">TYPE</label>
+          <input
+            id="add-veto-type"
+            type="text"
+            list="add-veto-types"
+            maxLength={40}
+            className={`field__input${type ? ' mono filled' : ' field__input--ghost'}`}
+            aria-label="Type de produit vétérinaire"
+            placeholder="Antiparasitaire"
+            value={type}
+            onChange={e => setType(e.target.value)}
+            disabled={saving}
+            autoComplete="off"
+          />
+        </div>
+        <div className="field">
+          <label className="label--v77" htmlFor="add-veto-usage">USAGE</label>
+          <input
+            id="add-veto-usage"
+            type="text"
+            list="add-veto-usages"
+            maxLength={40}
+            className={`field__input${usage ? ' mono filled' : ' field__input--ghost'}`}
+            aria-label="Usage du produit vétérinaire"
+            placeholder="Prévention"
+            value={usage}
+            onChange={e => setUsage(e.target.value)}
+            disabled={saving}
+            autoComplete="off"
+          />
+        </div>
+      </div>
+
+      <div className="field--inline">
+        <div className="field">
+          <label className="label--v77" htmlFor="add-veto-stock">
+            STOCK INITIAL <span className="req">requis</span>
+          </label>
+          <input
+            id="add-veto-stock"
+            type="text"
+            inputMode="decimal"
+            className={`field__input mono${stockActuel ? ' filled' : ' field__input--ghost'}`}
+            aria-label="Stock initial"
+            aria-required="true"
+            aria-invalid={!!errors.stockActuel}
+            placeholder="0"
+            value={stockActuel}
+            onChange={e => setStockActuel(e.target.value.replace(/[^\d.,]/g, ''))}
+            disabled={saving}
+          />
+          <FieldError message={errors.stockActuel} />
+        </div>
+        <div className="field">
+          <label className="label--v77" htmlFor="add-veto-unite">
+            UNITÉ <span className="req">requis</span>
+          </label>
+          <input
+            id="add-veto-unite"
+            type="text"
+            list="add-veto-unites"
+            maxLength={20}
+            className={`field__input${unite ? ' mono filled' : ' field__input--ghost'}`}
+            aria-label="Unité de mesure"
+            aria-required="true"
+            aria-invalid={!!errors.unite}
+            placeholder="mL"
+            value={unite}
+            onChange={e => setUnite(e.target.value)}
+            disabled={saving}
+            autoComplete="off"
+          />
+          <FieldError message={errors.unite} />
+        </div>
+      </div>
+
+      <div className="field">
+        <label className="label--v77" htmlFor="add-veto-seuil">
+          SEUIL ALERTE <span className="hint">défaut 5</span>
+        </label>
+        <input
+          id="add-veto-seuil"
+          type="text"
+          inputMode="decimal"
+          className={`field__input mono${seuilAlerte ? ' filled' : ' field__input--ghost'}`}
+          aria-label="Seuil d'alerte stock bas"
+          aria-invalid={!!errors.seuilAlerte}
+          placeholder="5"
+          value={seuilAlerte}
+          onChange={e => setSeuilAlerte(e.target.value.replace(/[^\d.,]/g, ''))}
+          disabled={saving}
+        />
+        <FieldError message={errors.seuilAlerte} />
+        {!errors.seuilAlerte && previewStatut ? (
+          <p
+            aria-live="polite"
+            style={{ marginTop: 4, fontFamily: 'var(--pt-font-mono)', fontSize: 10, color: 'var(--pt-subtle)' }}
           >
-            <Input
-              id="add-veto-id"
-              ref={firstFieldRef}
-              type="text"
-              maxLength={10}
-              autoCapitalize="characters"
-              aria-label="Identifiant du produit vétérinaire"
-              aria-required="true"
-              aria-invalid={!!errors.id}
-              aria-describedby={errors.id ? 'add-veto-id-error' : 'add-veto-id-hint'}
-              className="ft-code uppercase"
-              placeholder="V01"
-              value={id}
-              onChange={e => setId(e.target.value)}
-              disabled={saving}
-              autoComplete="off"
-              invalid={!!errors.id}
-            />
-          </FormField>
+            Statut calculé · <span className={previewTone}>{previewStatut}</span>
+          </p>
+        ) : null}
+      </div>
 
-          <FormField label="Produit" required error={errors.produit}>
-            <Input
-              id="add-veto-produit"
-              type="text"
-              maxLength={80}
-              aria-label="Nom du produit vétérinaire"
-              aria-required="true"
-              aria-invalid={!!errors.produit}
-              aria-describedby={errors.produit ? 'add-veto-produit-error' : undefined}
-              placeholder="Ex: Ivermectine 1%"
-              value={produit}
-              onChange={e => setProduit(e.target.value)}
-              disabled={saving}
-              autoComplete="off"
-              invalid={!!errors.produit}
-            />
-          </FormField>
-
-          <div className="grid grid-cols-2 gap-3">
-            <FormField label="Type">
-              <Input
-                id="add-veto-type"
-                type="text"
-                list="add-veto-types"
-                maxLength={40}
-                aria-label="Type de produit vétérinaire"
-                placeholder="Antiparasitaire"
-                value={type}
-                onChange={e => setType(e.target.value)}
-                disabled={saving}
-                autoComplete="off"
-              />
-            </FormField>
-            <FormField label="Usage">
-              <Input
-                id="add-veto-usage"
-                type="text"
-                list="add-veto-usages"
-                maxLength={40}
-                aria-label="Usage du produit vétérinaire"
-                placeholder="Prévention"
-                value={usage}
-                onChange={e => setUsage(e.target.value)}
-                disabled={saving}
-                autoComplete="off"
-              />
-            </FormField>
-          </div>
-
-          <div className="grid grid-cols-[2fr_1fr] gap-3">
-            <FormField label="Stock initial" error={errors.stockActuel}>
-              <Input
-                id="add-veto-stock"
-                type="text"
-                inputMode="decimal"
-                aria-label="Stock initial"
-                aria-required="true"
-                aria-invalid={!!errors.stockActuel}
-                aria-describedby={errors.stockActuel ? 'add-veto-stock-error' : undefined}
-                className="font-mono text-[20px] tabular-nums text-center"
-                placeholder="0"
-                value={stockActuel}
-                onChange={e => setStockActuel(e.target.value.replace(/[^\d.,]/g, ''))}
-                disabled={saving}
-                invalid={!!errors.stockActuel}
-              />
-            </FormField>
-
-            <FormField label="Unité" error={errors.unite}>
-              <Input
-                id="add-veto-unite"
-                type="text"
-                list="add-veto-unites"
-                maxLength={20}
-                aria-label="Unité de mesure"
-                aria-required="true"
-                aria-invalid={!!errors.unite}
-                aria-describedby={errors.unite ? 'add-veto-unite-error' : undefined}
-                className="uppercase tracking-wide text-center"
-                placeholder="mL"
-                value={unite}
-                onChange={e => setUnite(e.target.value)}
-                disabled={saving}
-                autoComplete="off"
-                invalid={!!errors.unite}
-              />
-            </FormField>
-          </div>
-
-          <FormField
-            label="Seuil alerte"
-            hint={
-              errors.seuilAlerte
-                ? undefined
-                : previewStatut
-                ? undefined
-                : 'défaut 5 · Notification stock bas si stock ≤ seuil'
-            }
-            error={errors.seuilAlerte}
-          >
-            <Input
-              id="add-veto-seuil"
-              type="text"
-              inputMode="decimal"
-              aria-label="Seuil d'alerte stock bas"
-              aria-invalid={!!errors.seuilAlerte}
-              aria-describedby={
-                errors.seuilAlerte ? 'add-veto-seuil-error' : 'add-veto-seuil-hint'
-              }
-              className="tabular-nums"
-              placeholder="5"
-              value={seuilAlerte}
-              onChange={e => setSeuilAlerte(e.target.value.replace(/[^\d.,]/g, ''))}
-              disabled={saving}
-              invalid={!!errors.seuilAlerte}
-            />
-            {!errors.seuilAlerte && previewStatut ? (
-              <p
-                id="add-veto-seuil-hint"
-                aria-live="polite"
-                className="mt-1 text-[10px] text-text-2"
-              >
-                Statut calculé · <span className={previewTone}>{previewStatut}</span>
-              </p>
-            ) : null}
-          </FormField>
-
-          <FormField label="Notes" hint={`optionnel · ${notes.length}/200`}>
-            <Textarea
-              id="add-veto-notes"
-              maxLength={200}
-              rows={3}
-              aria-label="Notes sur le produit"
-              placeholder="Posologie, précautions, fournisseur…"
-              value={notes}
-              onChange={e => setNotes(e.target.value)}
-              disabled={saving}
-            />
-          </FormField>
-
-          <div className="flex gap-3 justify-end pt-2 border-t border-border">
-            <Button
-              variant="secondary"
-              onClick={handleClose}
-              disabled={saving}
-              ariaLabel="Annuler et fermer"
-            >
-              Annuler
-            </Button>
-            <Button
-              type="submit"
-              variant="primary"
-              disabled={saving}
-              aria-busy={saving}
-              ariaLabel="Ajouter le produit à la pharmacie"
-            >
-              {saving ? 'Enregistrement…' : (
-                <span className="inline-flex items-center gap-2">
-                  Ajouter
-                  <Save size={14} aria-hidden="true" />
-                </span>
-              )}
-            </Button>
-          </div>
-        </form>
-      </BottomSheet>
-
-      <IonToast
-        isOpen={toast !== ''}
-        message={toast}
-        duration={1800}
-        onDidDismiss={() => setToast('')}
-        position="bottom"
-      />
-    </>
+      <div className="field">
+        <label className="label--v77" htmlFor="add-veto-notes">
+          NOTES <span className="hint">optionnel · {notes.length}/200</span>
+        </label>
+        <textarea
+          id="add-veto-notes"
+          maxLength={200}
+          rows={3}
+          className={`field__input${notes ? ' filled' : ' field__input--ghost'}`}
+          aria-label="Notes sur le produit"
+          placeholder="Posologie, précautions, fournisseur…"
+          value={notes}
+          onChange={e => setNotes(e.target.value)}
+          disabled={saving}
+        />
+      </div>
+    </QuickActionSheet>
   );
 };
 

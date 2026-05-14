@@ -1,12 +1,11 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { IonToast } from '@ionic/react';
-import { AlertTriangle, Edit3, Save } from 'lucide-react';
+import { AlertTriangle, Edit3 } from 'lucide-react';
 
-import { BottomSheet } from '../agritech';
-import { Button, FormField, Input, Select, Textarea } from '@/design-system';
+import { FormField, Input, Select, Textarea } from '@/design-system';
 import { listLoges, updateBoarByCode } from '../../services/supabaseWrites';
 import { useFarm } from '../../context/FarmContext';
 import { useAuth } from '../../context/AuthContext';
+import { useToast } from '../../context/ToastContext';
 import type { Loge, Verrat } from '../../types/farm';
 import {
   canAssignAnimal,
@@ -23,7 +22,8 @@ import {
   type VerratEditValidation,
 } from './quickEditVerratValidation';
 import { computeVerratPerformance } from '../../services/performanceAnalyzer';
-import { useEscapeKey, useFocusFirstInput } from './useFormA11y';
+import { useFocusFirstInput } from './useFormA11y';
+import QuickActionSheet from './QuickActionSheet';
 import PhotoUploader from './PhotoUploader';
 
 /* ═════════════════════════════════════════════════════════════════════════
@@ -55,6 +55,7 @@ const QuickEditVerratForm: React.FC<QuickEditVerratFormProps> = ({
 }) => {
   const { refreshData, bandes, saillies, truies } = useFarm();
   const { user } = useAuth();
+  const { showToast } = useToast();
   const farmId = user?.id ?? '';
 
   const initial: VerratEditInitial = useMemo(
@@ -108,7 +109,6 @@ const QuickEditVerratForm: React.FC<QuickEditVerratFormProps> = ({
   const [photoDirty, setPhotoDirty] = useState(false);
   const [errors, setErrors] = useState<VerratEditValidation['errors']>({});
   const [saving, setSaving] = useState(false);
-  const [toast, setToast] = useState<string>('');
 
   // V25 — Loge structurée (référentiel)
   const [loges, setLoges] = useState<Loge[]>([]);
@@ -208,8 +208,7 @@ const QuickEditVerratForm: React.FC<QuickEditVerratFormProps> = ({
     onClose();
   }, [onClose, saving]);
 
-  // A11y : Esc + focus auto sur 1er input (Nom)
-  useEscapeKey(isOpen && !saving, handleClose);
+  // A11y : Esc câblé par QuickActionSheet ; focus auto sur 1er input (Nom).
   const firstFieldRef = useFocusFirstInput<HTMLInputElement>(isOpen);
 
   const handleSubmit = async (e: React.FormEvent): Promise<void> => {
@@ -225,7 +224,11 @@ const QuickEditVerratForm: React.FC<QuickEditVerratFormProps> = ({
     }
     // V70 — Bloque si la loge sélectionnée viole les règles d'attribution.
     if (selectedLogeIdDirty && selectedLogeId && !logeAssignmentResult.ok) {
-      setToast(`Impossible : ${logeAssignmentResult.raison ?? 'loge non éligible'}`);
+      showToast(
+        `Impossible : ${logeAssignmentResult.raison ?? 'loge non éligible'}`,
+        'error',
+        2200,
+      );
       return;
     }
     setErrors({});
@@ -235,7 +238,7 @@ const QuickEditVerratForm: React.FC<QuickEditVerratFormProps> = ({
       !photoDirty &&
       !selectedLogeIdDirty
     ) {
-      setToast('Aucune modification');
+      showToast('Aucune modification', 'info', 1800);
       onClose();
       return;
     }
@@ -261,10 +264,12 @@ const QuickEditVerratForm: React.FC<QuickEditVerratFormProps> = ({
       if (selectedLogeIdDirty) supabasePatch.loge_id = selectedLogeId || null;
       await updateBoarByCode(verrat.id, supabasePatch);
       const online = typeof navigator !== 'undefined' && navigator.onLine;
-      setToast(
+      showToast(
         online
           ? 'Modifications enregistrées'
           : 'Modifications en file · sync auto',
+        online ? 'success' : 'info',
+        1800,
       );
       try {
         await refreshData(true);
@@ -274,10 +279,12 @@ const QuickEditVerratForm: React.FC<QuickEditVerratFormProps> = ({
       if (onSuccess) onSuccess();
       onClose();
     } catch (err) {
-      setToast(
+      showToast(
         err instanceof Error
           ? `Erreur : ${err.message}`
           : 'Erreur enregistrement local',
+        'error',
+        1800,
       );
     } finally {
       setSaving(false);
@@ -287,19 +294,19 @@ const QuickEditVerratForm: React.FC<QuickEditVerratFormProps> = ({
   const displayId = verrat.displayId || verrat.id;
 
   return (
-    <>
-      <BottomSheet
-        isOpen={isOpen}
-        onClose={handleClose}
-        title={`Éditer · ${displayId}`}
-        height="full"
-      >
-        <form
-          onSubmit={handleSubmit}
-          className="space-y-6"
-          noValidate
-          aria-label="Édition verrat"
-        >
+    <QuickActionSheet
+      isOpen={isOpen}
+      onClose={handleClose}
+      eyebrow={`Éditer · ${displayId}`}
+      title="Modifier identité & ration"
+      ariaLabel="Édition verrat"
+      saving={saving}
+      isValid={true}
+      onSubmit={handleSubmit}
+      submitLabel="Enregistrer"
+      submitAriaLabel="Enregistrer les modifications du verrat"
+    >
+      <div className="space-y-6">
           {/* Header */}
           <div className="flex items-center gap-3">
             <div className="inline-flex h-10 w-10 items-center justify-center rounded-md bg-bg-2 text-accent">
@@ -709,64 +716,8 @@ const QuickEditVerratForm: React.FC<QuickEditVerratFormProps> = ({
               />
             </FormField>
           </section>
-
-          {/* ═══ Actions ════════════════════════════════════════════ */}
-          <div className="flex items-center gap-2 pt-2">
-            <Button
-              type="button"
-              variant="secondary"
-              onClick={handleClose}
-              disabled={saving}
-              ariaLabel="Annuler et fermer"
-              className={[
-                'pressable flex-1 h-14 rounded-md',
-                'inline-flex items-center justify-center gap-2',
-                'bg-bg-1 border border-border text-text-1',
-                'text-[12px] font-bold uppercase tracking-wide',
-                'transition-colors duration-[160ms] hover:border-text-2',
-                'focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2',
-                saving ? 'opacity-40 cursor-not-allowed' : '',
-              ].join(' ')}
-            >
-              Annuler
-            </Button>
-            <Button
-              type="submit"
-              variant="primary"
-              disabled={saving}
-              ariaLabel="Enregistrer les modifications du verrat"
-              aria-busy={saving}
-              className={[
-                'pressable flex-[2] h-14 rounded-md',
-                'inline-flex items-center justify-center gap-2',
-                'bg-accent text-bg-0',
-                'text-[13px] font-bold uppercase tracking-wide',
-                'transition-colors duration-[160ms]',
-                'focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2',
-                saving ? 'opacity-40 cursor-not-allowed' : 'hover:brightness-110',
-              ].join(' ')}
-            >
-              {saving ? (
-                <span className="animate-pulse">Enregistrement…</span>
-              ) : (
-                <>
-                  <span>Enregistrer</span>
-                  <Save size={14} aria-hidden="true" />
-                </>
-              )}
-            </Button>
-          </div>
-        </form>
-      </BottomSheet>
-
-      <IonToast
-        isOpen={toast !== ''}
-        message={toast}
-        duration={1800}
-        onDidDismiss={() => setToast('')}
-        position="bottom"
-      />
-    </>
+      </div>
+    </QuickActionSheet>
   );
 };
 

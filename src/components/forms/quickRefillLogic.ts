@@ -43,6 +43,79 @@ export function recomputeStatut(
   return 'OK';
 }
 
+/** Erreurs de validation du formulaire de réapprovisionnement. */
+export interface RefillErrors {
+  item?: string;
+  quantite?: string;
+  prix?: string;
+  date?: string;
+}
+
+/** Entrée brute du formulaire de réapprovisionnement (champs texte). */
+export interface RefillFormInput {
+  hasItem: boolean;
+  quantite: string;
+  prixUnitaire: string;
+  dateIso: string;
+}
+
+/** Résultat de validation au contrat `{ ok, errors, normalized }`. */
+export interface RefillValidation {
+  ok: boolean;
+  errors: RefillErrors;
+  normalized?: {
+    quantite: number;
+    prixUnitaire: number | undefined;
+    dateIso: string;
+  };
+}
+
+/** Parse un nombre tolérant la virgule décimale FR. NaN si invalide/vide. */
+function parseRefillNum(raw: string): number {
+  const n = parseFloat(String(raw ?? '').replace(',', '.'));
+  return Number.isFinite(n) ? n : NaN;
+}
+
+/**
+ * Valide les champs du formulaire de réapprovisionnement (pur, testable).
+ *  - item présent
+ *  - quantite > 0
+ *  - prixUnitaire optionnel, mais si fourni doit être ≥ 0
+ *  - dateIso non vide
+ */
+export function validateRefill(input: RefillFormInput): RefillValidation {
+  const errors: RefillErrors = {};
+
+  if (!input.hasItem) errors.item = 'Produit manquant';
+
+  const quantite = parseRefillNum(input.quantite);
+  if (!Number.isFinite(quantite) || quantite <= 0) {
+    errors.quantite = 'Quantité > 0 requise';
+  }
+
+  let prixUnitaire: number | undefined;
+  if (input.prixUnitaire.trim()) {
+    const prix = parseRefillNum(input.prixUnitaire);
+    if (!Number.isFinite(prix) || prix < 0) {
+      errors.prix = 'Prix invalide';
+    } else {
+      prixUnitaire = prix;
+    }
+  }
+
+  if (!input.dateIso) errors.date = 'Date requise';
+
+  if (Object.keys(errors).length > 0) {
+    return { ok: false, errors };
+  }
+
+  return {
+    ok: true,
+    errors: {},
+    normalized: { quantite, prixUnitaire, dateIso: input.dateIso },
+  };
+}
+
 /** Payloads préparés par buildRefillPayloads (utiles en test). */
 export interface RefillPayloads {
   stockSheet: 'STOCK_ALIMENTS' | 'STOCK_VETO';

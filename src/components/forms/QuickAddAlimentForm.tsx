@@ -2,11 +2,7 @@
  * QuickAddAlimentForm — Création rapide d'un nouvel aliment au catalogue
  * ════════════════════════════════════════════════════════════════════════
  * BottomSheet : champs rapides pour enregistrer une nouvelle matière / aliment
- * dans `STOCK_ALIMENTS`. Submit → `enqueueAppendRow('STOCK_ALIMENTS', [...])`
- * avec l'ordre canonique des colonnes (cf. `mapStockAliment` dans
- * `src/mappers/index.ts`) :
- *
- *   ID · LIBELLE · STOCK_ACTUEL · UNITE · SEUIL_ALERTE · STATUT · NOTES
+ * dans `produits_aliments`. Submit → `insertProduitAliment(...)`.
  *
  * - ID auto-suggéré = "A" + max(id numérique existant) + 1 (fallback "A01")
  * - Validation :
@@ -16,31 +12,27 @@
  *     · unite non vide
  *     · seuilAlerte >= 0 (nombre fini)
  *     · notes max 200
- * - Statut auto-calculé via `recomputeStatut(stockActuel, seuilAlerte)` :
- *     · stock <= 0 → RUPTURE
- *     · 0 < stock <= seuilAlerte → BAS
- *     · sinon → OK
+ * - Statut auto-calculé via `recomputeStatut(stockActuel, seuilAlerte)`
  * - Toast online/offline + refreshData() au succès
  *
- * Compagnon tests : QuickAddAlimentForm.test.tsx
+ * Conforme FORM_CONTRACT : shell `<QuickActionSheet>`, `<form onSubmit>`,
+ * toast canonique `useToast()`, validation `{ ok, errors, row }` +
+ * `<FieldError>`, reset-on-open `lastOpenKey`, garde double-clic
+ * `closeTimerRef` + cleanup.
  *
- * Exports nommés (logique pure, testable sans React) :
- *   - validateAddAliment()
- *   - buildAddAlimentRow()
- *   - suggestNextAlimentId()
+ * Compagnon tests : QuickAddAlimentForm.test.tsx
  */
 
-import React, { useCallback, useMemo, useState } from 'react';
-import { IonToast } from '@ionic/react';
-import { Plus, Save } from 'lucide-react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import { BottomSheet } from '../agritech';
-import { FormField, Input, Textarea, Button } from '@/design-system';
 import { insertProduitAliment } from '../../services/supabaseWrites';
 import { useFarm } from '../../context/FarmContext';
+import { useToast } from '../../context/ToastContext';
 import type { StockStatut } from '../../types/farm';
 import { recomputeStatut } from './quickRefillLogic';
-import { useEscapeKey, useFocusFirstInput } from './useFormA11y';
+import { useFocusFirstInput } from './useFormA11y';
+import { FieldError } from './_formFields';
+import QuickActionSheet from './QuickActionSheet';
 import {
   UNITE_SUGGESTIONS,
   suggestNextAlimentId,
@@ -71,6 +63,7 @@ const QuickAddAlimentForm: React.FC<QuickAddAlimentFormProps> = ({
   onSuccess,
 }) => {
   const { stockAliment, refreshData } = useFarm();
+  const { showToast } = useToast();
 
   const suggestedId = useMemo(
     () => suggestNextAlimentId(stockAliment),
@@ -85,15 +78,16 @@ const QuickAddAlimentForm: React.FC<QuickAddAlimentFormProps> = ({
   const [notes, setNotes] = useState<string>('');
   const [errors, setErrors] = useState<AddAlimentValidation['errors']>({});
   const [saving, setSaving] = useState(false);
-  const [toast, setToast] = useState<string>('');
 
-  // Reset à l'ouverture (render-time sync) — re-calcule l'ID auto-suggéré
-  const [lastKey, setLastKey] = useState<{ isOpen: boolean; suggestedId: string }>({
+  const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Reset-on-open : pattern lastOpenKey render-phase (FORM_CONTRACT).
+  const [lastOpenKey, setLastOpenKey] = useState<{ isOpen: boolean; suggestedId: string }>({
     isOpen,
     suggestedId,
   });
-  if (lastKey.isOpen !== isOpen || lastKey.suggestedId !== suggestedId) {
-    setLastKey({ isOpen, suggestedId });
+  if (lastOpenKey.isOpen !== isOpen || lastOpenKey.suggestedId !== suggestedId) {
+    setLastOpenKey({ isOpen, suggestedId });
     if (isOpen) {
       setId(suggestedId);
       setLibelle('');
@@ -106,13 +100,18 @@ const QuickAddAlimentForm: React.FC<QuickAddAlimentFormProps> = ({
     }
   }
 
+  useEffect(() => {
+    return () => {
+      if (closeTimerRef.current) { clearTimeout(closeTimerRef.current); closeTimerRef.current = null; }
+    };
+  }, []);
+
   const handleClose = useCallback(() => {
     if (saving) return;
+    if (closeTimerRef.current) { clearTimeout(closeTimerRef.current); closeTimerRef.current = null; }
     onClose();
   }, [onClose, saving]);
 
-  // A11y : Esc ferme + focus auto
-  useEscapeKey(isOpen && !saving, handleClose);
   const firstFieldRef = useFocusFirstInput<HTMLInputElement>(isOpen);
 
   const handleSubmit = async (e: React.FormEvent): Promise<void> => {
@@ -143,8 +142,9 @@ const QuickAddAlimentForm: React.FC<QuickAddAlimentFormProps> = ({
         notes: (row[6] as string) || null,
       });
       const online = typeof navigator !== 'undefined' && navigator.onLine;
-      setToast(
+      showToast(
         online ? 'Aliment ajouté' : 'Aliment en file · sync auto',
+        online ? 'success' : 'info',
       );
       try {
         await refreshData(true); // Force process queue + refresh
@@ -152,14 +152,18 @@ const QuickAddAlimentForm: React.FC<QuickAddAlimentFormProps> = ({
         /* noop */
       }
       if (onSuccess) onSuccess();
-      onClose();
+      // Garde double-clic : saving maintenu jusqu'au onClose (FORM_CONTRACT).
+      closeTimerRef.current = setTimeout(() => {
+        closeTimerRef.current = null;
+        setSaving(false);
+        onClose();
+      }, 1500);
     } catch (err) {
-      setToast(
-        err instanceof Error
-          ? `Erreur : ${err.message}`
-          : 'Erreur enregistrement',
+      showToast(
+        err instanceof Error ? `Erreur : ${err.message}` : 'Erreur enregistrement',
+        'error',
+        4000,
       );
-    } finally {
       setSaving(false);
     }
   };
@@ -173,210 +177,154 @@ const QuickAddAlimentForm: React.FC<QuickAddAlimentFormProps> = ({
   }, [stockActuel, seuilAlerte]);
 
   return (
-    <>
-      <BottomSheet
-        isOpen={isOpen}
-        onClose={handleClose}
-        title="Nouvel aliment"
-        height="full"
-      >
-        <form
-          onSubmit={handleSubmit}
-          className="space-y-5"
-          noValidate
-          aria-label="Création d'un nouvel aliment"
-        >
-          {/* Header */}
-          <div className="flex items-center gap-3">
-            <div className="inline-flex h-10 w-10 items-center justify-center rounded-md bg-bg-2 text-accent">
-              <Plus size={18} aria-hidden="true" />
-            </div>
-            <p className="text-mono-label text-text-1">
-              Ajouter un aliment au catalogue
-            </p>
-          </div>
+    <QuickActionSheet
+      isOpen={isOpen}
+      onClose={handleClose}
+      eyebrow="Nouvel aliment"
+      title="Ajouter un aliment"
+      ariaLabel="Création d'un nouvel aliment"
+      saving={saving}
+      isValid
+      onSubmit={handleSubmit}
+      submitLabel="Ajouter"
+      submitAriaLabel="Ajouter l'aliment au catalogue"
+    >
+      <div className="field">
+        <label className="label--v77" htmlFor="add-aliment-id">
+          ID <span className="req">requis</span>
+        </label>
+        <input
+          id="add-aliment-id"
+          ref={firstFieldRef}
+          className={`field__input mono${id ? ' filled' : ' field__input--ghost'}`}
+          type="text"
+          maxLength={10}
+          autoCapitalize="characters"
+          aria-label="Identifiant de l'aliment"
+          aria-required="true"
+          aria-invalid={!!errors.id}
+          placeholder="A01"
+          value={id}
+          onChange={e => setId(e.target.value)}
+          disabled={saving}
+          autoComplete="off"
+        />
+        <FieldError message={errors.id} />
+        {!errors.id ? (
+          <span className="hint">Format A suivi de chiffres (ex: A01)</span>
+        ) : null}
+      </div>
 
-          <FormField
-            label="ID"
-            hint={errors.id ? undefined : 'Format A suivi de chiffres (ex: A01)'}
-            error={errors.id}
-          >
-            <Input
-              id="add-aliment-id"
-              ref={firstFieldRef}
-              type="text"
-              maxLength={10}
-              autoCapitalize="characters"
-              aria-label="Identifiant de l'aliment"
-              aria-required="true"
-              aria-invalid={!!errors.id}
-              aria-describedby={
-                errors.id ? 'add-aliment-id-error' : 'add-aliment-id-hint'
-              }
-              className="ft-code uppercase"
-              placeholder="A01"
-              value={id}
-              onChange={e => setId(e.target.value)}
-              disabled={saving}
-              autoComplete="off"
-              invalid={!!errors.id}
-            />
-          </FormField>
+      <div className="field">
+        <label className="label--v77" htmlFor="add-aliment-libelle">
+          LIBELLÉ <span className="req">requis</span>
+        </label>
+        <input
+          id="add-aliment-libelle"
+          className={`field__input${libelle ? ' filled' : ' field__input--ghost'}`}
+          type="text"
+          maxLength={60}
+          aria-label="Libellé de l'aliment"
+          aria-required="true"
+          aria-invalid={!!errors.libelle}
+          placeholder="Ex: Maïs grain"
+          value={libelle}
+          onChange={e => setLibelle(e.target.value)}
+          disabled={saving}
+          autoComplete="off"
+        />
+        <FieldError message={errors.libelle} />
+      </div>
 
-          <FormField label="Libellé" required error={errors.libelle}>
-            <Input
-              id="add-aliment-libelle"
-              type="text"
-              maxLength={60}
-              aria-label="Libellé de l'aliment"
-              aria-required="true"
-              aria-invalid={!!errors.libelle}
-              aria-describedby={
-                errors.libelle ? 'add-aliment-libelle-error' : undefined
-              }
-              placeholder="Ex: Maïs grain"
-              value={libelle}
-              onChange={e => setLibelle(e.target.value)}
-              disabled={saving}
-              autoComplete="off"
-              invalid={!!errors.libelle}
-            />
-          </FormField>
+      <div className="field--inline">
+        <div className="field">
+          <label className="label--v77" htmlFor="add-aliment-stock">STOCK INITIAL</label>
+          <input
+            id="add-aliment-stock"
+            className={`field__input mono${stockActuel ? ' filled' : ' field__input--ghost'}`}
+            type="number"
+            inputMode="decimal"
+            min={0}
+            step={0.1}
+            aria-label="Stock initial"
+            aria-required="true"
+            aria-invalid={!!errors.stockActuel}
+            placeholder="0"
+            value={stockActuel}
+            onChange={e => setStockActuel(e.target.value)}
+            disabled={saving}
+          />
+          <FieldError message={errors.stockActuel} />
+        </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <FormField label="Stock initial" error={errors.stockActuel}>
-              <Input
-                id="add-aliment-stock"
-                type="number"
-                inputMode="decimal"
-                min={0}
-                step={0.1}
-                aria-label="Stock initial"
-                aria-required="true"
-                aria-invalid={!!errors.stockActuel}
-                aria-describedby={
-                  errors.stockActuel ? 'add-aliment-stock-error' : undefined
-                }
-                className="font-mono tabular-nums"
-                placeholder="0"
-                value={stockActuel}
-                onChange={e => setStockActuel(e.target.value)}
-                disabled={saving}
-                invalid={!!errors.stockActuel}
-              />
-            </FormField>
+        <div className="field">
+          <label className="label--v77" htmlFor="add-aliment-unite">UNITÉ</label>
+          <input
+            id="add-aliment-unite"
+            className={`field__input${unite ? ' filled' : ' field__input--ghost'}`}
+            type="text"
+            list="add-aliment-unite-list"
+            maxLength={20}
+            aria-label="Unité de mesure"
+            aria-required="true"
+            aria-invalid={!!errors.unite}
+            placeholder="kg"
+            value={unite}
+            onChange={e => setUnite(e.target.value)}
+            disabled={saving}
+            autoComplete="off"
+          />
+          <datalist id="add-aliment-unite-list">
+            {UNITE_SUGGESTIONS.map(u => (
+              <option key={u} value={u} />
+            ))}
+          </datalist>
+          <FieldError message={errors.unite} />
+        </div>
+      </div>
 
-            <FormField label="Unité" error={errors.unite}>
-              <Input
-                id="add-aliment-unite"
-                type="text"
-                list="add-aliment-unite-list"
-                maxLength={20}
-                aria-label="Unité de mesure"
-                aria-required="true"
-                aria-invalid={!!errors.unite}
-                aria-describedby={
-                  errors.unite ? 'add-aliment-unite-error' : undefined
-                }
-                placeholder="kg"
-                value={unite}
-                onChange={e => setUnite(e.target.value)}
-                disabled={saving}
-                autoComplete="off"
-                invalid={!!errors.unite}
-              />
-              <datalist id="add-aliment-unite-list">
-                {UNITE_SUGGESTIONS.map(u => (
-                  <option key={u} value={u} />
-                ))}
-              </datalist>
-            </FormField>
-          </div>
+      <div className="field">
+        <label className="label--v77" htmlFor="add-aliment-seuil">SEUIL ALERTE</label>
+        <input
+          id="add-aliment-seuil"
+          className={`field__input mono${seuilAlerte ? ' filled' : ' field__input--ghost'}`}
+          type="number"
+          inputMode="decimal"
+          min={0}
+          step={1}
+          aria-label="Seuil d'alerte stock bas"
+          aria-required="true"
+          aria-invalid={!!errors.seuilAlerte}
+          placeholder="50"
+          value={seuilAlerte}
+          onChange={e => setSeuilAlerte(e.target.value)}
+          disabled={saving}
+        />
+        <FieldError message={errors.seuilAlerte} />
+        {!errors.seuilAlerte ? (
+          <span className="hint">Statut auto-calculé : {previewStatut ?? '—'}</span>
+        ) : null}
+      </div>
 
-          <FormField
-            label="Seuil alerte"
-            hint={
-              errors.seuilAlerte
-                ? undefined
-                : `Statut auto-calculé : ${previewStatut ?? '—'}`
-            }
-            error={errors.seuilAlerte}
-          >
-            <Input
-              id="add-aliment-seuil"
-              type="number"
-              inputMode="decimal"
-              min={0}
-              step={1}
-              aria-label="Seuil d'alerte stock bas"
-              aria-required="true"
-              aria-invalid={!!errors.seuilAlerte}
-              aria-describedby={
-                errors.seuilAlerte
-                  ? 'add-aliment-seuil-error'
-                  : 'add-aliment-seuil-hint'
-              }
-              className="font-mono tabular-nums"
-              placeholder="50"
-              value={seuilAlerte}
-              onChange={e => setSeuilAlerte(e.target.value)}
-              disabled={saving}
-              invalid={!!errors.seuilAlerte}
-            />
-          </FormField>
-
-          <FormField label="Notes" hint="optionnel" error={errors.notes}>
-            <Textarea
-              id="add-aliment-notes"
-              maxLength={200}
-              rows={3}
-              aria-label="Notes libres"
-              aria-invalid={!!errors.notes}
-              aria-describedby={
-                errors.notes ? 'add-aliment-notes-error' : undefined
-              }
-              placeholder="Fournisseur, calibre, observations…"
-              value={notes}
-              onChange={e => setNotes(e.target.value)}
-              disabled={saving}
-            />
-          </FormField>
-
-          <div className="flex gap-3 justify-end pt-2 border-t border-border">
-            <Button
-              variant="secondary"
-              onClick={handleClose}
-              disabled={saving}
-              ariaLabel="Annuler et fermer"
-            >
-              Annuler
-            </Button>
-            <Button
-              type="submit"
-              variant="primary"
-              disabled={saving}
-              aria-busy={saving}
-              ariaLabel="Ajouter l'aliment au catalogue"
-            >
-              {saving ? 'Enregistrement…' : (
-                <span className="inline-flex items-center gap-2">
-                  Ajouter
-                  <Save size={14} aria-hidden="true" />
-                </span>
-              )}
-            </Button>
-          </div>
-        </form>
-      </BottomSheet>
-
-      <IonToast
-        isOpen={toast !== ''}
-        message={toast}
-        duration={1800}
-        onDidDismiss={() => setToast('')}
-        position="bottom"
-      />
-    </>
+      <div className="field">
+        <label className="label--v77" htmlFor="add-aliment-notes">
+          NOTES <span className="hint">optionnel</span>
+        </label>
+        <textarea
+          id="add-aliment-notes"
+          className={`field__input${notes ? ' filled' : ' field__input--ghost'}`}
+          maxLength={200}
+          rows={3}
+          aria-label="Notes libres"
+          aria-invalid={!!errors.notes}
+          placeholder="Fournisseur, calibre, observations…"
+          value={notes}
+          onChange={e => setNotes(e.target.value)}
+          disabled={saving}
+        />
+        <FieldError message={errors.notes} />
+      </div>
+    </QuickActionSheet>
   );
 };
 

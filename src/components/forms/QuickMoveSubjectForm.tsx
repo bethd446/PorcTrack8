@@ -11,16 +11,28 @@
  *
  * Submit → moveSubject({...}) qui (1) lit la loge actuelle (2) INSERT
  * loge_movements (3) PATCH subject.loge_id.
+ *
+ * Conforme FORM_CONTRACT Phase 1 :
+ *  - shell `<QuickActionSheet>` (form onSubmit + bouton type=submit)
+ *  - toast canonique `useToast()` (context global, remplace IonToast local)
+ *  - validation : état `error` + rendu via `<FieldError>`
+ *  - reset-on-open via `lastOpenKey` render-phase
+ *  - garde double-clic : `saving` maintenu jusqu'au `onClose`, `closeTimerRef`
+ *    + cleanup `useEffect`
+ *
+ * Le picker de loge reste un radiogroup custom : `<EntityPicker>` est dédié
+ * aux truies / verrats (forme `PickableEntity`), pas aux loges groupées par
+ * type. On préserve les `data-testid="loge-X"` + `role="radio"` attendus par
+ * les tests.
  */
 
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { IonToast } from '@ionic/react';
-import { ArrowRight, Move } from 'lucide-react';
+import React, { useCallback, useEffect, useMemo, useState, useRef } from 'react';
+import { Move } from 'lucide-react';
 
-import { BottomSheet } from '../agritech';
-import { Button, Textarea } from '@/design-system';
+import { useToast } from '../../context/ToastContext';
 import { listLoges, moveSubject } from '../../services/supabaseWrites';
-import { useEscapeKey } from './useFormA11y';
+import { FieldError } from './_formFields';
+import QuickActionSheet from './QuickActionSheet';
 import type { Loge, LogeType } from '../../types/farm';
 
 export interface QuickMoveSubjectFormProps {
@@ -72,17 +84,20 @@ const QuickMoveSubjectForm: React.FC<QuickMoveSubjectFormProps> = ({
   currentLogeNumero,
   onSuccess,
 }) => {
+  const { showToast } = useToast();
   const [loges, setLoges] = useState<Loge[]>([]);
   const [loadingLoges, setLoadingLoges] = useState(false);
   const [selectedLogeId, setSelectedLogeId] = useState<string>('');
   const [reason, setReason] = useState<string>('');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string>('');
-  const [toast, setToast] = useState<string>('');
 
-  const [lastOpen, setLastOpen] = useState(isOpen);
-  if (lastOpen !== isOpen) {
-    setLastOpen(isOpen);
+  const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Reset-on-open : pattern lastOpenKey render-phase (FORM_CONTRACT).
+  const [lastOpenKey, setLastOpenKey] = useState<{ isOpen: boolean }>({ isOpen });
+  if (lastOpenKey.isOpen !== isOpen) {
+    setLastOpenKey({ isOpen });
     if (isOpen) {
       setSelectedLogeId('');
       setReason('');
@@ -90,6 +105,12 @@ const QuickMoveSubjectForm: React.FC<QuickMoveSubjectFormProps> = ({
       setSaving(false);
     }
   }
+
+  useEffect(() => {
+    return () => {
+      if (closeTimerRef.current) { clearTimeout(closeTimerRef.current); closeTimerRef.current = null; }
+    };
+  }, []);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -113,10 +134,9 @@ const QuickMoveSubjectForm: React.FC<QuickMoveSubjectFormProps> = ({
 
   const handleClose = useCallback(() => {
     if (saving) return;
+    if (closeTimerRef.current) { clearTimeout(closeTimerRef.current); closeTimerRef.current = null; }
     onClose();
   }, [onClose, saving]);
-
-  useEscapeKey(isOpen && !saving, handleClose);
 
   // Filtre loges compatibles + actives + exclut la loge courante.
   const allowed = ALLOWED_TYPES[subjectType];
@@ -150,176 +170,120 @@ const QuickMoveSubjectForm: React.FC<QuickMoveSubjectFormProps> = ({
         toLogeId: selectedLogeId,
         reason: reason.trim() || undefined,
       });
-      setToast('Sujet déplacé');
+      showToast('Sujet déplacé', 'success', 1800);
       onSuccess?.();
-      setTimeout(() => {
+      // Garder saving=true jusqu'au onClose pour empêcher le double-clic
+      // pendant la fenêtre de toast (FORM_CONTRACT).
+      closeTimerRef.current = setTimeout(() => {
+        closeTimerRef.current = null;
+        setSaving(false);
         onClose();
-      }, 600);
+      }, 1500);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erreur déplacement');
-    } finally {
       setSaving(false);
     }
   };
 
-  const labelCls =
-    'block text-mono-label text-text-2';
-
   return (
-    <>
-      <BottomSheet
-        isOpen={isOpen}
-        onClose={handleClose}
-        title={`Déplacer ${subjectLabel}`}
-        height="full"
-      >
-        <form
-          onSubmit={handleSubmit}
-          className="space-y-5"
-          noValidate
-          aria-label="Déplacement vers loge"
+    <QuickActionSheet
+      isOpen={isOpen}
+      onClose={handleClose}
+      eyebrow="Déplacement"
+      title={`Déplacer ${subjectLabel}`}
+      ariaLabel="Déplacement vers loge"
+      saving={saving}
+      isValid={!!selectedLogeId}
+      onSubmit={handleSubmit}
+      submitLabel="Déplacer"
+      submitAriaLabel="Déplacer"
+    >
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+        <div
+          aria-hidden="true"
+          style={{ display: 'inline-flex', height: 40, width: 40, alignItems: 'center', justifyContent: 'center', borderRadius: 8, background: 'var(--pt-bg)', color: 'var(--pt-accent)' }}
         >
-          <div className="flex items-center gap-3">
-            <div className="inline-flex h-10 w-10 items-center justify-center rounded-md bg-bg-2 text-accent">
-              <Move size={18} aria-hidden="true" />
-            </div>
-            <div className="min-w-0">
-              <p className="text-mono-label text-text-1 truncate">
-                {subjectLabel}
-              </p>
-              {currentLogeNumero ? (
-                <p className="text-[10px] text-text-2 mt-0.5">
-                  De : {currentLogeNumero}
-                </p>
-              ) : (
-                <p className="text-[10px] text-text-2 mt-0.5">
-                  Aucune loge actuelle
-                </p>
-              )}
-            </div>
-          </div>
+          <Move size={18} aria-hidden="true" />
+        </div>
+        <div style={{ minWidth: 0 }}>
+          <p className="label--v77" style={{ margin: 0 }}>{subjectLabel}</p>
+          <p style={{ margin: 0, marginTop: 2, fontSize: 10, color: 'var(--pt-subtle)' }}>
+            {currentLogeNumero ? `De : ${currentLogeNumero}` : 'Aucune loge actuelle'}
+          </p>
+        </div>
+      </div>
 
-          <div className="space-y-2">
-            <span id="move-loge-label" className={labelCls}>
-              Vers loge <span className="text-red normal-case">· requis</span>
-            </span>
-            {loadingLoges ? (
-              <p className="text-[11px] text-text-2">
-                Chargement des loges…
-              </p>
-            ) : grouped.length === 0 ? (
-              <p
-                className="rounded-md border border-dashed border-border bg-bg-1 px-3 py-3 text-[11px] text-text-2"
-                role="status"
-              >
-                Aucune loge compatible disponible
-              </p>
-            ) : (
-              <div
-                role="radiogroup"
-                aria-labelledby="move-loge-label"
-                className="space-y-3 max-h-[40vh] overflow-y-auto"
-              >
-                {grouped.map(([type, lst]) => (
-                  <div key={type} className="space-y-1.5">
-                    <p className="text-mono-micro text-text-2">
-                      {TYPE_LABEL[type]}
-                    </p>
-                    <div className="flex flex-wrap gap-2">
-                      {lst.map(l => {
-                        const isSel = selectedLogeId === l.id;
-                        return (
-                          <button
-                            key={l.id}
-                            type="button"
-                            role="radio"
-                            aria-checked={isSel}
-                            aria-label={`Sélectionner loge ${l.numero}`}
-                            data-testid={`loge-${l.numero}`}
-                            onClick={() => setSelectedLogeId(l.id)}
-                            className={[
-                              'pressable inline-flex items-center justify-center',
-                              'h-9 px-3 rounded-md border',
-                              'ft-code text-[12px] uppercase tracking-wide tabular-nums',
-                              'transition-colors duration-[160ms]',
-                              isSel
-                                ? 'bg-accent text-bg-0 border-accent font-semibold'
-                                : 'bg-bg-0 text-text-1 border-border hover:border-text-2',
-                            ].join(' ')}
-                          >
-                            {l.numero}
-                            {l.batiment ? ` · ${l.batiment}` : ''}
-                            {l.capaciteMax != null
-                              ? ` · ${l.capaciteMax}`
-                              : ''}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-                ))}
+      <div className="field">
+        <span id="move-loge-label" className="label--v77">
+          VERS LOGE <span className="req">requis</span>
+        </span>
+        {loadingLoges ? (
+          <p style={{ fontFamily: 'var(--pt-font-mono)', fontSize: 12, color: 'var(--pt-subtle)' }}>
+            Chargement des loges…
+          </p>
+        ) : grouped.length === 0 ? (
+          <p
+            role="status"
+            style={{ fontFamily: 'var(--pt-font-mono)', fontSize: 12, color: 'var(--pt-subtle)', margin: 0 }}
+          >
+            Aucune loge compatible disponible
+          </p>
+        ) : (
+          <div
+            role="radiogroup"
+            aria-labelledby="move-loge-label"
+            style={{ display: 'flex', flexDirection: 'column', gap: 12, maxHeight: '40vh', overflowY: 'auto' }}
+          >
+            {grouped.map(([type, lst]) => (
+              <div key={type} style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                <p style={{ margin: 0, fontFamily: 'var(--pt-font-mono)', fontSize: 11, color: 'var(--pt-subtle)' }}>
+                  {TYPE_LABEL[type]}
+                </p>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                  {lst.map(l => {
+                    const isSel = selectedLogeId === l.id;
+                    return (
+                      <button
+                        key={l.id}
+                        type="button"
+                        role="radio"
+                        aria-checked={isSel}
+                        aria-label={`Sélectionner loge ${l.numero}`}
+                        data-testid={`loge-${l.numero}`}
+                        onClick={() => setSelectedLogeId(l.id)}
+                        className={`radio-chip--card${isSel ? ' is-selected' : ''}`}
+                        disabled={saving}
+                      >
+                        {l.numero}
+                        {l.batiment ? ` · ${l.batiment}` : ''}
+                        {l.capaciteMax != null ? ` · ${l.capaciteMax}` : ''}
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
-            )}
+            ))}
           </div>
+        )}
+      </div>
 
-          <div className="space-y-1.5">
-            <label htmlFor="move-reason" className={labelCls}>
-              Raison du déplacement{' '}
-              <span className="text-text-2 normal-case">· optionnel</span>
-            </label>
-            <Textarea
-              id="move-reason"
-              maxLength={200}
-              placeholder="Ex: rotation maternité, regroupement, soin…"
-              value={reason}
-              onChange={e => setReason(e.target.value)}
-            />
-          </div>
+      <div className="field">
+        <label className="label--v77" htmlFor="move-reason">
+          RAISON DU DÉPLACEMENT <span className="hint">optionnel</span>
+        </label>
+        <textarea
+          id="move-reason"
+          maxLength={200}
+          className={`field__input${reason ? ' filled' : ' field__input--ghost'}`}
+          placeholder="Ex: rotation maternité, regroupement, soin…"
+          value={reason}
+          onChange={e => setReason(e.target.value)}
+          disabled={saving}
+        />
+      </div>
 
-          {error ? (
-            <p
-              role="alert"
-              className="text-mono-label text-red"
-            >
-              {error}
-            </p>
-          ) : null}
-
-          <div className="flex gap-3 justify-end px-4 py-3 border-t border-border">
-            <Button
-              variant="secondary"
-              onClick={handleClose}
-              disabled={saving}
-            >
-              Annuler
-            </Button>
-            <Button
-              variant="primary"
-              type="submit"
-              disabled={saving || !selectedLogeId}
-              aria-busy={saving}
-            >
-              {saving ? (
-                <span className="animate-pulse">Déplacement…</span>
-              ) : (
-                <span className="inline-flex items-center gap-2">
-                  Déplacer
-                  <ArrowRight size={14} aria-hidden="true" />
-                </span>
-              )}
-            </Button>
-          </div>
-        </form>
-      </BottomSheet>
-
-      <IonToast
-        isOpen={toast !== ''}
-        message={toast}
-        duration={1800}
-        onDidDismiss={() => setToast('')}
-        position="bottom"
-      />
-    </>
+      <FieldError message={error} />
+    </QuickActionSheet>
   );
 };
 

@@ -1,11 +1,11 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { AlertTriangle, Edit3, Save } from 'lucide-react';
+import { AlertTriangle, Edit3 } from 'lucide-react';
 
-import { AppToast, BottomSheet, useAppToast } from '../agritech';
-import { FormField, Input, Section, Select, Textarea, Button } from '@/design-system';
+import { FormField, Input, Section, Select, Textarea } from '@/design-system';
 import { listLoges, updateSow } from '../../services/supabaseWrites';
 import { useFarm } from '../../context/FarmContext';
 import { useAuth } from '../../context/AuthContext';
+import { useToast } from '../../context/ToastContext';
 import type { Loge, Truie } from '../../types/farm';
 import {
   canAssignAnimal,
@@ -19,7 +19,8 @@ import {
   type TruieEditInitial,
   type TruieEditValidation,
 } from './quickEditTruieValidation';
-import { useEscapeKey, useFocusFirstInput } from './useFormA11y';
+import { useFocusFirstInput } from './useFormA11y';
+import QuickActionSheet from './QuickActionSheet';
 import PhotoUploader from './PhotoUploader';
 
 /* ═════════════════════════════════════════════════════════════════════════
@@ -118,6 +119,7 @@ const QuickEditTruieForm: React.FC<QuickEditTruieFormProps> = ({
 }) => {
   const { refreshData, truies, verrats, bandes } = useFarm();
   const { user } = useAuth();
+  const { showToast } = useToast();
   const farmId = user?.id ?? '';
 
   const initial = useMemo(() => buildInitial(truie), [truie]);
@@ -137,7 +139,6 @@ const QuickEditTruieForm: React.FC<QuickEditTruieFormProps> = ({
   const [photoDirty, setPhotoDirty] = useState(false);
   const [errors, setErrors] = useState<TruieEditValidation['errors']>({});
   const [saving, setSaving] = useState(false);
-  const { show: showToast, toastProps } = useAppToast();
 
   // V25 — Loge structurée (référentiel)
   const [loges, setLoges] = useState<Loge[]>([]);
@@ -227,8 +228,7 @@ const QuickEditTruieForm: React.FC<QuickEditTruieFormProps> = ({
     onClose();
   }, [onClose, saving]);
 
-  // A11y : Esc ferme + focus auto premier input
-  useEscapeKey(isOpen && !saving, handleClose);
+  // A11y : Esc câblé par QuickActionSheet ; focus auto sur premier input.
   const firstFieldRef = useFocusFirstInput<HTMLInputElement>(isOpen);
 
   const update = useCallback(
@@ -249,8 +249,8 @@ const QuickEditTruieForm: React.FC<QuickEditTruieFormProps> = ({
     if (selectedLogeIdDirty && selectedLogeId && !logeAssignmentResult.ok) {
       showToast(
         `Impossible : ${logeAssignmentResult.raison ?? 'loge non éligible'}`,
-        'warning',
-        { duration: 2200 },
+        'error',
+        2200,
       );
       return;
     }
@@ -262,7 +262,7 @@ const QuickEditTruieForm: React.FC<QuickEditTruieFormProps> = ({
       !photoDirty &&
       !selectedLogeIdDirty
     ) {
-      showToast('Aucune modification', 'info', { duration: 1800 });
+      showToast('Aucune modification', 'info', 1800);
       onClose();
       return;
     }
@@ -298,7 +298,7 @@ const QuickEditTruieForm: React.FC<QuickEditTruieFormProps> = ({
         showToast(
           `Erreur : ${writeResult.error ?? 'Enregistrement échoué'}`,
           'error',
-          { duration: 1800 },
+          1800,
         );
         return;
       }
@@ -308,7 +308,7 @@ const QuickEditTruieForm: React.FC<QuickEditTruieFormProps> = ({
           ? 'Modifications enregistrées'
           : 'Modifications en file · sync auto',
         online ? 'success' : 'info',
-        { duration: 1800 },
+        1800,
       );
       try {
         await refreshData(true);
@@ -323,7 +323,7 @@ const QuickEditTruieForm: React.FC<QuickEditTruieFormProps> = ({
           ? `Erreur : ${err.message}`
           : 'Erreur enregistrement local',
         'error',
-        { duration: 1800 },
+        1800,
       );
     } finally {
       setSaving(false);
@@ -333,19 +333,19 @@ const QuickEditTruieForm: React.FC<QuickEditTruieFormProps> = ({
   const displayId = truie.displayId || truie.id;
 
   return (
-    <>
-      <BottomSheet
-        isOpen={isOpen}
-        onClose={handleClose}
-        title={`Éditer · ${displayId}`}
-        height="full"
-      >
-        <form
-          onSubmit={handleSubmit}
-          className="space-y-6"
-          noValidate
-          aria-label="Édition truie"
-        >
+    <QuickActionSheet
+      isOpen={isOpen}
+      onClose={handleClose}
+      eyebrow={`Éditer · ${displayId}`}
+      title="Modifier la truie"
+      ariaLabel="Édition truie"
+      saving={saving}
+      isValid={true}
+      onSubmit={handleSubmit}
+      submitLabel="Enregistrer"
+      submitAriaLabel="Enregistrer les modifications de la truie"
+    >
+      <div className="space-y-6">
           {/* Header */}
           <div className="flex items-center gap-3">
             <div className="inline-flex h-10 w-10 items-center justify-center rounded-md bg-bg-2 text-accent">
@@ -748,37 +748,8 @@ const QuickEditTruieForm: React.FC<QuickEditTruieFormProps> = ({
               />
             </FormField>
           </section>
-
-          {/* Actions */}
-          <div className="flex gap-3 justify-end pt-2 sticky bottom-0 bg-bg-1 -mx-4 px-4 pb-2 border-t border-border">
-            <Button
-              variant="ghost"
-              onClick={handleClose}
-              disabled={saving}
-              aria-label="Annuler et fermer"
-            >
-              Annuler
-            </Button>
-            <Button
-              type="submit"
-              variant="primary"
-              disabled={saving}
-              aria-label="Enregistrer les modifications de la truie"
-              aria-busy={saving}
-            >
-              {saving ? 'Enregistrement…' : (
-                <span className="inline-flex items-center gap-2">
-                  Enregistrer
-                  <Save size={14} aria-hidden="true" />
-                </span>
-              )}
-            </Button>
-          </div>
-        </form>
-      </BottomSheet>
-
-      <AppToast {...toastProps} />
-    </>
+      </div>
+    </QuickActionSheet>
   );
 };
 

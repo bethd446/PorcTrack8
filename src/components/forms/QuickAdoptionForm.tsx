@@ -2,8 +2,8 @@
  * QuickAdoptionForm — Adoption / transfert de porcelets entre bandes
  * ════════════════════════════════════════════════════════════════════════
  *
- * BottomSheet : bande source · bande destination · nb porcelets · date ·
- * motif · notes. Submit → `insertAdoption(...)` qui :
+ * Bande source · bande destination · nb porcelets · date · motif · notes.
+ * Submit → `insertAdoption(...)` qui :
  *  1. Insère une row dans `adoptions`.
  *  2. Décrémente `from_batch.porcelets_nes_vivants`.
  *  3. Incrémente `to_batch.porcelets_nes_vivants`.
@@ -12,25 +12,37 @@
  * ou "En maternité") afin que l'utilisateur ne sélectionne pas une bande
  * sevrée par mégarde.
  *
+ * Conforme au contrat (FORM_CONTRACT.md) :
+ *  - shell `<QuickActionSheet>` (form onSubmit + bouton type=submit)
+ *  - toast canonique `useToast()` (context global, pas de toast local)
+ *  - helpers date partagés `_formHelpers` (todayIso)
+ *  - erreurs via `<FieldError>` sous chaque champ
+ *  - reset-on-open via `lastOpenKey` render-phase
+ *  - garde double-clic : `saving` maintenu jusqu'au `onClose`, `closeTimerRef`
+ *    + cleanup `useEffect`
+ *
+ * Les `<select>` bande source/destination restent en `<select>` natif : ce
+ * sont des bandes (lots), pas des truies/verrats → `EntityPicker` non
+ * applicable.
+ *
  * Logique pure : `./quickAdoptionLogic.ts`
  * Tests : `./QuickAdoptionForm.test.tsx`
  */
 
-import React, { useCallback, useMemo, useState } from 'react';
-import { IonToast } from '@ionic/react';
-import { Save, Repeat } from 'lucide-react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import { BottomSheet } from '../agritech';
-import { FormField, Input, Select, Textarea, Button } from '@/design-system';
 import { useFarm } from '../../context/FarmContext';
+import { useToast } from '../../context/ToastContext';
 import { supabase } from '../../services/supabaseClient';
 import { insertAdoption } from '../../services/supabaseWrites';
-import { useEscapeKey, useFocusFirstInput } from './useFormA11y';
+import { useFocusFirstInput } from './useFormA11y';
+import { todayIso } from './_formHelpers';
+import { FieldError } from './_formFields';
+import QuickActionSheet from './QuickActionSheet';
 import {
   ADOPTION_MOTIFS,
   ADOPTION_MOTIF_LABELS,
   validateAddAdoption,
-  todayISO,
   type AddAdoptionInput,
   type AddAdoptionValidation,
 } from './quickAdoptionLogic';
@@ -47,6 +59,7 @@ const QuickAdoptionForm: React.FC<QuickAdoptionFormProps> = ({
   onSuccess,
 }) => {
   const { bandes, refreshData } = useFarm();
+  const { showToast } = useToast();
 
   // Bandes en maternité (Sous mère / En maternité). On garde toutes les bandes
   // si la liste filtrée est vide, pour ne pas bloquer la saisie.
@@ -58,18 +71,20 @@ const QuickAdoptionForm: React.FC<QuickAdoptionFormProps> = ({
   const [fromBatchCode, setFromBatchCode] = useState<string>('');
   const [toBatchCode, setToBatchCode] = useState<string>('');
   const [nbPorcelets, setNbPorcelets] = useState<string>('1');
-  const [dateAdoption, setDateAdoption] = useState<string>(todayISO());
+  const [dateAdoption, setDateAdoption] = useState<string>(todayIso);
   const [motif, setMotif] = useState<string>('EQUILIBRAGE');
   const [notes, setNotes] = useState<string>('');
   const [errors, setErrors] = useState<AddAdoptionValidation['errors']>({});
   const [saving, setSaving] = useState(false);
-  const [toast, setToast] = useState<string>('');
+
+  const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const fromBande = useMemo(
     () => bandesMaternite.find(b => b.id === fromBatchCode || b.idPortee === fromBatchCode),
     [bandesMaternite, fromBatchCode],
   );
 
+  // Reset-on-open : pattern lastOpenKey render-phase (FORM_CONTRACT).
   const [lastOpen, setLastOpen] = useState(isOpen);
   if (lastOpen !== isOpen) {
     setLastOpen(isOpen);
@@ -77,7 +92,7 @@ const QuickAdoptionForm: React.FC<QuickAdoptionFormProps> = ({
       setFromBatchCode('');
       setToBatchCode('');
       setNbPorcelets('1');
-      setDateAdoption(todayISO());
+      setDateAdoption(todayIso());
       setMotif('EQUILIBRAGE');
       setNotes('');
       setErrors({});
@@ -85,12 +100,18 @@ const QuickAdoptionForm: React.FC<QuickAdoptionFormProps> = ({
     }
   }
 
+  useEffect(() => {
+    return () => {
+      if (closeTimerRef.current) { clearTimeout(closeTimerRef.current); closeTimerRef.current = null; }
+    };
+  }, []);
+
   const handleClose = useCallback(() => {
     if (saving) return;
+    if (closeTimerRef.current) { clearTimeout(closeTimerRef.current); closeTimerRef.current = null; }
     onClose();
   }, [onClose, saving]);
 
-  useEscapeKey(isOpen && !saving, handleClose);
   const firstFieldRef = useFocusFirstInput<HTMLSelectElement>(isOpen);
 
   /** Résout un code (B12) ou ID UUID en UUID via une requête Supabase. */
@@ -107,6 +128,8 @@ const QuickAdoptionForm: React.FC<QuickAdoptionFormProps> = ({
     if (error || !data) return null;
     return (data as { id: string }).id;
   }
+
+  const isValid = !!fromBatchCode && !!toBatchCode;
 
   const handleSubmit = async (e: React.FormEvent): Promise<void> => {
     e.preventDefault();
@@ -131,14 +154,16 @@ const QuickAdoptionForm: React.FC<QuickAdoptionFormProps> = ({
       const fromUuid = await resolveBatchUuid(result.payload.from_batch_id);
       const toUuid = await resolveBatchUuid(result.payload.to_batch_id);
       if (!fromUuid || !toUuid) {
-        setToast('Bande introuvable côté serveur');
+        showToast('Bande introuvable côté serveur', 'error', 4000);
+        setSaving(false);
         return;
       }
       // Récupère l'utilisateur courant pour created_by
       const { data: sess } = await supabase.auth.getSession();
       const uid = sess.session?.user.id;
       if (!uid) {
-        setToast('Session expirée — reconnecte-toi');
+        showToast('Session expirée — reconnecte-toi', 'error', 4000);
+        setSaving(false);
         return;
       }
       await insertAdoption({
@@ -147,194 +172,170 @@ const QuickAdoptionForm: React.FC<QuickAdoptionFormProps> = ({
         to_batch_id: toUuid,
         created_by: uid,
       });
-      setToast('Adoption enregistrée');
       try {
         await refreshData(true);
       } catch {
         /* noop */
       }
-      if (onSuccess) onSuccess();
-      onClose();
+      showToast('Adoption enregistrée', 'success');
+      // Garder saving=true jusqu'au onClose pour empêcher le double-clic dans
+      // la fenêtre entre toast success et fermeture (FORM_CONTRACT).
+      closeTimerRef.current = setTimeout(() => {
+        closeTimerRef.current = null;
+        setSaving(false);
+        if (onSuccess) onSuccess();
+        onClose();
+      }, 1500);
     } catch (err) {
-      setToast(err instanceof Error ? `Erreur : ${err.message}` : 'Erreur enregistrement');
-    } finally {
+      const msg = err instanceof Error ? `Erreur : ${err.message}` : 'Erreur enregistrement';
+      showToast(msg, 'error', 4000);
       setSaving(false);
     }
   };
 
   return (
-    <>
-      <BottomSheet
-        isOpen={isOpen}
-        onClose={handleClose}
-        title="Adoption porcelets"
-        height="full"
-      >
-        <form
-          onSubmit={handleSubmit}
-          className="space-y-5"
-          noValidate
-          aria-label="Adoption / transfert de porcelets"
+    <QuickActionSheet
+      isOpen={isOpen}
+      onClose={handleClose}
+      eyebrow="Adoption porcelets"
+      title="Adoption porcelets"
+      ariaLabel="Adoption / transfert de porcelets"
+      saving={saving}
+      isValid={isValid}
+      onSubmit={handleSubmit}
+      submitLabel="Enregistrer l'adoption"
+      submitAriaLabel="Enregistrer l'adoption"
+    >
+      <p className="text-mono-label" style={{ color: 'var(--pt-subtle)', margin: 0 }}>
+        Transférer entre bandes en maternité
+      </p>
+
+      <div className="field">
+        <label className="label--v77" htmlFor="add-adoption-from">
+          BANDE SOURCE <span className="req">requis</span>
+        </label>
+        <select
+          id="add-adoption-from"
+          ref={firstFieldRef}
+          className={`field__input mono${fromBatchCode ? ' filled' : ' field__input--ghost'}`}
+          aria-label="Bande source"
+          aria-required="true"
+          aria-invalid={!!errors.fromBatchId}
+          value={fromBatchCode}
+          onChange={e => setFromBatchCode(e.target.value)}
+          disabled={saving}
         >
-          <div className="flex items-center gap-3">
-            <div className="inline-flex h-10 w-10 items-center justify-center rounded-md bg-bg-2 text-accent">
-              <Repeat size={18} aria-hidden="true" />
-            </div>
-            <p className="text-mono-label text-text-1">
-              Transférer entre bandes en maternité
-            </p>
-          </div>
+          <option value="">— Sélectionner —</option>
+          {bandesMaternite.map(b => (
+            <option key={b.id} value={b.id}>
+              {b.idPortee || b.id} · {b.vivants ?? 0} vivants
+            </option>
+          ))}
+        </select>
+        <FieldError message={errors.fromBatchId} />
+      </div>
 
-          <FormField label="Bande source" required error={errors.fromBatchId}>
-            <Select
-              id="add-adoption-from"
-              ref={firstFieldRef as React.Ref<HTMLSelectElement>}
-              aria-label="Bande source"
-              aria-required="true"
-              aria-invalid={!!errors.fromBatchId}
-              aria-describedby={errors.fromBatchId ? 'add-adoption-from-error' : undefined}
-              value={fromBatchCode}
-              onChange={e => setFromBatchCode(e.target.value)}
-              disabled={saving}
-            >
-              <option value="">— Sélectionner —</option>
-              {bandesMaternite.map(b => (
-                <option key={b.id} value={b.id}>
-                  {b.idPortee || b.id} · {b.vivants ?? 0} vivants
-                </option>
-              ))}
-            </Select>
-          </FormField>
+      <div className="field">
+        <label className="label--v77" htmlFor="add-adoption-to">
+          BANDE DESTINATION <span className="req">requis</span>
+        </label>
+        <select
+          id="add-adoption-to"
+          className={`field__input mono${toBatchCode ? ' filled' : ' field__input--ghost'}`}
+          aria-label="Bande destination"
+          aria-required="true"
+          aria-invalid={!!errors.toBatchId}
+          value={toBatchCode}
+          onChange={e => setToBatchCode(e.target.value)}
+          disabled={saving}
+        >
+          <option value="">— Sélectionner —</option>
+          {bandesMaternite
+            .filter(b => b.id !== fromBatchCode)
+            .map(b => (
+              <option key={b.id} value={b.id}>
+                {b.idPortee || b.id} · {b.vivants ?? 0} vivants
+              </option>
+            ))}
+        </select>
+        <FieldError message={errors.toBatchId} />
+      </div>
 
-          <FormField label="Bande destination" required error={errors.toBatchId}>
-            <Select
-              id="add-adoption-to"
-              aria-label="Bande destination"
-              aria-required="true"
-              aria-invalid={!!errors.toBatchId}
-              aria-describedby={errors.toBatchId ? 'add-adoption-to-error' : undefined}
-              value={toBatchCode}
-              onChange={e => setToBatchCode(e.target.value)}
-              disabled={saving}
-            >
-              <option value="">— Sélectionner —</option>
-              {bandesMaternite
-                .filter(b => b.id !== fromBatchCode)
-                .map(b => (
-                  <option key={b.id} value={b.id}>
-                    {b.idPortee || b.id} · {b.vivants ?? 0} vivants
-                  </option>
-                ))}
-            </Select>
-          </FormField>
+      <div className="field--inline">
+        <div className="field">
+          <label className="label--v77" htmlFor="add-adoption-nb">NB PORCELETS</label>
+          <input
+            id="add-adoption-nb"
+            className={`field__input mono${nbPorcelets ? ' filled' : ' field__input--ghost'}`}
+            type="number"
+            aria-label="Nombre de porcelets"
+            inputMode="numeric"
+            min={1}
+            step={1}
+            aria-required="true"
+            aria-invalid={!!errors.nbPorcelets}
+            placeholder="1"
+            value={nbPorcelets}
+            onChange={e => setNbPorcelets(e.target.value)}
+            disabled={saving}
+          />
+          <FieldError message={errors.nbPorcelets} />
+        </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <FormField label="Nb porcelets" error={errors.nbPorcelets}>
-              <Input
-                id="add-adoption-nb"
-                type="number"
-                aria-label="Nombre de porcelets"
-                inputMode="numeric"
-                min={1}
-                step={1}
-                aria-required="true"
-                aria-invalid={!!errors.nbPorcelets}
-                aria-describedby={
-                  errors.nbPorcelets ? 'add-adoption-nb-error' : undefined
-                }
-                className="font-mono tabular-nums"
-                placeholder="1"
-                value={nbPorcelets}
-                onChange={e => setNbPorcelets(e.target.value)}
-                disabled={saving}
-                invalid={!!errors.nbPorcelets}
-              />
-            </FormField>
+        <div className="field">
+          <label className="label--v77" htmlFor="add-adoption-date">DATE</label>
+          <input
+            id="add-adoption-date"
+            className={`field__input mono${dateAdoption ? ' filled' : ' field__input--ghost'}`}
+            type="date"
+            aria-label="Date d'adoption"
+            aria-required="true"
+            aria-invalid={!!errors.dateAdoption}
+            value={dateAdoption}
+            max={todayIso()}
+            onChange={e => setDateAdoption(e.target.value)}
+            disabled={saving}
+          />
+          <FieldError message={errors.dateAdoption} />
+        </div>
+      </div>
 
-            <FormField label="Date" error={errors.dateAdoption}>
-              <Input
-                id="add-adoption-date"
-                type="date"
-                aria-label="Date d'adoption"
-                aria-required="true"
-                aria-invalid={!!errors.dateAdoption}
-                aria-describedby={
-                  errors.dateAdoption ? 'add-adoption-date-error' : undefined
-                }
-                className="font-mono tabular-nums"
-                value={dateAdoption}
-                onChange={e => setDateAdoption(e.target.value)}
-                disabled={saving}
-                invalid={!!errors.dateAdoption}
-              />
-            </FormField>
-          </div>
+      <div className="field">
+        <label className="label--v77" htmlFor="add-adoption-motif">MOTIF</label>
+        <select
+          id="add-adoption-motif"
+          className={`field__input mono${motif ? ' filled' : ' field__input--ghost'}`}
+          aria-label="Motif"
+          value={motif}
+          onChange={e => setMotif(e.target.value)}
+          disabled={saving}
+        >
+          {ADOPTION_MOTIFS.map(m => (
+            <option key={m} value={m}>
+              {ADOPTION_MOTIF_LABELS[m]}
+            </option>
+          ))}
+        </select>
+        <FieldError message={errors.motif} />
+      </div>
 
-          <FormField label="Motif">
-            <Select
-              id="add-adoption-motif"
-              aria-label="Motif"
-              value={motif}
-              onChange={e => setMotif(e.target.value)}
-              disabled={saving}
-            >
-              {ADOPTION_MOTIFS.map(m => (
-                <option key={m} value={m}>
-                  {ADOPTION_MOTIF_LABELS[m]}
-                </option>
-              ))}
-            </Select>
-          </FormField>
-
-          <FormField label="Notes" hint="optionnel">
-            <Textarea
-              id="add-adoption-notes"
-              aria-label="Notes"
-              maxLength={500}
-              rows={3}
-              aria-invalid={!!errors.notes}
-              placeholder="Ex : truie T03 sans lait, transfert d'urgence"
-              value={notes}
-              onChange={e => setNotes(e.target.value)}
-              disabled={saving}
-            />
-          </FormField>
-
-          <div className="flex gap-3 justify-end pt-2 border-t border-border">
-            <Button
-              variant="secondary"
-              onClick={handleClose}
-              disabled={saving}
-              ariaLabel="Annuler et fermer"
-            >
-              Annuler
-            </Button>
-            <Button
-              type="submit"
-              variant="primary"
-              disabled={saving}
-              aria-busy={saving}
-              ariaLabel="Enregistrer l'adoption"
-            >
-              {saving ? 'Enregistrement…' : (
-                <span className="inline-flex items-center gap-2">
-                  Enregistrer
-                  <Save size={14} aria-hidden="true" />
-                </span>
-              )}
-            </Button>
-          </div>
-        </form>
-      </BottomSheet>
-
-      <IonToast
-        isOpen={toast !== ''}
-        message={toast}
-        duration={1800}
-        onDidDismiss={() => setToast('')}
-        position="bottom"
-      />
-    </>
+      <div className="field">
+        <label className="label--v77" htmlFor="add-adoption-notes">NOTES <span className="hint">optionnel</span></label>
+        <textarea
+          id="add-adoption-notes"
+          className="field__input"
+          aria-label="Notes"
+          maxLength={500}
+          rows={3}
+          aria-invalid={!!errors.notes}
+          placeholder="Ex : truie T03 sans lait, transfert d'urgence"
+          value={notes}
+          onChange={e => setNotes(e.target.value)}
+          disabled={saving}
+        />
+        <FieldError message={errors.notes} />
+      </div>
+    </QuickActionSheet>
   );
 };
 

@@ -1,7 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Stethoscope, Send, Bandage, Scissors, AlertTriangle, FileText } from 'lucide-react';
 import { insertHealthLog } from '../../services/supabaseWrites';
-import { AppToast, useAppToast } from '../agritech';
 import { Button, FormField, Input, Section, Select, Textarea } from '@/design-system';
 import { useFarm } from '../../context/FarmContext';
 import { useToast } from '../../context/ToastContext';
@@ -85,9 +84,8 @@ const QuickHealthForm: React.FC<QuickHealthFormProps> = ({
 }) => {
   const { refreshData, stockVeto } = useFarm();
   const { role } = useAuth();
-  const { showToast: showGlobalToast } = useToast();
+  const { showToast } = useToast();
   const [loading, setLoading] = useState(false);
-  const { show: showToast, toastProps } = useAppToast();
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [formData, setFormData] = useState<FormDataState>(() => ({
     type: defaultLogType ?? 'AUTRE',
@@ -153,10 +151,11 @@ const QuickHealthForm: React.FC<QuickHealthFormProps> = ({
       });
       const online = typeof navigator !== 'undefined' && navigator.onLine;
       showToast(
-        online ? `${tplLabel} enregistré` : `${tplLabel} mis en file · sync auto`,
-        'success',
+        online
+          ? `Soin enregistré · ${subjectId} · ${tplLabel}`
+          : `${tplLabel} mis en file · sync auto · ${subjectId}`,
+        online ? 'success' : 'info',
       );
-      showGlobalToast(`Soin enregistré · ${subjectId} · ${tplLabel}`, 'success');
       try {
         await refreshData(true);
       } catch {
@@ -164,8 +163,7 @@ const QuickHealthForm: React.FC<QuickHealthFormProps> = ({
       }
       if (onSuccess) onSuccess();
     } catch (err) {
-      showToast('Erreur enregistrement local', 'error');
-      showGlobalToast(
+      showToast(
         (err as Error)?.message ?? "Erreur lors de l'enregistrement du soin",
         'error',
         4000,
@@ -340,8 +338,6 @@ const QuickHealthForm: React.FC<QuickHealthFormProps> = ({
           </Button>
         </div>
       </form>
-
-      <AppToast {...toastProps} />
     </div>
   );
 };

@@ -1,5 +1,5 @@
 /**
- * QuickRetourChaleurForm — Sprint 11 · V78 sheet V77
+ * QuickRetourChaleurForm — Sprint 11 · migré FORM_CONTRACT Phase 2 (batch A)
  * ════════════════════════════════════════════════════════════════════════
  * Saisie d'un retour de chaleur observé chez une truie présumée gestante.
  *
@@ -14,21 +14,32 @@
  *     2. de calculer le taux de fécondation (saillies utiles / saillies),
  *     3. de tracer les truies à surveiller (2e retour → réforme).
  *
+ * Conforme au contrat :
+ *  - shell `<QuickActionSheet>` (form onSubmit + bouton type=submit)
+ *  - toast canonique `useToast()` (context global)
+ *  - helper date partagé `_formHelpers` (todayIso)
+ *  - reset-on-open via `lastIsOpen` render-phase
+ *  - garde double-clic : `saving` maintenu jusqu'au `onClose`, `closeTimerRef`
+ *    + cleanup `useEffect`
+ *
+ * NOTE : la sélection de truie porte sur des `TruieAvecSaillie` enrichies
+ * (sub-label J+X · saillie du …, `data-testid`, `aria-label` paramétré) que
+ * `EntityPicker` ne sait pas rendre — les chips custom sont conservées
+ * (cf. section SPEC du rapport).
+ *
  * Implémentation :
  *   - On filtre les truies dont la dernière saillie est dans la fenêtre
  *     [J+12 ; J+35] (un peu plus large que J18-J21 pour tolérance terrain).
  *   - On loggue l'évènement dans `health_logs` avec
  *     `log_type = 'RETOUR_CHALEUR'` et `sow_id` lié.
  *   - Si action = "re-saillir maintenant", on remonte l'info au parent
- *     via `onResaillir(truieDisplayId)` pour qu'il enchaîne avec
- *     <QuickSaillieForm defaultTruieDisplayId=... />.
+ *     via `onResaillir(truieDisplayId)`.
  *   - Si action = "réformer si 2e retour", on update statut truie en
  *     "À surveiller" (pas de réforme automatique — décision humaine).
  */
 
-import React, { useMemo, useState } from 'react';
-import { IonModal } from '@ionic/react';
-import { Heart, Check, CheckCircle2, X } from 'lucide-react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Heart } from 'lucide-react';
 
 import { useFarm } from '../../context/FarmContext';
 import { useToast } from '../../context/ToastContext';
@@ -38,6 +49,8 @@ import {
   updateSow,
 } from '../../services/supabaseWrites';
 import type { Saillie, Truie } from '../../types/farm';
+import { todayIso } from './_formHelpers';
+import QuickActionSheet from './QuickActionSheet';
 
 const RETOUR_WINDOW_MIN_DAYS = 12;
 const RETOUR_WINDOW_MAX_DAYS = 35;
@@ -53,8 +66,6 @@ export interface QuickRetourChaleurFormProps {
    */
   onResaillir?: (truieDisplayId: string) => void;
 }
-
-const todayISO = (): string => new Date().toISOString().slice(0, 10);
 
 function parseDateLoose(s?: string | null): Date | null {
   if (!s) return null;
@@ -99,25 +110,43 @@ const QuickRetourChaleurForm: React.FC<QuickRetourChaleurFormProps> = ({
   const { showToast } = useToast();
 
   const [selectedTruieId, setSelectedTruieId] = useState<string>('');
-  const [dateObs, setDateObs] = useState<string>(todayISO());
+  const [dateObs, setDateObs] = useState<string>(todayIso());
   const [action, setAction] = useState<RetourChaleurAction>('RESAILLIR');
   const [note, setNote] = useState<string>('');
   const [saving, setSaving] = useState(false);
-  const [success, setSuccess] = useState(false);
 
-  // Reset on open.
+  const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Reset-on-open : pattern lastIsOpen render-phase (FORM_CONTRACT).
   const [lastIsOpen, setLastIsOpen] = useState(isOpen);
   if (lastIsOpen !== isOpen) {
     setLastIsOpen(isOpen);
     if (isOpen) {
       setSelectedTruieId('');
-      setDateObs(todayISO());
+      setDateObs(todayIso());
       setAction('RESAILLIR');
       setNote('');
       setSaving(false);
-      setSuccess(false);
     }
   }
+
+  useEffect(() => {
+    return () => {
+      if (closeTimerRef.current) {
+        clearTimeout(closeTimerRef.current);
+        closeTimerRef.current = null;
+      }
+    };
+  }, []);
+
+  const handleClose = useCallback(() => {
+    if (saving) return;
+    if (closeTimerRef.current) {
+      clearTimeout(closeTimerRef.current);
+      closeTimerRef.current = null;
+    }
+    onClose();
+  }, [onClose, saving]);
 
   /**
    * Truies dans la fenêtre d'observation : on prend la saillie la plus
@@ -164,7 +193,10 @@ const QuickRetourChaleurForm: React.FC<QuickRetourChaleurFormProps> = ({
     [candidates, selectedTruieId],
   );
 
-  const handleSave = async (): Promise<void> => {
+  const isValid = !!selectedTruieId && !!selected;
+
+  const handleSubmit = async (e: React.FormEvent): Promise<void> => {
+    e.preventDefault();
     if (!selectedTruieId || !selected) return;
     setSaving(true);
     try {
@@ -201,295 +233,223 @@ const QuickRetourChaleurForm: React.FC<QuickRetourChaleurFormProps> = ({
         }
       }
 
-      try { await refreshData(true); } catch { /* noop */ }
+      try {
+        await refreshData(true);
+      } catch {
+        /* noop */
+      }
 
       showToast(
         `Retour chaleur enregistré · ${selectedTruieId} (J+${selected.joursDepuisSaillie})`,
         'success',
       );
-      setSuccess(true);
 
+      // Garder saving=true jusqu'au onClose pour bloquer le double-clic
+      // pendant la fenêtre de toast (FORM_CONTRACT).
       const truieToResaillir = selectedTruieId;
-      setTimeout(() => {
-        setSuccess(false);
+      closeTimerRef.current = setTimeout(() => {
+        closeTimerRef.current = null;
+        setSaving(false);
         if (action === 'RESAILLIR' && onResaillir) {
           onResaillir(truieToResaillir);
         }
         onClose();
-      }, 1200);
-    } catch (e) {
-      console.error('[retour-chaleur] save failed', e);
-      const msg = (e as Error)?.message ?? 'Erreur enregistrement retour chaleur';
+      }, 1500);
+    } catch (e2) {
+      console.error('[retour-chaleur] save failed', e2);
+      const msg = (e2 as Error)?.message ?? 'Erreur enregistrement retour chaleur';
       showToast(msg, 'error', 4000);
       setSaving(false);
     }
   };
 
-  const handleClose = (): void => {
-    if (saving) return;
-    onClose();
-  };
-
   return (
-    <IonModal
+    <QuickActionSheet
       isOpen={isOpen}
-      onDidDismiss={handleClose}
-      breakpoints={[0, 1]}
-      initialBreakpoint={1}
-      className="agritech-bottom-sheet pt-sheet-modal pt-screen"
-      aria-label="Saisir un retour de chaleur"
+      onClose={handleClose}
+      eyebrow="Retour de chaleur"
+      title="Saisir un retour de chaleur"
+      ariaLabel="Saisir un retour de chaleur"
+      saving={saving}
+      isValid={isValid}
+      onSubmit={handleSubmit}
+      submitLabel="Enregistrer le retour"
+      submitAriaLabel="Enregistrer le retour"
     >
-      <div className="ion-page pt-screen" style={{ position: 'relative', overflow: 'auto' }}>
-        <div className="sheet" style={{ position: 'relative', height: '100%', maxHeight: '100%' }}>
-          <span className="sheet__handle" />
+      <p className="sheet__sub">
+        Truie revenue en chaleur après une saillie. Fenêtre normale d'observation : J18-J21 post-saillie.
+      </p>
 
-          {success ? (
-            <div
-              className="flex flex-col items-center justify-center py-20 animate-scale-in"
-              role="status"
-              aria-live="polite"
-            >
-              <CheckCircle2
-                size={38}
-                className="text-accent mb-4"
-                aria-hidden="true"
-                strokeWidth={2}
-              />
-              <p className="sheet__title" style={{ textAlign: 'center' }}>
-                Retour chaleur enregistré
-              </p>
-              {selected && (
-                <p className="sheet__sub" style={{ textAlign: 'center', marginTop: 8 }}>
-                  {selectedTruieId} · J+{selected.joursDepuisSaillie}
-                </p>
-              )}
-            </div>
-          ) : (
-            <>
-              <header className="sheet__head">
-                <div>
-                  <div className="eyebrow">Retour de chaleur</div>
-                  <h2 className="sheet__title">Saisir un retour de chaleur</h2>
-                </div>
+      <div className="field--inline" style={{ alignItems: 'center', gap: 12 }}>
+        <div
+          className="inline-flex items-center justify-center"
+          style={{
+            height: 40,
+            width: 40,
+            borderRadius: 10,
+            background: 'var(--pt-bg)',
+            color: 'var(--pt-primary)',
+            flex: '0 0 auto',
+          }}
+        >
+          <Heart size={18} aria-hidden="true" />
+        </div>
+        <p
+          style={{
+            fontFamily: 'var(--pt-font-mono)',
+            fontSize: 12,
+            color: 'var(--pt-ink)',
+            margin: 0,
+          }}
+        >
+          {candidates.length} truie{candidates.length > 1 ? 's' : ''} dans la fenêtre J{RETOUR_WINDOW_MIN_DAYS}-J{RETOUR_WINDOW_MAX_DAYS}
+        </p>
+      </div>
+
+      <div className="step-pill">Étape 1 / 3 · Observation</div>
+
+      <div className="field">
+        <label className="label--v77" htmlFor="retour-date-obs">
+          DATE OBSERVATION <span className="req">requis</span>
+        </label>
+        <input
+          id="retour-date-obs"
+          className={`field__input mono${dateObs ? ' filled' : ' field__input--ghost'}`}
+          type="date"
+          aria-label="Date observation"
+          value={dateObs}
+          max={todayIso()}
+          onChange={e => setDateObs(e.target.value)}
+          disabled={saving}
+        />
+      </div>
+
+      <div className="field">
+        <label className="label--v77">
+          TRUIE EN RETOUR <span className="req">requis</span>
+        </label>
+        {candidates.length === 0 ? (
+          <p
+            style={{
+              fontFamily: 'var(--pt-font-mono)',
+              fontSize: 12,
+              color: 'var(--pt-subtle)',
+              margin: 0,
+            }}
+          >
+            Aucune truie dans la fenêtre d'observation pour cette date.
+            Vérifie la date d'observation ou enregistre d'abord la saillie d'origine.
+          </p>
+        ) : (
+          <div
+            className="radio-chips--cards"
+            role="radiogroup"
+            aria-label="Truie en retour de chaleur"
+          >
+            {candidates.map(c => {
+              const isSelected = selectedTruieId === c.truie.displayId;
+              return (
                 <button
+                  key={c.truie.id}
                   type="button"
-                  className="sheet__close"
-                  onClick={handleClose}
-                  aria-label="Fermer"
+                  role="radio"
+                  aria-checked={isSelected}
+                  aria-label={`Sélectionner la truie ${c.truie.displayId} (J+${c.joursDepuisSaillie})`}
+                  data-testid={`retour-truie-${c.truie.displayId}`}
+                  onClick={() => setSelectedTruieId(c.truie.displayId)}
+                  className={`radio-chip--card${isSelected ? ' is-selected' : ''}`}
                   disabled={saving}
                 >
-                  <X size={14} aria-hidden="true" />
-                </button>
-              </header>
-
-              <div className="sheet__body">
-                <p className="sheet__sub">
-                  Truie revenue en chaleur après une saillie. Fenêtre normale d'observation : J18-J21 post-saillie.
-                </p>
-
-                <div className="field--inline" style={{ alignItems: 'center', gap: 12 }}>
-                  <div
-                    className="inline-flex items-center justify-center"
-                    style={{
-                      height: 40,
-                      width: 40,
-                      borderRadius: 10,
-                      background: 'var(--pt-bg)',
-                      color: 'var(--pt-primary)',
-                      flex: '0 0 auto',
-                    }}
-                  >
-                    <Heart size={18} aria-hidden="true" />
+                  <div className="radio-chip__code">{c.truie.displayId}</div>
+                  <div className="radio-chip__sub">
+                    J+{c.joursDepuisSaillie} · saillie {formatDateFr(c.saillie.dateSaillie)}
                   </div>
-                  <p
-                    style={{
-                      fontFamily: 'var(--pt-font-mono)',
-                      fontSize: 12,
-                      color: 'var(--pt-ink)',
-                      margin: 0,
-                    }}
-                  >
-                    {candidates.length} truie{candidates.length > 1 ? 's' : ''} dans la fenêtre J{RETOUR_WINDOW_MIN_DAYS}-J{RETOUR_WINDOW_MAX_DAYS}
-                  </p>
-                </div>
-
-                <div className="step-pill">Étape 1 / 3 · Observation</div>
-
-                <div className="field">
-                  <label className="label--v77" htmlFor="retour-date-obs">
-                    DATE OBSERVATION <span className="req">requis</span>
-                  </label>
-                  <input
-                    id="retour-date-obs"
-                    className={`field__input mono${dateObs ? ' filled' : ' field__input--ghost'}`}
-                    type="date"
-                    aria-label="Date observation"
-                    value={dateObs}
-                    max={todayISO()}
-                    onChange={e => setDateObs(e.target.value)}
-                    disabled={saving}
-                  />
-                </div>
-
-                <div className="field">
-                  <label className="label--v77">
-                    TRUIE EN RETOUR <span className="req">requis</span>
-                  </label>
-                  {candidates.length === 0 ? (
-                    <p
-                      style={{
-                        fontFamily: 'var(--pt-font-mono)',
-                        fontSize: 12,
-                        color: 'var(--pt-subtle)',
-                        margin: 0,
-                      }}
-                    >
-                      Aucune truie dans la fenêtre d'observation pour cette date.
-                      Vérifie la date d'observation ou enregistre d'abord la saillie d'origine.
-                    </p>
-                  ) : (
-                    <div
-                      className="radio-chips--cards"
-                      role="radiogroup"
-                      aria-label="Truie en retour de chaleur"
-                    >
-                      {candidates.map(c => {
-                        const isSelected = selectedTruieId === c.truie.displayId;
-                        return (
-                          <button
-                            key={c.truie.id}
-                            type="button"
-                            role="radio"
-                            aria-checked={isSelected}
-                            aria-label={`Sélectionner la truie ${c.truie.displayId} (J+${c.joursDepuisSaillie})`}
-                            data-testid={`retour-truie-${c.truie.displayId}`}
-                            onClick={() => setSelectedTruieId(c.truie.displayId)}
-                            className={`radio-chip--card${isSelected ? ' is-selected' : ''}`}
-                            disabled={saving}
-                          >
-                            <div className="radio-chip__code">{c.truie.displayId}</div>
-                            <div className="radio-chip__sub">
-                              J+{c.joursDepuisSaillie} · saillie {formatDateFr(c.saillie.dateSaillie)}
-                            </div>
-                          </button>
-                        );
-                      })}
-                    </div>
-                  )}
-                </div>
-
-                {selected && (
-                  <div className="calc-card">
-                    <div className="calc-card__big">
-                      {selected.truie.displayId} × {selected.saillie.verratId}
-                    </div>
-                    <div className="calc-card__hint">
-                      Saillie {formatDateFr(selected.saillie.dateSaillie)} · J+{selected.joursDepuisSaillie} aujourd'hui
-                    </div>
-                  </div>
-                )}
-
-                <div className="step-pill">Étape 2 / 3 · Action suivante</div>
-
-                <div className="field">
-                  <label className="label--v77">
-                    QUE FAIRE ? <span className="req">requis</span>
-                  </label>
-                  <div
-                    className="radio-chips--cards"
-                    role="radiogroup"
-                    aria-label="Action suivante"
-                  >
-                    <button
-                      type="button"
-                      role="radio"
-                      aria-checked={action === 'RESAILLIR'}
-                      onClick={() => setAction('RESAILLIR')}
-                      className={`radio-chip--card${action === 'RESAILLIR' ? ' is-selected' : ''}`}
-                      data-testid="action-resaillir"
-                      disabled={saving}
-                    >
-                      <div className="radio-chip__code">Re-saillir maintenant</div>
-                      <div className="radio-chip__sub">Enchaîner avec la saillie</div>
-                    </button>
-                    <button
-                      type="button"
-                      role="radio"
-                      aria-checked={action === 'ATTENDRE'}
-                      onClick={() => setAction('ATTENDRE')}
-                      className={`radio-chip--card${action === 'ATTENDRE' ? ' is-selected' : ''}`}
-                      data-testid="action-attendre"
-                      disabled={saving}
-                    >
-                      <div className="radio-chip__code">Attendre prochain cycle</div>
-                      <div className="radio-chip__sub">Patience J21</div>
-                    </button>
-                    <button
-                      type="button"
-                      role="radio"
-                      aria-checked={action === 'SURVEILLER'}
-                      onClick={() => setAction('SURVEILLER')}
-                      className={`radio-chip--card${action === 'SURVEILLER' ? ' is-selected' : ''}`}
-                      data-testid="action-surveiller"
-                      disabled={saving}
-                    >
-                      <div className="radio-chip__code">Surveiller</div>
-                      <div className="radio-chip__sub">Réformer si 2e retour</div>
-                    </button>
-                  </div>
-                </div>
-
-                <div className="step-pill">Étape 3 / 3 · Note terrain</div>
-
-                <div className="field">
-                  <label className="label--v77" htmlFor="retour-note">
-                    NOTE TERRAIN <span className="hint">optionnel</span>
-                  </label>
-                  <textarea
-                    id="retour-note"
-                    className="field__input"
-                    style={{ minHeight: 80, resize: 'vertical' }}
-                    placeholder="Ex: marque vulvaire, immobilité forte devant V01…"
-                    maxLength={240}
-                    value={note}
-                    onChange={e => setNote(e.target.value)}
-                    disabled={saving}
-                  />
-                </div>
-              </div>
-
-              <footer className="sheet__foot">
-                <button
-                  type="button"
-                  className="btn btn--ghost"
-                  onClick={handleClose}
-                  disabled={saving}
-                  aria-label="Annuler et fermer"
-                >
-                  Annuler
                 </button>
-                <button
-                  type="button"
-                  className="btn btn--primary"
-                  onClick={handleSave}
-                  disabled={!selectedTruieId || saving}
-                  aria-busy={saving}
-                  aria-label="Confirmer le retour de chaleur"
-                >
-                  {saving ? (
-                    'Enregistrement…'
-                  ) : (
-                    <>
-                      <Check size={14} aria-hidden="true" /> Enregistrer le retour
-                    </>
-                  )}
-                </button>
-              </footer>
-            </>
-          )}
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      {selected && (
+        <div className="calc-card">
+          <div className="calc-card__big">
+            {selected.truie.displayId} × {selected.saillie.verratId}
+          </div>
+          <div className="calc-card__hint">
+            Saillie {formatDateFr(selected.saillie.dateSaillie)} · J+{selected.joursDepuisSaillie} aujourd'hui
+          </div>
+        </div>
+      )}
+
+      <div className="step-pill">Étape 2 / 3 · Action suivante</div>
+
+      <div className="field">
+        <label className="label--v77">
+          QUE FAIRE ? <span className="req">requis</span>
+        </label>
+        <div
+          className="radio-chips--cards"
+          role="radiogroup"
+          aria-label="Action suivante"
+        >
+          <button
+            type="button"
+            role="radio"
+            aria-checked={action === 'RESAILLIR'}
+            onClick={() => setAction('RESAILLIR')}
+            className={`radio-chip--card${action === 'RESAILLIR' ? ' is-selected' : ''}`}
+            data-testid="action-resaillir"
+            disabled={saving}
+          >
+            <div className="radio-chip__code">Re-saillir maintenant</div>
+            <div className="radio-chip__sub">Enchaîner avec la saillie</div>
+          </button>
+          <button
+            type="button"
+            role="radio"
+            aria-checked={action === 'ATTENDRE'}
+            onClick={() => setAction('ATTENDRE')}
+            className={`radio-chip--card${action === 'ATTENDRE' ? ' is-selected' : ''}`}
+            data-testid="action-attendre"
+            disabled={saving}
+          >
+            <div className="radio-chip__code">Attendre prochain cycle</div>
+            <div className="radio-chip__sub">Patience J21</div>
+          </button>
+          <button
+            type="button"
+            role="radio"
+            aria-checked={action === 'SURVEILLER'}
+            onClick={() => setAction('SURVEILLER')}
+            className={`radio-chip--card${action === 'SURVEILLER' ? ' is-selected' : ''}`}
+            data-testid="action-surveiller"
+            disabled={saving}
+          >
+            <div className="radio-chip__code">Surveiller</div>
+            <div className="radio-chip__sub">Réformer si 2e retour</div>
+          </button>
         </div>
       </div>
-    </IonModal>
+
+      <div className="step-pill">Étape 3 / 3 · Note terrain</div>
+
+      <div className="field">
+        <label className="label--v77" htmlFor="retour-note">
+          NOTE TERRAIN <span className="hint">optionnel</span>
+        </label>
+        <textarea
+          id="retour-note"
+          className="field__input"
+          style={{ minHeight: 80, resize: 'vertical' }}
+          placeholder="Ex: marque vulvaire, immobilité forte devant V01…"
+          maxLength={240}
+          value={note}
+          onChange={e => setNote(e.target.value)}
+          disabled={saving}
+        />
+      </div>
+    </QuickActionSheet>
   );
 };
 

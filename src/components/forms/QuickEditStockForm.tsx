@@ -1,9 +1,25 @@
-import React, { useCallback, useMemo, useState } from 'react';
-import { IonToast } from '@ionic/react';
-import { Edit3, Save, RefreshCw } from 'lucide-react';
+/**
+ * QuickEditStockForm · Édition admin d'un stock (aliment OU véto)
+ * ════════════════════════════════════════════════════════════════════════
+ * Distinct de QuickRefillForm :
+ *   - QuickRefillForm AJOUTE une quantité (flow porcher / réception).
+ *   - QuickEditStockForm CORRIGE les infos (flow admin — rattrapage).
+ *
+ * Sections :
+ *   • Identité : libelle (aliment) OU produit + type + usage (véto)
+ *   • Stock    : stockActuel, unite, seuilAlerte
+ *   • Statut   : OK / BAS / RUPTURE (+ bouton Recalculer)
+ *   • Notes    : textarea max 200 chars
+ *
+ * Conforme FORM_CONTRACT : shell `<QuickActionSheet>`, `<form onSubmit>`,
+ * toast canonique `useToast()`, validation `validateStockEdit` →
+ * `{ ok, errors, patch }` + `<FieldError>`, reset-on-open `lastOpenKey`,
+ * garde double-clic `closeTimerRef` + cleanup.
+ */
 
-import { BottomSheet } from '../agritech';
-import { FormField, Input, Select, Textarea, Button } from '@/design-system';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { RefreshCw } from 'lucide-react';
+
 import {
   updateProduitAliment,
   updateProduitVeto,
@@ -11,7 +27,11 @@ import {
   resolveProduitVetoByCode,
 } from '../../services/supabaseWrites';
 import { useFarm } from '../../context/FarmContext';
+import { useToast } from '../../context/ToastContext';
 import type { StockAliment, StockVeto } from '../../types/farm';
+import { useFocusFirstInput } from './useFormA11y';
+import { FieldError } from './_formFields';
+import QuickActionSheet from './QuickActionSheet';
 import {
   recomputeStatut,
   stockLabelFor,
@@ -21,21 +41,6 @@ import {
   type StockEditErrors,
   type StockKind,
 } from './quickEditStockLogic';
-import { useEscapeKey, useFocusFirstInput } from './useFormA11y';
-
-/* ═════════════════════════════════════════════════════════════════════════
-   QuickEditStockForm · Édition admin d'un stock (aliment OU véto)
-   ─────────────────────────────────────────────────────────────────────────
-   Distinct de QuickRefillForm :
-     - QuickRefillForm AJOUTE une quantité (flow porcher / réception).
-     - QuickEditStockForm CORRIGE les infos (flow admin — rattrapage).
-
-   Sections :
-     • Identité         : libelle (aliment) OU produit + type + usage (véto)
-     • Stock            : stockActuel, unite, seuilAlerte
-     • Statut           : OK / BAS / RUPTURE (+ bouton Recalculer)
-     • Notes            : textarea max 200 chars
-   ═════════════════════════════════════════════════════════════════════════ */
 
 const UNITE_SUGGESTIONS = ['kg', 'mL', 'doses', 'sacs', 'unités'];
 
@@ -55,6 +60,7 @@ const QuickEditStockForm: React.FC<QuickEditStockFormProps> = ({
   onSuccess,
 }) => {
   const { refreshData } = useFarm();
+  const { showToast } = useToast();
 
   // ── State form ───────────────────────────────────────────────────────────
   const initial = useMemo(
@@ -74,15 +80,16 @@ const QuickEditStockForm: React.FC<QuickEditStockFormProps> = ({
 
   const [errors, setErrors] = useState<StockEditErrors>({});
   const [saving, setSaving] = useState(false);
-  const [toast, setToast] = useState<string>('');
 
-  // Reset à chaque (re)ouverture avec un nouvel item — render-time sync
-  const [lastKey, setLastKey] = useState<{ isOpen: boolean; itemId: string }>({
+  const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Reset-on-open : pattern lastOpenKey render-phase (FORM_CONTRACT).
+  const [lastOpenKey, setLastOpenKey] = useState<{ isOpen: boolean; itemId: string }>({
     isOpen,
     itemId: stockItem.id,
   });
-  if (lastKey.isOpen !== isOpen || lastKey.itemId !== stockItem.id) {
-    setLastKey({ isOpen, itemId: stockItem.id });
+  if (lastOpenKey.isOpen !== isOpen || lastOpenKey.itemId !== stockItem.id) {
+    setLastOpenKey({ isOpen, itemId: stockItem.id });
     if (isOpen) {
       setLibelle(initial.libelle ?? '');
       setProduit(initial.produit ?? '');
@@ -98,13 +105,18 @@ const QuickEditStockForm: React.FC<QuickEditStockFormProps> = ({
     }
   }
 
+  useEffect(() => {
+    return () => {
+      if (closeTimerRef.current) { clearTimeout(closeTimerRef.current); closeTimerRef.current = null; }
+    };
+  }, []);
+
   const handleClose = useCallback(() => {
     if (saving) return;
+    if (closeTimerRef.current) { clearTimeout(closeTimerRef.current); closeTimerRef.current = null; }
     onClose();
   }, [onClose, saving]);
 
-  // A11y : Esc ferme la sheet + focus auto sur 1er champ
-  useEscapeKey(isOpen && !saving, handleClose);
   const firstFieldRef = useFocusFirstInput<HTMLInputElement>(isOpen);
 
   // Recalcule le statut depuis stockActuel + seuilAlerte courants
@@ -168,10 +180,9 @@ const QuickEditStockForm: React.FC<QuickEditStockFormProps> = ({
         }
       }
       const online = typeof navigator !== 'undefined' && navigator.onLine;
-      setToast(
-        online
-          ? 'Stock mis à jour'
-          : 'Modifications en file · sync auto',
+      showToast(
+        online ? 'Stock mis à jour' : 'Modifications en file · sync auto',
+        online ? 'success' : 'info',
       );
       try {
         await refreshData(true);
@@ -179,14 +190,18 @@ const QuickEditStockForm: React.FC<QuickEditStockFormProps> = ({
         /* noop */
       }
       if (onSuccess) onSuccess();
-      onClose();
+      // Garde double-clic : saving maintenu jusqu'au onClose (FORM_CONTRACT).
+      closeTimerRef.current = setTimeout(() => {
+        closeTimerRef.current = null;
+        setSaving(false);
+        onClose();
+      }, 1500);
     } catch (err) {
-      setToast(
-        err instanceof Error
-          ? `Erreur : ${err.message}`
-          : 'Erreur enregistrement local',
+      showToast(
+        err instanceof Error ? `Erreur : ${err.message}` : 'Erreur enregistrement local',
+        'error',
+        4000,
       );
-    } finally {
       setSaving(false);
     }
   };
@@ -194,286 +209,240 @@ const QuickEditStockForm: React.FC<QuickEditStockFormProps> = ({
   const displayLabel = stockLabelFor(stockItem, kind);
   const title = `Éditer · ${displayLabel || stockItem.id}`;
 
-  const statutTone =
-    statut === 'RUPTURE' ? 'text-red'
-      : statut === 'BAS' ? 'text-amber'
-        : 'text-accent';
-
   return (
-    <>
-      <BottomSheet
-        isOpen={isOpen}
-        onClose={handleClose}
-        title={title}
-        height="full"
-      >
-        <form
-          onSubmit={handleSubmit}
-          className="space-y-5"
-          noValidate
-          aria-label={`Édition stock ${kind === 'ALIMENT' ? 'aliment' : 'vétérinaire'}`}
-        >
-          {/* Header */}
-          <div className="flex items-center gap-3">
-            <div className="inline-flex h-10 w-10 items-center justify-center rounded-md bg-bg-2 text-accent">
-              <Edit3 size={18} aria-hidden="true" />
-            </div>
-            <div className="min-w-0">
-              <p className="text-mono-label text-text-1">
-                {kind === 'ALIMENT' ? 'Éditer aliment' : 'Éditer produit véto'}
-              </p>
-              <p className="text-mono-micro text-text-2 tabular-nums mt-0.5 truncate">
-                {stockItem.id}
-              </p>
-            </div>
+    <QuickActionSheet
+      isOpen={isOpen}
+      onClose={handleClose}
+      eyebrow={kind === 'ALIMENT' ? 'Éditer aliment' : 'Éditer produit véto'}
+      title={title}
+      ariaLabel={`Édition stock ${kind === 'ALIMENT' ? 'aliment' : 'vétérinaire'}`}
+      saving={saving}
+      isValid
+      onSubmit={handleSubmit}
+      submitLabel="Enregistrer"
+      submitAriaLabel="Enregistrer les modifications du stock"
+    >
+      {/* ── Section Identité ─────────────────────────────────────── */}
+      {kind === 'ALIMENT' ? (
+        <div className="field">
+          <label className="label--v77" htmlFor="edit-stock-libelle">
+            LIBELLÉ <span className="req">requis</span>
+          </label>
+          <input
+            id="edit-stock-libelle"
+            ref={firstFieldRef}
+            className={`field__input${libelle ? ' filled' : ' field__input--ghost'}`}
+            type="text"
+            maxLength={60}
+            aria-label="Libellé de l'aliment"
+            aria-required="true"
+            aria-invalid={!!errors.libelle}
+            placeholder="Ex: Truie gestation"
+            value={libelle}
+            onChange={e => setLibelle(e.target.value)}
+            disabled={saving}
+            autoComplete="off"
+          />
+          <FieldError message={errors.libelle} />
+        </div>
+      ) : (
+        <>
+          <div className="field">
+            <label className="label--v77" htmlFor="edit-stock-produit">
+              PRODUIT <span className="req">requis</span>
+            </label>
+            <input
+              id="edit-stock-produit"
+              ref={firstFieldRef}
+              className={`field__input${produit ? ' filled' : ' field__input--ghost'}`}
+              type="text"
+              maxLength={60}
+              aria-label="Nom du produit vétérinaire"
+              aria-required="true"
+              aria-invalid={!!errors.produit}
+              placeholder="Ex: Ivermectine"
+              value={produit}
+              onChange={e => setProduit(e.target.value)}
+              disabled={saving}
+              autoComplete="off"
+            />
+            <FieldError message={errors.produit} />
           </div>
 
-          {/* ── Section Identité ─────────────────────────────────────── */}
-          {kind === 'ALIMENT' ? (
-            <FormField label="Libellé" required error={errors.libelle}>
-              <Input
-                id="edit-stock-libelle"
-                ref={firstFieldRef}
+          <div className="field--inline">
+            <div className="field">
+              <label className="label--v77" htmlFor="edit-stock-type">
+                TYPE <span className="hint">optionnel</span>
+              </label>
+              <input
+                id="edit-stock-type"
+                className={`field__input${typeVeto ? ' filled' : ' field__input--ghost'}`}
                 type="text"
                 maxLength={60}
-                aria-label="Libellé de l'aliment"
-                aria-required="true"
-                aria-invalid={!!errors.libelle}
-                aria-describedby={errors.libelle ? 'edit-stock-libelle-error' : undefined}
-                placeholder="Ex: Truie gestation"
-                value={libelle}
-                onChange={e => setLibelle(e.target.value)}
+                aria-label="Type (catégorie) du produit"
+                aria-invalid={!!errors.type}
+                placeholder="Ex: Antibiotique"
+                value={typeVeto}
+                onChange={e => setTypeVeto(e.target.value)}
                 disabled={saving}
                 autoComplete="off"
               />
-            </FormField>
-          ) : (
-            <div className="space-y-3">
-              <FormField label="Produit" required error={errors.produit}>
-                <Input
-                  id="edit-stock-produit"
-                  ref={firstFieldRef}
-                  type="text"
-                  maxLength={60}
-                  aria-label="Nom du produit vétérinaire"
-                  aria-required="true"
-                  aria-invalid={!!errors.produit}
-                  aria-describedby={errors.produit ? 'edit-stock-produit-error' : undefined}
-                  placeholder="Ex: Ivermectine"
-                  value={produit}
-                  onChange={e => setProduit(e.target.value)}
-                  disabled={saving}
-                  autoComplete="off"
-                />
-              </FormField>
-
-              <div className="grid grid-cols-2 gap-3">
-                <FormField label="Type" hint="optionnel" error={errors.type}>
-                  <Input
-                    id="edit-stock-type"
-                    type="text"
-                    maxLength={60}
-                    aria-label="Type (catégorie) du produit"
-                    aria-invalid={!!errors.type}
-                    aria-describedby={errors.type ? 'edit-stock-type-error' : undefined}
-                    placeholder="Ex: Antibiotique"
-                    value={typeVeto}
-                    onChange={e => setTypeVeto(e.target.value)}
-                    disabled={saving}
-                    autoComplete="off"
-                  />
-                </FormField>
-                <FormField label="Usage" hint="optionnel" error={errors.usage}>
-                  <Input
-                    id="edit-stock-usage"
-                    type="text"
-                    maxLength={60}
-                    aria-label="Usage du produit"
-                    aria-invalid={!!errors.usage}
-                    aria-describedby={errors.usage ? 'edit-stock-usage-error' : undefined}
-                    placeholder="Ex: Prévention"
-                    value={usageVeto}
-                    onChange={e => setUsageVeto(e.target.value)}
-                    disabled={saving}
-                    autoComplete="off"
-                  />
-                </FormField>
-              </div>
+              <FieldError message={errors.type} />
             </div>
-          )}
-
-          {/* ── Section Stock ───────────────────────────────────────── */}
-          <div className="space-y-3">
-            <p className="text-mono-micro text-text-2">Stock</p>
-
-            <div className="grid grid-cols-2 gap-3">
-              <FormField label="Stock actuel" required error={errors.stockActuel}>
-                <Input
-                  id="edit-stock-actuel"
-                  type="number"
-                  inputMode="decimal"
-                  min={0}
-                  max={9999}
-                  step={0.1}
-                  aria-label="Stock actuel"
-                  aria-required="true"
-                  aria-invalid={!!errors.stockActuel}
-                  aria-describedby={errors.stockActuel ? 'edit-stock-actuel-error' : undefined}
-                  className="font-mono tabular-nums text-center"
-                  placeholder="0"
-                  value={stockActuel}
-                  onChange={e => setStockActuel(e.target.value)}
-                  disabled={saving}
-                />
-              </FormField>
-
-              <FormField label="Unité" required error={errors.unite}>
-                <Input
-                  id="edit-stock-unite"
-                  type="text"
-                  list="edit-stock-unite-suggestions"
-                  maxLength={20}
-                  aria-label="Unité de mesure"
-                  aria-required="true"
-                  aria-invalid={!!errors.unite}
-                  aria-describedby={errors.unite ? 'edit-stock-unite-error' : undefined}
-                  placeholder="kg"
-                  value={unite}
-                  onChange={e => setUnite(e.target.value)}
-                  disabled={saving}
-                  autoComplete="off"
-                />
-                <datalist id="edit-stock-unite-suggestions">
-                  {UNITE_SUGGESTIONS.map(u => (
-                    <option key={u} value={u} />
-                  ))}
-                </datalist>
-              </FormField>
-            </div>
-
-            <FormField
-              label="Seuil d'alerte"
-              required
-              hint="Stock ≤ ce seuil › statut BAS"
-              error={errors.seuilAlerte}
-            >
-              <Input
-                id="edit-stock-seuil"
-                type="number"
-                inputMode="decimal"
-                min={0}
-                max={9999}
-                step={0.1}
-                aria-label="Seuil d'alerte"
-                aria-required="true"
-                aria-invalid={!!errors.seuilAlerte}
-                aria-describedby={errors.seuilAlerte ? 'edit-stock-seuil-error' : 'edit-stock-seuil-hint'}
-                className="font-mono tabular-nums"
-                placeholder="0"
-                value={seuilAlerte}
-                onChange={e => setSeuilAlerte(e.target.value)}
-                disabled={saving}
-              />
-            </FormField>
-          </div>
-
-          {/* ── Section Statut ──────────────────────────────────────── */}
-          <div className="space-y-1.5">
-            <div className="flex items-center justify-between gap-2">
-              <label
-                htmlFor="edit-stock-statut"
-                className="block text-mono-label text-text-2"
-              >
-                Statut · <span className={statutTone}>{statut}</span>
+            <div className="field">
+              <label className="label--v77" htmlFor="edit-stock-usage">
+                USAGE <span className="hint">optionnel</span>
               </label>
-              <Button
-                variant="secondary"
-                size="small"
-                onClick={handleRecalculer}
+              <input
+                id="edit-stock-usage"
+                className={`field__input${usageVeto ? ' filled' : ' field__input--ghost'}`}
+                type="text"
+                maxLength={60}
+                aria-label="Usage du produit"
+                aria-invalid={!!errors.usage}
+                placeholder="Ex: Prévention"
+                value={usageVeto}
+                onChange={e => setUsageVeto(e.target.value)}
                 disabled={saving}
-                ariaLabel="Recalculer le statut depuis stock actuel et seuil"
-              >
-                <span className="inline-flex items-center gap-1.5">
-                  <RefreshCw size={12} aria-hidden="true" />
-                  Recalculer
-                </span>
-              </Button>
+                autoComplete="off"
+              />
+              <FieldError message={errors.usage} />
             </div>
-            <Select
-              id="edit-stock-statut"
-              aria-label="Statut du stock"
-              aria-invalid={!!errors.statut}
-              value={statut}
-              onChange={e => setStatut(e.target.value as EditableStatut)}
-              disabled={saving}
-            >
-              <option value="OK">OK</option>
-              <option value="BAS">BAS</option>
-              <option value="RUPTURE">RUPTURE</option>
-            </Select>
-            {errors.statut ? (
-              <p role="alert" className="text-[11px] text-red">
-                {errors.statut}
-              </p>
-            ) : null}
           </div>
+        </>
+      )}
 
-          {/* ── Section Notes ───────────────────────────────────────── */}
-          <FormField
-            label="Notes"
-            hint={`optionnel · ${notes.length}/200`}
-            error={errors.notes}
+      {/* ── Section Stock ───────────────────────────────────────── */}
+      <div className="field--inline">
+        <div className="field">
+          <label className="label--v77" htmlFor="edit-stock-actuel">
+            STOCK ACTUEL <span className="req">requis</span>
+          </label>
+          <input
+            id="edit-stock-actuel"
+            className={`field__input mono${stockActuel ? ' filled' : ' field__input--ghost'}`}
+            type="number"
+            inputMode="decimal"
+            min={0}
+            max={9999}
+            step={0.1}
+            aria-label="Stock actuel"
+            aria-required="true"
+            aria-invalid={!!errors.stockActuel}
+            placeholder="0"
+            value={stockActuel}
+            onChange={e => setStockActuel(e.target.value)}
+            disabled={saving}
+          />
+          <FieldError message={errors.stockActuel} />
+        </div>
+
+        <div className="field">
+          <label className="label--v77" htmlFor="edit-stock-unite">
+            UNITÉ <span className="req">requis</span>
+          </label>
+          <input
+            id="edit-stock-unite"
+            className={`field__input${unite ? ' filled' : ' field__input--ghost'}`}
+            type="text"
+            list="edit-stock-unite-suggestions"
+            maxLength={20}
+            aria-label="Unité de mesure"
+            aria-required="true"
+            aria-invalid={!!errors.unite}
+            placeholder="kg"
+            value={unite}
+            onChange={e => setUnite(e.target.value)}
+            disabled={saving}
+            autoComplete="off"
+          />
+          <datalist id="edit-stock-unite-suggestions">
+            {UNITE_SUGGESTIONS.map(u => (
+              <option key={u} value={u} />
+            ))}
+          </datalist>
+          <FieldError message={errors.unite} />
+        </div>
+      </div>
+
+      <div className="field">
+        <label className="label--v77" htmlFor="edit-stock-seuil">
+          SEUIL D'ALERTE <span className="req">requis</span>
+        </label>
+        <input
+          id="edit-stock-seuil"
+          className={`field__input mono${seuilAlerte ? ' filled' : ' field__input--ghost'}`}
+          type="number"
+          inputMode="decimal"
+          min={0}
+          max={9999}
+          step={0.1}
+          aria-label="Seuil d'alerte"
+          aria-required="true"
+          aria-invalid={!!errors.seuilAlerte}
+          placeholder="0"
+          value={seuilAlerte}
+          onChange={e => setSeuilAlerte(e.target.value)}
+          disabled={saving}
+        />
+        <FieldError message={errors.seuilAlerte} />
+        {!errors.seuilAlerte ? (
+          <span className="hint">Stock ≤ ce seuil › statut BAS</span>
+        ) : null}
+      </div>
+
+      {/* ── Section Statut ──────────────────────────────────────── */}
+      <div className="field">
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+          <label className="label--v77" htmlFor="edit-stock-statut">
+            STATUT · {statut}
+          </label>
+          <button
+            type="button"
+            className="btn btn--ghost"
+            onClick={handleRecalculer}
+            disabled={saving}
+            aria-label="Recalculer le statut depuis stock actuel et seuil"
           >
-            <Textarea
-              id="edit-stock-notes"
-              maxLength={200}
-              rows={3}
-              aria-label="Notes libres"
-              aria-invalid={!!errors.notes}
-              aria-describedby={errors.notes ? 'edit-stock-notes-error' : 'edit-stock-notes-hint'}
-              placeholder="Lot, fournisseur, observations…"
-              value={notes}
-              onChange={e => setNotes(e.target.value)}
-              disabled={saving}
-            />
-          </FormField>
+            <RefreshCw size={12} aria-hidden="true" /> Recalculer
+          </button>
+        </div>
+        <select
+          id="edit-stock-statut"
+          className={`field__input${statut ? ' filled' : ''}`}
+          aria-label="Statut du stock"
+          aria-invalid={!!errors.statut}
+          value={statut}
+          onChange={e => setStatut(e.target.value as EditableStatut)}
+          disabled={saving}
+        >
+          <option value="OK">OK</option>
+          <option value="BAS">BAS</option>
+          <option value="RUPTURE">RUPTURE</option>
+        </select>
+        <FieldError message={errors.statut} />
+      </div>
 
-          {/* ── Actions ─────────────────────────────────────────────── */}
-          <div className="flex gap-3 justify-end pt-2 border-t border-border">
-            <Button
-              variant="secondary"
-              onClick={handleClose}
-              disabled={saving}
-              ariaLabel="Annuler et fermer"
-            >
-              Annuler
-            </Button>
-            <Button
-              type="submit"
-              variant="primary"
-              disabled={saving}
-              ariaLabel="Enregistrer les modifications du stock"
-              aria-busy={saving}
-            >
-              {saving ? 'Enregistrement…' : (
-                <span className="inline-flex items-center gap-2">
-                  Enregistrer
-                  <Save size={14} aria-hidden="true" />
-                </span>
-              )}
-            </Button>
-          </div>
-        </form>
-      </BottomSheet>
-
-      <IonToast
-        isOpen={toast !== ''}
-        message={toast}
-        duration={1800}
-        onDidDismiss={() => setToast('')}
-        position="bottom"
-      />
-    </>
+      {/* ── Section Notes ───────────────────────────────────────── */}
+      <div className="field">
+        <label className="label--v77" htmlFor="edit-stock-notes">
+          NOTES <span className="hint">optionnel · {notes.length}/200</span>
+        </label>
+        <textarea
+          id="edit-stock-notes"
+          className={`field__input${notes ? ' filled' : ' field__input--ghost'}`}
+          maxLength={200}
+          rows={3}
+          aria-label="Notes libres"
+          aria-invalid={!!errors.notes}
+          placeholder="Lot, fournisseur, observations…"
+          value={notes}
+          onChange={e => setNotes(e.target.value)}
+          disabled={saving}
+        />
+        <FieldError message={errors.notes} />
+      </div>
+    </QuickActionSheet>
   );
 };
 

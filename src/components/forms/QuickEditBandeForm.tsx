@@ -1,5 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { IonToast } from '@ionic/react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AlertTriangle, Edit3, Plus, Save, Trash2, X } from 'lucide-react';
 
 import { BottomSheet } from '../agritech';
@@ -12,6 +11,7 @@ import {
   updateBatchByCode,
 } from '../../services/supabaseWrites';
 import { useFarm } from '../../context/FarmContext';
+import { useToast } from '../../context/ToastContext';
 import { useAuth } from '../../context/AuthContext';
 import type { BandePorcelets, BatchSource, Loge } from '../../types/farm';
 import {
@@ -41,6 +41,14 @@ import QuickAddLogeForm from './QuickAddLogeForm';
    nb_males, nb_femelles, date_separation, loge_engraissement, statut,
    notes, truie, boucle_mere).
    Patch partiel : seules les valeurs modifiées sont envoyées.
+
+   Migration partielle FORM_CONTRACT (Phase 2 · Batch C) :
+     - toast canonique `useToast()` (remplace IonToast local)
+     - garde double-clic : `closeTimerRef` + cleanup `useEffect`
+     - reset-on-open déjà en render-phase (`lastKey`)
+   Le shell `<QuickActionSheet>` n'est PAS applicable : ce form a un layout
+   multi-fieldset, des sous-formulaires inline et un `<QuickAddLogeForm>`
+   imbriqué ; il reste sur `<BottomSheet>` + composants DS.
    ═════════════════════════════════════════════════════════════════════════ */
 
 interface QuickEditBandeFormProps {
@@ -57,8 +65,11 @@ const QuickEditBandeForm: React.FC<QuickEditBandeFormProps> = ({
   onSuccess,
 }) => {
   const { refreshData, saillies, verrats, bandes, truies } = useFarm();
+  const { showToast } = useToast();
   const { user } = useAuth();
   const farmId = user?.id ?? '';
+
+  const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const initial = useMemo<BandeEditRawInput>(
     () => ({ ...bandeToRawInput(bande), codeId: bande.idPortee ?? '' }),
@@ -81,7 +92,6 @@ const QuickEditBandeForm: React.FC<QuickEditBandeFormProps> = ({
   const [logeDirty, setLogeDirty] = useState(false);
   const [errors, setErrors] = useState<BandeEditErrors>({});
   const [saving, setSaving] = useState(false);
-  const [toast, setToast] = useState<string>('');
 
   // V24 — Sources (multi-mères)
   const [sources, setSources] = useState<BatchSource[]>(bande.sources ?? []);
@@ -121,6 +131,12 @@ const QuickEditBandeForm: React.FC<QuickEditBandeFormProps> = ({
     });
     return () => { cancelled = true; };
   }, [isOpen, bande.id, bande.sources]);
+
+  useEffect(() => {
+    return () => {
+      if (closeTimerRef.current) { clearTimeout(closeTimerRef.current); closeTimerRef.current = null; }
+    };
+  }, []);
 
   // Origine = parents truie + verrat (readonly, déduit via dernière saillie liée)
   const origineDeduite = useMemo(() => {
@@ -241,7 +257,7 @@ const QuickEditBandeForm: React.FC<QuickEditBandeFormProps> = ({
       setNewSourceNotes('');
       setNewSourceDate(new Date().toISOString().slice(0, 10));
       setAddSourceOpen(false);
-      setToast('Truie source ajoutée');
+      showToast('Truie source ajoutée', 'success');
     } catch (err) {
       setSourceError(err instanceof Error ? err.message : 'Erreur');
     } finally {
@@ -254,9 +270,9 @@ const QuickEditBandeForm: React.FC<QuickEditBandeFormProps> = ({
     try {
       await removeBatchSource(id);
       setSources(prev => prev.filter(s => s.id !== id));
-      setToast('Truie source retirée');
+      showToast('Truie source retirée', 'success');
     } catch (err) {
-      setToast(err instanceof Error ? `Erreur : ${err.message}` : 'Erreur');
+      showToast(err instanceof Error ? `Erreur : ${err.message}` : 'Erreur', 'error');
     } finally {
       setSourceBusy(false);
     }
@@ -267,11 +283,12 @@ const QuickEditBandeForm: React.FC<QuickEditBandeFormProps> = ({
     setSelectedLogeId(newLoge.id);
     setSelectedLogeIdDirty(true);
     setAddLogeOpen(false);
-    setToast(`Loge ${newLoge.numero} créée`);
+    showToast(`Loge ${newLoge.numero} créée`, 'success');
   };
 
   const handleClose = useCallback(() => {
     if (saving) return;
+    if (closeTimerRef.current) { clearTimeout(closeTimerRef.current); closeTimerRef.current = null; }
     onClose();
   }, [onClose, saving]);
 
@@ -309,7 +326,7 @@ const QuickEditBandeForm: React.FC<QuickEditBandeFormProps> = ({
     }
     // V25 — Bloque si la loge choisie est déjà occupée par un autre sujet.
     if (selectedLogeIdDirty && logeConflict) {
-      setToast(
+      showToast(
         `Loge déjà occupée par ${
           logeConflict.kind === 'bande'
             ? `bande ${logeConflict.label}`
@@ -317,6 +334,7 @@ const QuickEditBandeForm: React.FC<QuickEditBandeFormProps> = ({
               ? `truie ${logeConflict.label}`
               : `verrat ${logeConflict.label}`
         }`,
+        'error',
       );
       return;
     }
@@ -374,10 +392,11 @@ const QuickEditBandeForm: React.FC<QuickEditBandeFormProps> = ({
       // NB_MALES, NB_FEMELLES, DATE_SEPARATION → ignorés silencieusement.
       await updateBatchByCode(bande.id, supabasePatch);
       const online = typeof navigator !== 'undefined' && navigator.onLine;
-      setToast(
+      showToast(
         online
           ? 'Modifications enregistrées'
           : 'Modifications en file · sync auto',
+        online ? 'success' : 'info',
       );
       try {
         await refreshData(true);
@@ -385,14 +404,20 @@ const QuickEditBandeForm: React.FC<QuickEditBandeFormProps> = ({
         /* noop */
       }
       if (onSuccess) onSuccess();
-      onClose();
+      // Garder saving=true jusqu'au onClose pour empêcher le double-clic dans
+      // la fenêtre 1.5s entre toast success et fermeture (FORM_CONTRACT).
+      closeTimerRef.current = setTimeout(() => {
+        closeTimerRef.current = null;
+        setSaving(false);
+        onClose();
+      }, 1500);
     } catch (err) {
-      setToast(
+      showToast(
         err instanceof Error
           ? `Erreur : ${err.message}`
           : 'Erreur enregistrement local',
+        'error',
       );
-    } finally {
       setSaving(false);
     }
   };
@@ -1131,14 +1156,6 @@ const QuickEditBandeForm: React.FC<QuickEditBandeFormProps> = ({
         isOpen={addLogeOpen}
         onClose={() => setAddLogeOpen(false)}
         onSuccess={handleLogeCreated}
-      />
-
-      <IonToast
-        isOpen={toast !== ''}
-        message={toast}
-        duration={1800}
-        onDidDismiss={() => setToast('')}
-        position="bottom"
       />
     </>
   );

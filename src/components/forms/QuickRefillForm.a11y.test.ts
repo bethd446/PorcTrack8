@@ -1,12 +1,15 @@
 /**
  * Tests a11y — QuickRefillForm
  * ═══════════════════════════════════════════════════════════════════════════
- * Vitest tourne en `node` sans jsdom. On valide statiquement :
- *   - L'intégration des hooks `useEscapeKey` + `useFocusFirstInput`
- *   - La présence de `aria-label` sur tous les champs (quantité, fournisseur,
- *     prix, date) + sur les actions (annuler, valider)
- *   - `aria-describedby` pour les hints + messages d'erreur
- *   - `aria-busy={saving}` sur le bouton submit
+ * Vitest tourne en `node` sans jsdom. On valide statiquement la conformité
+ * FORM_CONTRACT (migration Phase 2) :
+ *   - Le form passe par le shell partagé `QuickActionSheet` (qui câble
+ *     lui-même `useEscapeKey` + le bouton submit `aria-busy={saving}`).
+ *   - Le focus auto est posé sur le premier champ via `useFocusFirstInput`.
+ *   - Présence de `aria-label` sur tous les champs (quantité, fournisseur,
+ *     prix, date).
+ *   - Erreurs de champ rendues via `<FieldError>` (remplace les
+ *     `aria-describedby` inline), `aria-invalid` conservé.
  *
  * On vérifie aussi le contrat pur de `shouldCloseOnKey`.
  */
@@ -23,13 +26,13 @@ const SRC = readFileSync(
 );
 
 describe('QuickRefillForm · accessibilité', () => {
-  it('importe les hooks a11y partagés', () => {
-    expect(SRC).toMatch(/useEscapeKey/);
-    expect(SRC).toMatch(/useFocusFirstInput/);
+  it('passe par le shell partagé QuickActionSheet', () => {
+    expect(SRC).toMatch(/import QuickActionSheet from '\.\/QuickActionSheet'/);
+    expect(SRC).toMatch(/<QuickActionSheet/);
   });
 
-  it('monte le listener Escape sur ouverture (useEscapeKey(isOpen, resetAndClose))', () => {
-    expect(SRC).toMatch(/useEscapeKey\(\s*isOpen[^,]*,\s*resetAndClose\s*\)/);
+  it('utilise le hook focus-first partagé', () => {
+    expect(SRC).toMatch(/useFocusFirstInput/);
   });
 
   it('Escape key ferme le form (contrat shouldCloseOnKey)', () => {
@@ -62,22 +65,18 @@ describe('QuickRefillForm · accessibilité', () => {
     expect(SRC).toMatch(
       /id="refill-date"[^]*?aria-label="Date de réception"/,
     );
-    // annuler / valider (Button DS expose ariaLabel prop, pas attribut HTML)
-    expect(SRC).toMatch(/ariaLabel="Annuler le réapprovisionnement"/);
+    // annuler / valider sont rendus par le shell QuickActionSheet ;
+    // le form passe les libellés via submitLabel / submitAriaLabel
     expect(SRC).toMatch(
-      /ariaLabel="Valider la réception du réapprovisionnement"/,
+      /submitAriaLabel="Valider la réception du réapprovisionnement"/,
     );
   });
 
-  it('gère aria-describedby pour hints + erreurs', () => {
-    expect(SRC).toMatch(/id="refill-qty-hint"/);
-    expect(SRC).toMatch(/id="refill-qty-error"/);
-    expect(SRC).toMatch(/id="refill-price-error"/);
-    expect(SRC).toMatch(/id="refill-date-error"/);
-    // Quantité : branche error → hint
-    expect(SRC).toMatch(
-      /errors\.quantite \? 'refill-qty-error' : 'refill-qty-hint'/,
-    );
+  it('rend les erreurs de champ via FieldError', () => {
+    expect(SRC).toMatch(/import \{ FieldError \}/);
+    expect(SRC).toMatch(/<FieldError message=\{errors\.quantite\}/);
+    expect(SRC).toMatch(/<FieldError message=\{errors\.prix\}/);
+    expect(SRC).toMatch(/<FieldError message=\{errors\.date\}/);
   });
 
   it('marque les champs invalides via aria-invalid', () => {
@@ -92,7 +91,8 @@ describe('QuickRefillForm · accessibilité', () => {
     expect(SRC).toMatch(/id="refill-date"[^]*?aria-required="true"/);
   });
 
-  it('submit button expose aria-busy={saving}', () => {
-    expect(SRC).toMatch(/aria-busy=\{saving\}/);
+  it('délègue saving + aria-busy au shell QuickActionSheet', () => {
+    // Le bouton submit (et son aria-busy={saving}) est rendu par le shell.
+    expect(SRC).toMatch(/saving=\{saving\}/);
   });
 });

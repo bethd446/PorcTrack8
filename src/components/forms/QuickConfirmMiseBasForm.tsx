@@ -7,26 +7,32 @@
  *      poids portée, M/F, loge
  *   3. Submit → INSERT batch phase=SOUS_MERE, validation_status=VALIDATED
  *
- * Pattern BottomSheet inspiré de QuickAddBandeFromLogeForm.
+ * Migré FORM_CONTRACT Phase 2 (batch A) :
+ *  - shell `<QuickActionSheet>` (form onSubmit + bouton type=submit)
+ *  - toast canonique `useToast()` unique (remplace `useAppToast` + `AppToast`)
+ *  - validation `validateMiseBas` → { ok, errors, values }, rendu via FormField
+ *  - helper date partagé `todayIso`
+ *  - reset-on-open via `lastKey` render-phase
+ *  - garde double-clic : `saving` maintenu jusqu'au `onClose`, `closeTimerRef`
+ *    + cleanup `useEffect`
+ *
  * Logique pure dans `quickConfirmMiseBasLogic` (testée).
  */
 
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { Save } from 'lucide-react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import { AppToast, BottomSheet, useAppToast } from '../agritech';
-import { Button, FormField, Input, Section, Select } from '@/design-system';
+import { FormField, Input, Section, Select } from '@/design-system';
 import { listLoges } from '../../services/supabaseWrites';
 import { supabase } from '../../services/supabaseClient';
 import { confirmMiseBas } from '../../services/mbWorkflowService';
 import { useFarm } from '../../context/FarmContext';
 import { useToast } from '../../context/ToastContext';
-import { useEscapeKey } from './useFormA11y';
 import type { Loge } from '../../types/farm';
+import { todayIso } from './_formHelpers';
+import QuickActionSheet from './QuickActionSheet';
 import {
   computeMortNes,
   generateMbCodeId,
-  todayIso,
   validateMiseBas,
   type MiseBasValidation,
 } from './quickConfirmMiseBasLogic';
@@ -55,7 +61,7 @@ const QuickConfirmMiseBasForm: React.FC<QuickConfirmMiseBasFormProps> = ({
   onSuccess,
 }) => {
   const { truies, verrats, refreshData } = useFarm();
-  const { showToast: showGlobalToast } = useToast();
+  const { showToast } = useToast();
 
   const [saillie, setSaillie] = useState<SailliePreload | null>(null);
   const [loges, setLoges] = useState<Loge[]>([]);
@@ -70,9 +76,10 @@ const QuickConfirmMiseBasForm: React.FC<QuickConfirmMiseBasFormProps> = ({
 
   const [errors, setErrors] = useState<MiseBasValidation['errors']>({});
   const [saving, setSaving] = useState(false);
-  const { show: showToast, toastProps } = useAppToast();
 
-  // Reset à l'ouverture
+  const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Reset à l'ouverture (render-phase, FORM_CONTRACT).
   const [lastKey, setLastKey] = useState({ isOpen, saillieId });
   if (lastKey.isOpen !== isOpen || lastKey.saillieId !== saillieId) {
     setLastKey({ isOpen, saillieId });
@@ -89,6 +96,15 @@ const QuickConfirmMiseBasForm: React.FC<QuickConfirmMiseBasFormProps> = ({
       setSaillie(null);
     }
   }
+
+  useEffect(() => {
+    return () => {
+      if (closeTimerRef.current) {
+        clearTimeout(closeTimerRef.current);
+        closeTimerRef.current = null;
+      }
+    };
+  }, []);
 
   // Précharge saillie
   useEffect(() => {
@@ -152,10 +168,12 @@ const QuickConfirmMiseBasForm: React.FC<QuickConfirmMiseBasFormProps> = ({
 
   const handleClose = useCallback(() => {
     if (saving) return;
+    if (closeTimerRef.current) {
+      clearTimeout(closeTimerRef.current);
+      closeTimerRef.current = null;
+    }
     onClose();
   }, [onClose, saving]);
-
-  useEscapeKey(isOpen && !saving, handleClose);
 
   const handleSubmit = async (e: React.FormEvent): Promise<void> => {
     e.preventDefault();
@@ -200,10 +218,9 @@ const QuickConfirmMiseBasForm: React.FC<QuickConfirmMiseBasFormProps> = ({
         code_id: codeId,
       });
 
-      showToast(`Mise bas confirmée — bande ${codeId}`, 'success');
       const codeTruie = truieDisplay?.displayId ?? saillie.sow_code_id ?? '—';
-      showGlobalToast(
-        `Mise-bas enregistrée · ${codeTruie} · ${result.values.nbVivants} nés vivants`,
+      showToast(
+        `Mise-bas enregistrée · ${codeTruie} · ${result.values.nbVivants} nés vivants · bande ${codeId}`,
         'success',
       );
       try {
@@ -212,18 +229,21 @@ const QuickConfirmMiseBasForm: React.FC<QuickConfirmMiseBasFormProps> = ({
         /* noop */
       }
       onSuccess?.(newBatchId);
-      onClose();
+      // Garder saving=true jusqu'au onClose pour bloquer le double-clic
+      // pendant la fenêtre de toast (FORM_CONTRACT).
+      closeTimerRef.current = setTimeout(() => {
+        closeTimerRef.current = null;
+        setSaving(false);
+        onClose();
+      }, 1500);
     } catch (err) {
       showToast(
-        err instanceof Error ? `Erreur : ${err.message}` : 'Erreur enregistrement',
-        'error',
-      );
-      showGlobalToast(
-        (err as Error)?.message ?? "Erreur lors de l'enregistrement de la mise-bas",
+        err instanceof Error
+          ? `Erreur : ${err.message}`
+          : "Erreur lors de l'enregistrement de la mise-bas",
         'error',
         4000,
       );
-    } finally {
       setSaving(false);
     }
   };
@@ -231,229 +251,201 @@ const QuickConfirmMiseBasForm: React.FC<QuickConfirmMiseBasFormProps> = ({
   // ─── Render ──────────────────────────────────────────────────────────────
 
   return (
-    <>
-      <BottomSheet
-        isOpen={isOpen}
-        onClose={handleClose}
-        title="Confirmer la mise bas"
-        height="full"
-      >
-        <form
-          onSubmit={handleSubmit}
-          className="space-y-5"
-          noValidate
-          aria-label="Confirmation rigoureuse d'une mise bas"
-          data-testid="quick-confirm-mise-bas-form"
-        >
-          {/* ── RÉCAP SAILLIE ──────────────────────────────────────── */}
-          <Section label="SAILLIE SOURCE" />
+    <QuickActionSheet
+      isOpen={isOpen}
+      onClose={handleClose}
+      eyebrow="Mise-bas"
+      title="Confirmer la mise bas"
+      ariaLabel="Confirmation rigoureuse d'une mise bas"
+      saving={saving}
+      isValid={!!saillie}
+      onSubmit={handleSubmit}
+      submitLabel="VALIDER"
+      submitAriaLabel="Confirmer la mise bas"
+    >
+      {/* ── RÉCAP SAILLIE ──────────────────────────────────────── */}
+      <Section label="SAILLIE SOURCE" />
 
-          {saillie ? (
-            <div
-              className="card-dense space-y-1 py-3"
-              data-testid="saillie-recap"
-            >
-              <div className="flex items-center justify-between gap-3">
-                <span className="text-[10px] uppercase tracking-wide text-text-2">
-                  Truie
-                </span>
-                <span className="ft-code tabular-nums text-[13px] text-text-0">
-                  {truieDisplay?.displayId ?? saillie.sow_code_id ?? '—'}
-                  {truieDisplay?.nom ? ` · ${truieDisplay.nom}` : ''}
-                </span>
-              </div>
-              <div className="flex items-center justify-between gap-3">
-                <span className="text-[10px] uppercase tracking-wide text-text-2">
-                  Verrat
-                </span>
-                <span className="ft-code tabular-nums text-[13px] text-text-0">
-                  {verratDisplay?.displayId ?? saillie.boar_code_id ?? '—'}
-                </span>
-              </div>
-              <div className="flex items-center justify-between gap-3">
-                <span className="text-[10px] uppercase tracking-wide text-text-2">
-                  Date saillie
-                </span>
-                <span className="ft-code tabular-nums text-[13px] text-text-0">
-                  {saillie.date_saillie ?? '—'}
-                </span>
-              </div>
-            </div>
-          ) : (
-            <p className="text-[12px] text-text-2 italic">
-              Chargement de la saillie…
-            </p>
-          )}
-
-          {/* ── INFORMATIONS PRINCIPALES ───────────────────────────── */}
-          <Section label="INFORMATIONS PRINCIPALES" />
-
-          <FormField label="Date de mise bas" required error={errors.dateMiseBas}>
-            <Input
-              id="qcmb-date"
-              type="date"
-              aria-label="Date de mise bas"
-              value={dateMiseBas}
-              onChange={e => setDateMiseBas(e.target.value)}
-              aria-invalid={!!errors.dateMiseBas}
-              invalid={!!errors.dateMiseBas}
-            />
-          </FormField>
-
-          {/* ── PORTÉE ─────────────────────────────────────────────── */}
-          <Section label="PORTÉE" />
-
-          <div className="grid grid-cols-2 gap-3">
-            <FormField label="Nés total" required error={errors.nbTotal}>
-              <Input
-                id="qcmb-total"
-                type="number"
-                aria-label="Nés total"
-                inputMode="numeric"
-                min={1}
-                max={25}
-                step={1}
-                placeholder="Ex: 12"
-                value={nbTotal}
-                onChange={e => setNbTotal(e.target.value)}
-                aria-invalid={!!errors.nbTotal}
-                data-testid="qcmb-total"
-                invalid={!!errors.nbTotal}
-              />
-            </FormField>
-            <FormField label="Nés vivants" required error={errors.nbVivants}>
-              <Input
-                id="qcmb-vivants"
-                type="number"
-                aria-label="Nés vivants"
-                inputMode="numeric"
-                min={0}
-                max={25}
-                step={1}
-                placeholder="Ex: 11"
-                value={nbVivants}
-                onChange={e => setNbVivants(e.target.value)}
-                aria-invalid={!!errors.nbVivants}
-                data-testid="qcmb-vivants"
-                invalid={!!errors.nbVivants}
-              />
-            </FormField>
-          </div>
-
-          {/* Mort-nés (auto, lecture seule) */}
-          <div className="card-dense flex items-center justify-between gap-3 py-2">
+      {saillie ? (
+        <div className="card-dense space-y-1 py-3" data-testid="saillie-recap">
+          <div className="flex items-center justify-between gap-3">
             <span className="text-[10px] uppercase tracking-wide text-text-2">
-              Mort-nés (auto)
+              Truie
             </span>
-            <span
-              className="tabular-nums text-[13px] text-accent"
-              data-testid="qcmb-mort-nes"
-            >
-              {mortNesDerivé}
+            <span className="ft-code tabular-nums text-[13px] text-text-0">
+              {truieDisplay?.displayId ?? saillie.sow_code_id ?? '—'}
+              {truieDisplay?.nom ? ` · ${truieDisplay.nom}` : ''}
             </span>
           </div>
-
-          <FormField label="Poids portée kg" hint="optionnel" error={errors.poidsPorteeKg}>
-            <Input
-              id="qcmb-poids"
-              type="number"
-              aria-label="Poids portée"
-              inputMode="decimal"
-              min={0.5}
-              max={50}
-              step={0.1}
-              placeholder="Ex: 16.5"
-              value={poidsPorteeKg}
-              onChange={e => setPoidsPorteeKg(e.target.value)}
-              invalid={!!errors.poidsPorteeKg}
-            />
-          </FormField>
-
-          <div className="grid grid-cols-2 gap-3">
-            <FormField label="Mâles" hint="optionnel" error={errors.nbMales}>
-              <Input
-                id="qcmb-males"
-                type="number"
-                aria-label="Mâles"
-                inputMode="numeric"
-                min={0}
-                max={25}
-                step={1}
-                placeholder="—"
-                value={nbMales}
-                onChange={e => setNbMales(e.target.value)}
-                invalid={!!errors.nbMales}
-              />
-            </FormField>
-            <FormField label="Femelles" hint="optionnel" error={errors.nbFemelles}>
-              <Input
-                id="qcmb-femelles"
-                type="number"
-                aria-label="Femelles"
-                inputMode="numeric"
-                min={0}
-                max={25}
-                step={1}
-                placeholder="—"
-                value={nbFemelles}
-                onChange={e => setNbFemelles(e.target.value)}
-                invalid={!!errors.nbFemelles}
-              />
-            </FormField>
+          <div className="flex items-center justify-between gap-3">
+            <span className="text-[10px] uppercase tracking-wide text-text-2">
+              Verrat
+            </span>
+            <span className="ft-code tabular-nums text-[13px] text-text-0">
+              {verratDisplay?.displayId ?? saillie.boar_code_id ?? '—'}
+            </span>
           </div>
-
-          {/* ── LOGE ───────────────────────────────────────────────── */}
-          <Section label="LOGE MATERNITÉ" />
-
-          <FormField label="Loge maternité" required error={errors.logeId}>
-            <Select
-              id="qcmb-loge"
-              aria-label="Loge maternité"
-              value={logeId}
-              onChange={e => setLogeId(e.target.value)}
-              aria-invalid={!!errors.logeId}
-              data-testid="qcmb-loge"
-            >
-              <option value="">— Choisir une loge —</option>
-              {loges.map(l => (
-                <option key={l.id} value={l.id}>
-                  {logeNumeroPrefixed(l)}
-                  {l.batiment ? ` · ${l.batiment}` : ''}
-                </option>
-              ))}
-            </Select>
-          </FormField>
-
-          <div className="flex gap-3 justify-end pt-3 border-t border-border">
-            <Button
-              variant="secondary"
-              onClick={handleClose}
-              disabled={saving}
-              ariaLabel="Annuler"
-            >
-              ANNULER
-            </Button>
-            <Button
-              type="submit"
-              variant="primary"
-              disabled={saving || !saillie}
-              aria-busy={saving}
-              ariaLabel="Confirmer la mise bas"
-              data-testid="qcmb-submit"
-            >
-              {saving ? 'Confirmation…' : (
-                <span className="inline-flex items-center gap-2">
-                  <Save size={14} aria-hidden="true" />
-                  VALIDER
-                </span>
-              )}
-            </Button>
+          <div className="flex items-center justify-between gap-3">
+            <span className="text-[10px] uppercase tracking-wide text-text-2">
+              Date saillie
+            </span>
+            <span className="ft-code tabular-nums text-[13px] text-text-0">
+              {saillie.date_saillie ?? '—'}
+            </span>
           </div>
-        </form>
-      </BottomSheet>
+        </div>
+      ) : (
+        <p className="text-[12px] text-text-2 italic">
+          Chargement de la saillie…
+        </p>
+      )}
 
-      <AppToast {...toastProps} />
-    </>
+      {/* ── INFORMATIONS PRINCIPALES ───────────────────────────── */}
+      <Section label="INFORMATIONS PRINCIPALES" />
+
+      <FormField label="Date de mise bas" required error={errors.dateMiseBas}>
+        <Input
+          id="qcmb-date"
+          type="date"
+          aria-label="Date de mise bas"
+          value={dateMiseBas}
+          onChange={e => setDateMiseBas(e.target.value)}
+          aria-invalid={!!errors.dateMiseBas}
+          invalid={!!errors.dateMiseBas}
+          disabled={saving}
+        />
+      </FormField>
+
+      {/* ── PORTÉE ─────────────────────────────────────────────── */}
+      <Section label="PORTÉE" />
+
+      <div className="grid grid-cols-2 gap-3">
+        <FormField label="Nés total" required error={errors.nbTotal}>
+          <Input
+            id="qcmb-total"
+            type="number"
+            aria-label="Nés total"
+            inputMode="numeric"
+            min={1}
+            max={25}
+            step={1}
+            placeholder="Ex: 12"
+            value={nbTotal}
+            onChange={e => setNbTotal(e.target.value)}
+            aria-invalid={!!errors.nbTotal}
+            data-testid="qcmb-total"
+            invalid={!!errors.nbTotal}
+            disabled={saving}
+          />
+        </FormField>
+        <FormField label="Nés vivants" required error={errors.nbVivants}>
+          <Input
+            id="qcmb-vivants"
+            type="number"
+            aria-label="Nés vivants"
+            inputMode="numeric"
+            min={0}
+            max={25}
+            step={1}
+            placeholder="Ex: 11"
+            value={nbVivants}
+            onChange={e => setNbVivants(e.target.value)}
+            aria-invalid={!!errors.nbVivants}
+            data-testid="qcmb-vivants"
+            invalid={!!errors.nbVivants}
+            disabled={saving}
+          />
+        </FormField>
+      </div>
+
+      {/* Mort-nés (auto, lecture seule) */}
+      <div className="card-dense flex items-center justify-between gap-3 py-2">
+        <span className="text-[10px] uppercase tracking-wide text-text-2">
+          Mort-nés (auto)
+        </span>
+        <span
+          className="tabular-nums text-[13px] text-accent"
+          data-testid="qcmb-mort-nes"
+        >
+          {mortNesDerivé}
+        </span>
+      </div>
+
+      <FormField label="Poids portée kg" hint="optionnel" error={errors.poidsPorteeKg}>
+        <Input
+          id="qcmb-poids"
+          type="number"
+          aria-label="Poids portée"
+          inputMode="decimal"
+          min={0.5}
+          max={50}
+          step={0.1}
+          placeholder="Ex: 16.5"
+          value={poidsPorteeKg}
+          onChange={e => setPoidsPorteeKg(e.target.value)}
+          invalid={!!errors.poidsPorteeKg}
+          disabled={saving}
+        />
+      </FormField>
+
+      <div className="grid grid-cols-2 gap-3">
+        <FormField label="Mâles" hint="optionnel" error={errors.nbMales}>
+          <Input
+            id="qcmb-males"
+            type="number"
+            aria-label="Mâles"
+            inputMode="numeric"
+            min={0}
+            max={25}
+            step={1}
+            placeholder="—"
+            value={nbMales}
+            onChange={e => setNbMales(e.target.value)}
+            invalid={!!errors.nbMales}
+            disabled={saving}
+          />
+        </FormField>
+        <FormField label="Femelles" hint="optionnel" error={errors.nbFemelles}>
+          <Input
+            id="qcmb-femelles"
+            type="number"
+            aria-label="Femelles"
+            inputMode="numeric"
+            min={0}
+            max={25}
+            step={1}
+            placeholder="—"
+            value={nbFemelles}
+            onChange={e => setNbFemelles(e.target.value)}
+            invalid={!!errors.nbFemelles}
+            disabled={saving}
+          />
+        </FormField>
+      </div>
+
+      {/* ── LOGE ───────────────────────────────────────────────── */}
+      <Section label="LOGE MATERNITÉ" />
+
+      <FormField label="Loge maternité" required error={errors.logeId}>
+        <Select
+          id="qcmb-loge"
+          aria-label="Loge maternité"
+          value={logeId}
+          onChange={e => setLogeId(e.target.value)}
+          aria-invalid={!!errors.logeId}
+          data-testid="qcmb-loge"
+          disabled={saving}
+        >
+          <option value="">— Choisir une loge —</option>
+          {loges.map(l => (
+            <option key={l.id} value={l.id}>
+              {logeNumeroPrefixed(l)}
+              {l.batiment ? ` · ${l.batiment}` : ''}
+            </option>
+          ))}
+        </Select>
+      </FormField>
+    </QuickActionSheet>
   );
 };
 

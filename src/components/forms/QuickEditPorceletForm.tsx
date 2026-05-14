@@ -2,9 +2,15 @@
  * QuickEditPorceletForm — Édition + suppression d'un porcelet individuel.
  * Champs : boucle · sexe · poids courant · statut · notes.
  * Patch partiel via updatePorcelet ; bouton suppression avec confirmation.
+ *
+ * Migration partielle FORM_CONTRACT (Phase 2 · Batch C) :
+ *  - toast canonique `useToast()` (remplace IonToast local)
+ *  - reset-on-open via `lastKey` render-phase (remplace useEffect[isOpen])
+ *  - garde double-clic : `closeTimerRef` + cleanup `useEffect`
+ *  Le shell `<QuickActionSheet>` n'est PAS applicable : ce form a un bouton
+ *  « Supprimer » dédié et reste sur `<BottomSheet>` + composants DS.
  */
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { IonToast } from '@ionic/react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Edit3, Save, Trash2 } from 'lucide-react';
 
 import { BottomSheet } from '../agritech';
@@ -13,6 +19,7 @@ import {
   removePorcelet,
   updatePorcelet,
 } from '../../services/supabaseWrites';
+import { useToast } from '../../context/ToastContext';
 import { useEscapeKey, useFocusFirstInput } from './useFormA11y';
 import type {
   PorceletIndividuel,
@@ -47,6 +54,7 @@ const QuickEditPorceletForm: React.FC<QuickEditPorceletFormProps> = ({
   onSuccess,
   onDeleted,
 }) => {
+  const { showToast } = useToast();
   const [boucle, setBoucle] = useState<string>(porcelet.boucle);
   const [sexe, setSexe] = useState<PorceletSexe>(porcelet.sexe);
   const [statut, setStatut] = useState<PorceletStatut>(porcelet.statut);
@@ -57,10 +65,15 @@ const QuickEditPorceletForm: React.FC<QuickEditPorceletFormProps> = ({
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
-  const [toast, setToast] = useState<string>('');
 
-  // Reset à l'ouverture
-  useEffect(() => {
+  const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Reset-on-open : pattern lastKey render-phase (FORM_CONTRACT).
+  const [lastKey, setLastKey] = useState<{ isOpen: boolean; porceletId: string }>({
+    isOpen, porceletId: porcelet.id,
+  });
+  if (lastKey.isOpen !== isOpen || lastKey.porceletId !== porcelet.id) {
+    setLastKey({ isOpen, porceletId: porcelet.id });
     if (isOpen) {
       setBoucle(porcelet.boucle);
       setSexe(porcelet.sexe);
@@ -73,10 +86,17 @@ const QuickEditPorceletForm: React.FC<QuickEditPorceletFormProps> = ({
       setSaving(false);
       setConfirmDelete(false);
     }
-  }, [isOpen, porcelet]);
+  }
+
+  useEffect(() => {
+    return () => {
+      if (closeTimerRef.current) { clearTimeout(closeTimerRef.current); closeTimerRef.current = null; }
+    };
+  }, []);
 
   const handleClose = useCallback(() => {
     if (saving) return;
+    if (closeTimerRef.current) { clearTimeout(closeTimerRef.current); closeTimerRef.current = null; }
     onClose();
   }, [onClose, saving]);
 
@@ -113,16 +133,22 @@ const QuickEditPorceletForm: React.FC<QuickEditPorceletFormProps> = ({
         statut,
         notes: result.values.notes,
       });
-      setToast('Porcelet mis à jour');
+      showToast('Porcelet mis à jour', 'success');
       if (onSuccess) onSuccess();
-      onClose();
+      // Garder saving=true jusqu'au onClose pour empêcher le double-clic dans
+      // la fenêtre 1.5s entre toast success et fermeture (FORM_CONTRACT).
+      closeTimerRef.current = setTimeout(() => {
+        closeTimerRef.current = null;
+        setSaving(false);
+        onClose();
+      }, 1500);
     } catch (err) {
-      setToast(
+      showToast(
         err instanceof Error
           ? `Erreur : ${err.message}`
           : 'Erreur enregistrement',
+        'error',
       );
-    } finally {
       setSaving(false);
     }
   };
@@ -135,16 +161,20 @@ const QuickEditPorceletForm: React.FC<QuickEditPorceletFormProps> = ({
     setSaving(true);
     try {
       await removePorcelet(porcelet.id);
-      setToast('Porcelet supprimé');
+      showToast('Porcelet supprimé', 'success');
       if (onDeleted) onDeleted();
-      onClose();
+      closeTimerRef.current = setTimeout(() => {
+        closeTimerRef.current = null;
+        setSaving(false);
+        onClose();
+      }, 1500);
     } catch (err) {
-      setToast(
+      showToast(
         err instanceof Error
           ? `Erreur : ${err.message}`
           : 'Erreur suppression',
+        'error',
       );
-    } finally {
       setSaving(false);
     }
   };
@@ -294,14 +324,6 @@ const QuickEditPorceletForm: React.FC<QuickEditPorceletFormProps> = ({
           </div>
         </form>
       </BottomSheet>
-
-      <IonToast
-        isOpen={toast !== ''}
-        message={toast}
-        duration={1800}
-        onDidDismiss={() => setToast('')}
-        position="bottom"
-      />
     </>
   );
 };

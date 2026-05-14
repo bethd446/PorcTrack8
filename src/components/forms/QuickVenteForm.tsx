@@ -1,17 +1,19 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { TrendingUp, Check, CheckCircle2 } from 'lucide-react';
+import { TrendingUp } from 'lucide-react';
 
-import { AppToast, BottomSheet, useAppToast } from '../agritech';
-import { FormField, Input, Select, Textarea, Button } from '@/design-system';
+import { Input, Select, Textarea } from '@/design-system';
 import { useFarm } from '../../context/FarmContext';
+import { useToast } from '../../context/ToastContext';
 import {
   insertFinance,
   updateBatchByCode,
 } from '../../services/supabaseWrites';
 import type { BandePorcelets } from '../../types/farm';
-import { useEscapeKey, useFocusFirstInput } from './useFormA11y';
+import { useFocusFirstInput } from './useFormA11y';
 import { useAuth } from '../../context/AuthContext';
 import { getDefaultValidationStatus } from '../../services/validationWorkflow';
+import { FieldError } from './_formFields';
+import QuickActionSheet from './QuickActionSheet';
 import {
   buildVentePayloads,
   computeRendementCarcasse,
@@ -41,10 +43,14 @@ const CANAL_LABELS: Record<VenteCanal, string> = {
  *     1. Réduire le nombre de vivants de la bande (et l'archiver si =0)
  *     2. Créer une ligne REVENU dans FINANCES pour la comptabilité
  *
- * Pattern (cf. QuickMortalityForm + QuickRefillForm) :
- *   - BottomSheet wrapper
- *   - 2 enqueues atomiques (update bande PUIS append finance)
- *   - Idempotent : valeurs absolues côté bande (VIVANTS = currentVivants - nb)
+ * Conforme FORM_CONTRACT Phase 2 :
+ *   - shell `<QuickActionSheet>` (form onSubmit + bouton type=submit)
+ *   - toast canonique `useToast()` (remplace `useAppToast`/`AppToast` local)
+ *   - validation `validateVente` → { ok, errors } + rendu via `<FieldError>`
+ *   - helpers date partagés `_formHelpers` (via `toIsoDateInput` de la logique)
+ *   - reset-on-open via `lastOpenKey` render-phase
+ *   - garde double-clic : `saving` maintenu jusqu'au `onClose`, `closeTimerRef`
+ *     + cleanup `useEffect`
  *
  * L'enqueue ordre est préservé pour que, en cas de replay offline, l'update
  * bande passe avant l'append finance (pas de comptabilité orpheline).
@@ -65,6 +71,7 @@ const QuickVenteForm: React.FC<QuickVenteFormProps> = ({
 }) => {
   const { refreshData } = useFarm();
   const { role } = useAuth();
+  const { showToast } = useToast();
   const vivantsActuels = bande.vivants ?? 0;
 
   const [nbVendus, setNbVendus] = useState<string>('');
@@ -79,13 +86,11 @@ const QuickVenteForm: React.FC<QuickVenteFormProps> = ({
   const [prixCarcasse, setPrixCarcasse] = useState<string>('');
 
   const [saving, setSaving] = useState(false);
-  const [success, setSuccess] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const { show: showToast, toastProps } = useAppToast();
 
   const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Render-time sync: reset quand la sheet s'ouvre ou que la bande change
+  // Reset-on-open : pattern lastOpenKey render-phase (FORM_CONTRACT).
   const [lastKey, setLastKey] = useState<{ isOpen: boolean; bandeId: string }>({
     isOpen,
     bandeId: bande.id,
@@ -105,7 +110,6 @@ const QuickVenteForm: React.FC<QuickVenteFormProps> = ({
       setPrixCarcasse('');
       setErrors({});
       setSaving(false);
-      setSuccess(false);
     }
   }
 
@@ -119,32 +123,16 @@ const QuickVenteForm: React.FC<QuickVenteFormProps> = ({
     };
   }, []);
 
-  const resetAndClose = useCallback((): void => {
+  const handleClose = useCallback((): void => {
+    if (saving) return;
     if (closeTimerRef.current) {
       clearTimeout(closeTimerRef.current);
       closeTimerRef.current = null;
     }
-    setNbVendus('');
-    setPoidsMoyen('90');
-    setPrixUnitaire('2100');
-    setAcheteur('');
-    setDateIso(toIsoDateInput());
-    setNotes('');
-    setCanal('DIRECT');
-    setAbattoirNom('');
-    setPoidsCarcasse('');
-    setPrixCarcasse('');
-    setErrors({});
-    setSaving(false);
-    setSuccess(false);
     onClose();
-  }, [onClose]);
+  }, [onClose, saving]);
 
-  // ─ A11y : Esc ferme la sheet + focus auto sur nbVendus ────────────────────
-  useEscapeKey(isOpen && !saving, resetAndClose);
-  const firstFieldRef = useFocusFirstInput<HTMLInputElement>(
-    isOpen && !success,
-  );
+  const firstFieldRef = useFocusFirstInput<HTMLInputElement>(isOpen);
 
   // ─ Parsing numériques ─────────────────────────────────────────────────────
   const nbNum = useMemo(() => {
@@ -253,8 +241,7 @@ const QuickVenteForm: React.FC<QuickVenteFormProps> = ({
         ? `Vente enregistrée · ${formatted} FCFA`
         : `Vente en file · ${formatted} FCFA · sync auto`;
 
-      showToast(baseMsg, online ? 'success' : 'info', { duration: 2800 });
-      setSuccess(true);
+      showToast(baseMsg, online ? 'success' : 'info', 2800);
 
       // Refresh parent (non-bloquant)
       try {
@@ -265,15 +252,17 @@ const QuickVenteForm: React.FC<QuickVenteFormProps> = ({
 
       if (onSuccess) onSuccess();
 
-      // Fermeture différée
+      // Garder saving=true jusqu'au onClose pour empêcher le double-clic
+      // dans la fenêtre 1.5s avant fermeture (FORM_CONTRACT).
       closeTimerRef.current = setTimeout(() => {
         closeTimerRef.current = null;
-        resetAndClose();
+        setSaving(false);
+        onClose();
       }, 1500);
     } catch (err) {
       console.error('[QuickVenteForm] enregistrement local échoué:', err);
       const msg = err instanceof Error ? err.message : 'Erreur enregistrement';
-      showToast(msg, 'error', { duration: 2800 });
+      showToast(msg, 'error', 2800);
       setSaving(false);
     }
   };
@@ -291,321 +280,287 @@ const QuickVenteForm: React.FC<QuickVenteFormProps> = ({
     ));
 
   return (
-    <BottomSheet
+    <QuickActionSheet
       isOpen={isOpen}
-      onClose={resetAndClose}
+      onClose={handleClose}
+      eyebrow="Vente porcs"
       title={`Enregistrer vente · ${idBandeDisplay}`}
-      height="full"
+      ariaLabel="Enregistrement d'une vente de porcs"
+      saving={saving}
+      isValid={isValid}
+      onSubmit={handleSubmit}
+      submitLabel="Valider vente"
+      submitAriaLabel="Valider la vente"
     >
-      <div
-        role="dialog"
-        aria-labelledby="vente-form-heading"
-        aria-modal="true"
-        className="space-y-5"
-      >
-        <h2 id="vente-form-heading" className="sr-only">
-          Enregistrement d'une vente de porcs
-        </h2>
-
-        {success ? (
-          /* ── Success state ───────────────────────────────────────────── */
-          <div
-            className="flex flex-col items-center justify-center py-16 animate-scale-in"
-            role="status"
-            aria-live="polite"
-          >
-            <CheckCircle2
-              size={38}
-              className="text-amber mb-4"
-              aria-hidden="true"
-              strokeWidth={2}
-            />
-            <p className="agritech-heading text-[18px] uppercase tracking-wide">
-              Vente enregistrée
-            </p>
-            <p className="mt-2 ft-code text-[12px] uppercase tracking-wide text-text-2 tabular-nums text-center px-4">
-              {idBandeDisplay} · {nbNum} porc{nbNum > 1 ? 's' : ''} · {montantTotal.toLocaleString('fr-FR')} FCFA
-            </p>
+      {/* ── Info bande (read-only) ──────────────────────────────── */}
+      <div className="card-dense !p-4 flex items-start gap-3">
+        <div className="inline-flex h-10 w-10 items-center justify-center rounded-md bg-bg-2 text-amber shrink-0">
+          <TrendingUp size={18} aria-hidden="true" />
+        </div>
+        <div className="min-w-0 flex-1">
+          <div className="text-mono-micro text-text-2">
+            Bande en finition
           </div>
-        ) : (
-          <form onSubmit={handleSubmit} className="space-y-5" noValidate>
-            {/* ── Info bande (read-only) ──────────────────────────────── */}
-            <div className="card-dense !p-4 flex items-start gap-3">
-              <div className="inline-flex h-10 w-10 items-center justify-center rounded-md bg-bg-2 text-amber shrink-0">
-                <TrendingUp size={18} aria-hidden="true" />
-              </div>
-              <div className="min-w-0 flex-1">
-                <div className="text-mono-micro text-text-2">
-                  Bande en finition
-                </div>
-                <div className="truncate ft-code text-[13px] text-text-0">
-                  {idBandeDisplay}
-                  {bande.boucleMere ? ` · ${bande.boucleMere}` : ''}
-                </div>
-                <div className="mt-1 flex flex-wrap gap-3 text-[11px] text-text-2">
-                  <span>
-                    Vivants actuels ·{' '}
-                    <span className="text-text-0">{vivantsActuels}</span>
-                  </span>
-                </div>
-              </div>
-            </div>
+          <div className="truncate ft-code text-[13px] text-text-0">
+            {idBandeDisplay}
+            {bande.boucleMere ? ` · ${bande.boucleMere}` : ''}
+          </div>
+          <div className="mt-1 flex flex-wrap gap-3 text-[11px] text-text-2">
+            <span>
+              Vivants actuels ·{' '}
+              <span className="text-text-0">{vivantsActuels}</span>
+            </span>
+          </div>
+        </div>
+      </div>
 
-            {/* ── Nombre de porcs vendus ───────────────────────────────── */}
-            <FormField
-              label={`Nombre de porcs vendus (max ${vivantsActuels})`}
-              required
-              error={errors.nbVendus}
-            >
+      {/* ── Nombre de porcs vendus ───────────────────────────────── */}
+      <div className="field">
+        <label className="label--v77" htmlFor="vente-nb">
+          NOMBRE DE PORCS VENDUS (MAX {vivantsActuels}) <span className="req">requis</span>
+        </label>
+        <Input
+          id="vente-nb"
+          ref={firstFieldRef}
+          type="number"
+          inputMode="numeric"
+          min={1}
+          max={vivantsActuels}
+          step={1}
+          aria-label="Nombre de porcs vendus"
+          aria-required="true"
+          aria-invalid={!!errors.nbVendus}
+          className="font-mono text-[24px] tabular-nums text-center"
+          placeholder="0"
+          value={nbVendus}
+          onChange={e => setNbVendus(e.target.value.replace(/[^\d]/g, ''))}
+          disabled={saving}
+        />
+        <FieldError message={errors.nbVendus} />
+      </div>
+
+      {/* ── Poids + Prix (grid 2-col) ────────────────────────────── */}
+      <div className="grid grid-cols-2 gap-3">
+        <div className="field">
+          <label className="label--v77" htmlFor="vente-poids">
+            POIDS MOYEN (KG) <span className="req">requis</span>
+          </label>
+          <Input
+            id="vente-poids"
+            type="text"
+            inputMode="decimal"
+            aria-label="Poids moyen par porc en kilogrammes"
+            aria-required="true"
+            aria-invalid={!!errors.poids}
+            className="tabular-nums"
+            placeholder="90"
+            value={poidsMoyen}
+            onChange={e => setPoidsMoyen(e.target.value.replace(/[^\d.,]/g, ''))}
+            disabled={saving}
+          />
+          <FieldError message={errors.poids} />
+        </div>
+
+        <div className="field">
+          <label className="label--v77" htmlFor="vente-prix">
+            PRIX UNIT. FCFA / KG <span className="req">requis</span>
+          </label>
+          <Input
+            id="vente-prix"
+            type="text"
+            inputMode="decimal"
+            aria-label="Prix unitaire en FCFA par kilogramme"
+            aria-required="true"
+            aria-invalid={!!errors.prix}
+            className="tabular-nums"
+            placeholder="2100"
+            value={prixUnitaire}
+            onChange={e => setPrixUnitaire(e.target.value.replace(/[^\d.,]/g, ''))}
+            disabled={saving}
+          />
+          <FieldError message={errors.prix} />
+        </div>
+      </div>
+
+      {/* ── Montant total (auto-calculé) ─────────────────────────── */}
+      <div
+        className="card-dense !p-3 flex items-center justify-between"
+        aria-live="polite"
+        aria-label={`Montant total estimé : ${montantTotal.toLocaleString('fr-FR')} FCFA`}
+      >
+        <span className="text-mono-label text-text-2">
+          Montant total
+        </span>
+        <span className="font-mono text-[16px] tabular-nums text-amber font-bold">
+          {montantTotal.toLocaleString('fr-FR')} FCFA
+        </span>
+      </div>
+
+      {/* ── Acheteur ─────────────────────────────────────────────── */}
+      <div className="field">
+        <label className="label--v77" htmlFor="vente-acheteur">
+          ACHETEUR <span className="req">requis</span>
+        </label>
+        <Input
+          id="vente-acheteur"
+          type="text"
+          aria-label="Nom de l'acheteur"
+          aria-required="true"
+          aria-invalid={!!errors.acheteur}
+          placeholder="Ex : Abattoir Abidjan"
+          value={acheteur}
+          onChange={e => setAcheteur(e.target.value)}
+          disabled={saving}
+          maxLength={VENTE_ACHETEUR_MAX}
+        />
+        <FieldError message={errors.acheteur} />
+      </div>
+
+      {/* ── Date vente ───────────────────────────────────────────── */}
+      <div className="field">
+        <label className="label--v77" htmlFor="vente-date">
+          DATE VENTE <span className="req">requis</span>
+        </label>
+        <Input
+          id="vente-date"
+          type="date"
+          aria-label="Date de la vente"
+          aria-required="true"
+          aria-invalid={!!errors.date}
+          className="font-mono tabular-nums"
+          value={dateIso}
+          onChange={e => setDateIso(e.target.value)}
+          disabled={saving}
+        />
+        <FieldError message={errors.date} />
+      </div>
+
+      {/* ── Canal de vente ──────────────────────────────────────── */}
+      <div className="field">
+        <label className="label--v77" htmlFor="vente-canal">CANAL DE VENTE</label>
+        <Select
+          id="vente-canal"
+          aria-label="Canal de vente"
+          aria-invalid={!!errors.canal}
+          value={canal}
+          onChange={e => setCanal(e.target.value as VenteCanal)}
+          disabled={saving}
+        >
+          {VENTE_CANAUX.map(c => (
+            <option key={c} value={c}>{CANAL_LABELS[c]}</option>
+          ))}
+        </Select>
+        <FieldError message={errors.canal} />
+      </div>
+
+      {/* ── Champs ABATTOIR (conditionnels) ─────────────────────── */}
+      {showAbattoirFields ? (
+        <div
+          className="space-y-3 rounded-md border border-border bg-bg-1 p-3"
+          aria-label="Informations abattoir et carcasse"
+        >
+          <div className="field">
+            <label className="label--v77" htmlFor="vente-abattoir">
+              NOM ABATTOIR <span className="req">requis</span>
+            </label>
+            <Input
+              id="vente-abattoir"
+              type="text"
+              aria-label="Nom de l'abattoir"
+              aria-required="true"
+              aria-invalid={!!errors.abattoirNom}
+              placeholder="Ex : Abattoir Abidjan"
+              value={abattoirNom}
+              onChange={e => setAbattoirNom(e.target.value)}
+              disabled={saving}
+              maxLength={VENTE_ABATTOIR_NOM_MAX}
+            />
+            <FieldError message={errors.abattoirNom} />
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div className="field">
+              <label className="label--v77" htmlFor="vente-carcasse">
+                POIDS CARCASSE TOTAL (KG) <span className="req">requis</span>
+              </label>
               <Input
-                id="vente-nb"
-                ref={firstFieldRef}
-                type="number"
-                inputMode="numeric"
-                min={1}
-                max={vivantsActuels}
-                step={1}
-                aria-label="Nombre de porcs vendus"
+                id="vente-carcasse"
+                type="text"
+                inputMode="decimal"
+                aria-label="Poids carcasse total en kilogrammes"
                 aria-required="true"
-                aria-invalid={!!errors.nbVendus}
-                aria-describedby={errors.nbVendus ? 'vente-nb-error' : undefined}
-                className="font-mono text-[24px] tabular-nums text-center"
+                aria-invalid={!!errors.poidsCarcasse}
+                className="tabular-nums"
                 placeholder="0"
-                value={nbVendus}
-                onChange={e => setNbVendus(e.target.value.replace(/[^\d]/g, ''))}
+                value={poidsCarcasse}
+                onChange={e => setPoidsCarcasse(e.target.value.replace(/[^\d.,]/g, ''))}
                 disabled={saving}
               />
-            </FormField>
-
-            {/* ── Poids + Prix (grid 2-col) ────────────────────────────── */}
-            <div className="grid grid-cols-2 gap-3">
-              <FormField label="Poids moyen (kg)" required error={errors.poids}>
-                <Input
-                  id="vente-poids"
-                  type="text"
-                  inputMode="decimal"
-                  aria-label="Poids moyen par porc en kilogrammes"
-                  aria-required="true"
-                  aria-invalid={!!errors.poids}
-                  aria-describedby={errors.poids ? 'vente-poids-error' : undefined}
-                  className="tabular-nums"
-                  placeholder="90"
-                  value={poidsMoyen}
-                  onChange={e => setPoidsMoyen(e.target.value.replace(/[^\d.,]/g, ''))}
-                  disabled={saving}
-                />
-              </FormField>
-
-              <FormField label="Prix unit. FCFA / kg" required error={errors.prix}>
-                <Input
-                  id="vente-prix"
-                  type="text"
-                  inputMode="decimal"
-                  aria-label="Prix unitaire en FCFA par kilogramme"
-                  aria-required="true"
-                  aria-invalid={!!errors.prix}
-                  aria-describedby={errors.prix ? 'vente-prix-error' : undefined}
-                  className="tabular-nums"
-                  placeholder="2100"
-                  value={prixUnitaire}
-                  onChange={e => setPrixUnitaire(e.target.value.replace(/[^\d.,]/g, ''))}
-                  disabled={saving}
-                />
-              </FormField>
+              <FieldError message={errors.poidsCarcasse} />
             </div>
 
-            {/* ── Montant total (auto-calculé) ─────────────────────────── */}
+            <div className="field">
+              <label className="label--v77" htmlFor="vente-prix-carcasse">
+                PRIX CARCASSE (FCFA / KG) <span className="req">requis</span>
+              </label>
+              <Input
+                id="vente-prix-carcasse"
+                type="text"
+                inputMode="decimal"
+                aria-label="Prix par kilogramme de carcasse en FCFA"
+                aria-required="true"
+                aria-invalid={!!errors.prixCarcasse}
+                className="tabular-nums"
+                placeholder="0"
+                value={prixCarcasse}
+                onChange={e => setPrixCarcasse(e.target.value.replace(/[^\d.,]/g, ''))}
+                disabled={saving}
+              />
+              <FieldError message={errors.prixCarcasse} />
+            </div>
+          </div>
+
+          {/* Badge rendement carcasse auto-calculé */}
+          {Number.isFinite(rendementPct) ? (
             <div
               className="card-dense !p-3 flex items-center justify-between"
               aria-live="polite"
-              aria-label={`Montant total estimé : ${montantTotal.toLocaleString('fr-FR')} FCFA`}
+              aria-label={`Rendement carcasse : ${rendementPct} pour cent`}
             >
               <span className="text-mono-label text-text-2">
-                Montant total
+                Rendement carcasse
               </span>
-              <span className="font-mono text-[16px] tabular-nums text-amber font-bold">
-                {montantTotal.toLocaleString('fr-FR')} FCFA
+              <span
+                className={[
+                  'text-[14px] tabular-nums font-bold rounded-full px-3 py-0.5',
+                  rendementPct >= VENTE_RENDEMENT_SEUIL_BON
+                    ? 'bg-green-500/15 text-green-600'
+                    : 'bg-amber/15 text-amber',
+                ].join(' ')}
+              >
+                {rendementPct.toFixed(1)}%
               </span>
             </div>
+          ) : null}
+        </div>
+      ) : null}
 
-            {/* ── Acheteur ─────────────────────────────────────────────── */}
-            <FormField label="Acheteur" required error={errors.acheteur}>
-              <Input
-                id="vente-acheteur"
-                type="text"
-                aria-label="Nom de l'acheteur"
-                aria-required="true"
-                aria-invalid={!!errors.acheteur}
-                aria-describedby={errors.acheteur ? 'vente-acheteur-error' : undefined}
-                placeholder="Ex : Abattoir Abidjan"
-                value={acheteur}
-                onChange={e => setAcheteur(e.target.value)}
-                disabled={saving}
-                maxLength={VENTE_ACHETEUR_MAX}
-              />
-            </FormField>
-
-            {/* ── Date vente ───────────────────────────────────────────── */}
-            <FormField label="Date vente" required error={errors.date}>
-              <Input
-                id="vente-date"
-                type="date"
-                aria-label="Date de la vente"
-                aria-required="true"
-                aria-invalid={!!errors.date}
-                aria-describedby={errors.date ? 'vente-date-error' : undefined}
-                className="font-mono tabular-nums"
-                value={dateIso}
-                onChange={e => setDateIso(e.target.value)}
-                disabled={saving}
-              />
-            </FormField>
-
-            {/* ── Canal de vente ──────────────────────────────────────── */}
-            <FormField label="Canal de vente" error={errors.canal}>
-              <Select
-                id="vente-canal"
-                aria-label="Canal de vente"
-                aria-invalid={!!errors.canal}
-                aria-describedby={errors.canal ? 'vente-canal-error' : undefined}
-                value={canal}
-                onChange={e => setCanal(e.target.value as VenteCanal)}
-                disabled={saving}
-              >
-                {VENTE_CANAUX.map(c => (
-                  <option key={c} value={c}>{CANAL_LABELS[c]}</option>
-                ))}
-              </Select>
-            </FormField>
-
-            {/* ── Champs ABATTOIR (conditionnels) ─────────────────────── */}
-            {showAbattoirFields ? (
-              <div
-                className="space-y-3 rounded-md border border-border bg-bg-1 p-3"
-                aria-label="Informations abattoir et carcasse"
-              >
-                <FormField label="Nom abattoir" required error={errors.abattoirNom}>
-                  <Input
-                    id="vente-abattoir"
-                    type="text"
-                    aria-label="Nom de l'abattoir"
-                    aria-required="true"
-                    aria-invalid={!!errors.abattoirNom}
-                    aria-describedby={errors.abattoirNom ? 'vente-abattoir-error' : undefined}
-                    placeholder="Ex : Abattoir Abidjan"
-                    value={abattoirNom}
-                    onChange={e => setAbattoirNom(e.target.value)}
-                    disabled={saving}
-                    maxLength={VENTE_ABATTOIR_NOM_MAX}
-                  />
-                </FormField>
-
-                <div className="grid grid-cols-2 gap-3">
-                  <FormField label="Poids carcasse total (kg)" required error={errors.poidsCarcasse}>
-                    <Input
-                      id="vente-carcasse"
-                      type="text"
-                      inputMode="decimal"
-                      aria-label="Poids carcasse total en kilogrammes"
-                      aria-required="true"
-                      aria-invalid={!!errors.poidsCarcasse}
-                      aria-describedby={errors.poidsCarcasse ? 'vente-carcasse-error' : undefined}
-                      className="tabular-nums"
-                      placeholder="0"
-                      value={poidsCarcasse}
-                      onChange={e => setPoidsCarcasse(e.target.value.replace(/[^\d.,]/g, ''))}
-                      disabled={saving}
-                    />
-                  </FormField>
-
-                  <FormField label="Prix carcasse (FCFA / kg)" required error={errors.prixCarcasse}>
-                    <Input
-                      id="vente-prix-carcasse"
-                      type="text"
-                      inputMode="decimal"
-                      aria-label="Prix par kilogramme de carcasse en FCFA"
-                      aria-required="true"
-                      aria-invalid={!!errors.prixCarcasse}
-                      aria-describedby={errors.prixCarcasse ? 'vente-prix-carcasse-error' : undefined}
-                      className="tabular-nums"
-                      placeholder="0"
-                      value={prixCarcasse}
-                      onChange={e => setPrixCarcasse(e.target.value.replace(/[^\d.,]/g, ''))}
-                      disabled={saving}
-                    />
-                  </FormField>
-                </div>
-
-                {/* Badge rendement carcasse auto-calculé */}
-                {Number.isFinite(rendementPct) ? (
-                  <div
-                    className="card-dense !p-3 flex items-center justify-between"
-                    aria-live="polite"
-                    aria-label={`Rendement carcasse : ${rendementPct} pour cent`}
-                  >
-                    <span className="text-mono-label text-text-2">
-                      Rendement carcasse
-                    </span>
-                    <span
-                      className={[
-                        'text-[14px] tabular-nums font-bold rounded-full px-3 py-0.5',
-                        rendementPct >= VENTE_RENDEMENT_SEUIL_BON
-                          ? 'bg-green-500/15 text-green-600'
-                          : 'bg-amber/15 text-amber',
-                      ].join(' ')}
-                    >
-                      {rendementPct.toFixed(1)}%
-                    </span>
-                  </div>
-                ) : null}
-              </div>
-            ) : null}
-
-            {/* ── Notes (optionnel) ────────────────────────────────────── */}
-            <FormField label="Notes" hint={`optionnel · ${notes.length}/${VENTE_NOTES_MAX}`}>
-              <Textarea
-                id="vente-notes"
-                aria-label="Notes complémentaires sur la vente"
-                aria-describedby="vente-notes-hint"
-                placeholder="Ex : livraison matin, camion 1"
-                value={notes}
-                onChange={e => setNotes(e.target.value)}
-                disabled={saving}
-                maxLength={VENTE_NOTES_MAX}
-              />
-            </FormField>
-
-            {/* ── Actions ─────────────────────────────────────────────── */}
-            <div className="flex gap-3 justify-end pt-2 border-t border-border">
-              <Button
-                variant="ghost"
-                onClick={resetAndClose}
-                disabled={saving}
-                ariaLabel="Annuler la vente"
-              >
-                Annuler
-              </Button>
-              <Button
-                type="submit"
-                variant="primary"
-                disabled={saving || !isValid}
-                ariaLabel="Valider la vente"
-                aria-busy={saving}
-              >
-                {saving ? 'Enregistrement…' : (
-                  <span className="inline-flex items-center gap-2">
-                    <Check size={14} aria-hidden="true" />
-                    Valider vente
-                  </span>
-                )}
-              </Button>
-            </div>
-          </form>
-        )}
+      {/* ── Notes (optionnel) ────────────────────────────────────── */}
+      <div className="field">
+        <label className="label--v77" htmlFor="vente-notes">
+          NOTES <span className="hint">optionnel · {notes.length}/{VENTE_NOTES_MAX}</span>
+        </label>
+        <Textarea
+          id="vente-notes"
+          aria-label="Notes complémentaires sur la vente"
+          placeholder="Ex : livraison matin, camion 1"
+          value={notes}
+          onChange={e => setNotes(e.target.value)}
+          disabled={saving}
+          maxLength={VENTE_NOTES_MAX}
+        />
       </div>
-
-      <AppToast {...toastProps} />
-    </BottomSheet>
+    </QuickActionSheet>
   );
 };
 

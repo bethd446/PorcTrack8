@@ -4,14 +4,24 @@
  * Ouvert depuis /today (cards "Confirmations en attente · CONFIRM REFORME").
  * Délègue à `confirmAction()` du confirmationQueue ; le shell saving/error/
  * toast est factorisé via `useConfirmFlow`.
+ *
+ * Conforme au contrat (FORM_CONTRACT) :
+ *  - shell `<QuickActionSheet>` (form onSubmit + bouton type=submit)
+ *  - helpers date partagés `_formHelpers` (todayIso)
+ *  - reset-on-open via `lastOpenKey` render-phase
+ *
+ * Note SPEC : le toast transactionnel reste géré par `useConfirmFlow`
+ * (hook partagé, hors zone) via son `IonToast` local — la bascule vers
+ * `useToast()` exigerait de modifier `useConfirmFlow.ts`.
  */
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { IonToast } from '@ionic/react';
 
-import { BottomSheet } from '../agritech';
-import { FormField, Input, Select, Button } from '@/design-system';
+import { FormField, Input, Select } from '@/design-system';
 import type { PendingConfirmation } from '../../services/confirmationQueue';
 import { useConfirmFlow } from './useConfirmFlow';
+import { todayIso } from './_formHelpers';
+import QuickActionSheet from './QuickActionSheet';
 
 export interface QuickConfirmReformeFormProps {
   isOpen: boolean;
@@ -28,8 +38,6 @@ const REFORME_MOTIFS = [
   { value: 'AGE', label: 'Âge' },
   { value: 'AUTRE', label: 'Autre' },
 ] as const;
-
-const todayIso = (): string => new Date().toISOString().slice(0, 10);
 
 const QuickConfirmReformeForm: React.FC<QuickConfirmReformeFormProps> = ({
   isOpen,
@@ -56,18 +64,22 @@ const QuickConfirmReformeForm: React.FC<QuickConfirmReformeFormProps> = ({
     onSuccess,
   });
 
-  useEffect(() => {
+  // Reset-on-open : pattern lastOpenKey render-phase (FORM_CONTRACT).
+  const [lastOpenKey, setLastOpenKey] = useState<{ isOpen: boolean; motifSuggere: string }>({
+    isOpen, motifSuggere,
+  });
+  if (lastOpenKey.isOpen !== isOpen || lastOpenKey.motifSuggere !== motifSuggere) {
+    setLastOpenKey({ isOpen, motifSuggere });
     if (isOpen) {
       setMotif(motifSuggere);
       setDateSortie(todayIso());
       setMotifAutre('');
       resetError();
     }
-    // resetError est stable (setter), pas besoin dans les deps.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isOpen, motifSuggere]);
+  }
 
-  const handleConfirm = async (): Promise<void> => {
+  const handleSubmit = async (e: React.FormEvent): Promise<void> => {
+    e.preventDefault();
     const motifLabel = motif === 'AUTRE'
       ? `Autre — ${motifAutre.trim() || 'non précisé'}`
       : (REFORME_MOTIFS.find(m => m.value === motif)?.label ?? motif);
@@ -79,11 +91,17 @@ const QuickConfirmReformeForm: React.FC<QuickConfirmReformeFormProps> = ({
 
   return (
     <>
-      <BottomSheet
+      <QuickActionSheet
         isOpen={isOpen}
         onClose={onClose}
+        eyebrow="Confirmation en attente"
         title={`Confirmer la réforme de ${truieId}`}
-        height="auto"
+        ariaLabel={`Confirmer la réforme de ${truieId}`}
+        saving={saving}
+        isValid={true}
+        onSubmit={handleSubmit}
+        submitLabel="Confirmer la réforme"
+        submitAriaLabel="Confirmer la réforme"
       >
         <div className="space-y-5">
           <div className="card-dense !p-4 space-y-1">
@@ -100,6 +118,7 @@ const QuickConfirmReformeForm: React.FC<QuickConfirmReformeFormProps> = ({
               aria-label="Motif retenu"
               value={motif}
               onChange={e => setMotif(e.target.value)}
+              disabled={saving}
             >
               {REFORME_MOTIFS.map(m => (
                 <option key={m.value} value={m.value}>{m.label}</option>
@@ -117,6 +136,7 @@ const QuickConfirmReformeForm: React.FC<QuickConfirmReformeFormProps> = ({
                 value={motifAutre}
                 onChange={e => setMotifAutre(e.target.value)}
                 placeholder="Ex. comportement agressif"
+                disabled={saving}
               />
             </FormField>
           )}
@@ -129,6 +149,7 @@ const QuickConfirmReformeForm: React.FC<QuickConfirmReformeFormProps> = ({
               value={dateSortie}
               onChange={e => setDateSortie(e.target.value)}
               max={todayIso()}
+              disabled={saving}
             />
           </FormField>
 
@@ -137,19 +158,8 @@ const QuickConfirmReformeForm: React.FC<QuickConfirmReformeFormProps> = ({
               {error}
             </p>
           )}
-
-          <Button
-            variant="primary"
-            fullWidth
-            onClick={handleConfirm}
-            disabled={saving}
-            aria-busy={saving}
-            ariaLabel="Confirmer la réforme"
-          >
-            {saving ? 'Enregistrement…' : 'Confirmer la réforme'}
-          </Button>
         </div>
-      </BottomSheet>
+      </QuickActionSheet>
 
       <IonToast
         isOpen={toast.show}

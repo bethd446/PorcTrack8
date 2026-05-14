@@ -7,7 +7,7 @@
  *  [2] Aucune bande Sous mère → empty state explicite
  *  [3] Submit : updateBatchByCode + updateSowByCode appelés avec bons params
  *  [4] Toast succès UNIQUEMENT après confirmation DB (pas avant)
- *  [5] Erreur Supabase → setError visible, pas masqué par success
+ *  [5] Erreur Supabase → toast erreur visible (useToast, FORM_CONTRACT)
  */
 
 import React from 'react';
@@ -61,6 +61,13 @@ import {
   updateSowByCode,
 } from '../../services/supabaseWrites';
 import QuickSevrageForm from './QuickSevrageForm';
+import { ToastProvider } from '../../context/ToastContext';
+
+// Le form émet désormais ses toasts via useToast() (context global, FORM_CONTRACT).
+// On wrappe les renders dans ToastProvider pour que les toasts soient montés.
+function renderForm(ui: React.ReactElement) {
+  return render(<ToastProvider>{ui}</ToastProvider>);
+}
 
 // ── Fixtures ────────────────────────────────────────────────────────────────
 
@@ -102,7 +109,7 @@ describe('QuickSevrageForm', () => {
       makeBande({ id: 'B4', idPortee: '26-T10-01', statut: 'Maternité' }),
     ];
 
-    render(<QuickSevrageForm isOpen onClose={() => undefined} />);
+    renderForm(<QuickSevrageForm isOpen onClose={() => undefined} />);
 
     const select = screen.getByLabelText('Bande') as HTMLSelectElement;
     const labels = Array.from(select.options).map(o => o.value);
@@ -116,7 +123,7 @@ describe('QuickSevrageForm', () => {
     mockFarm.bandes = [
       makeBande({ id: 'B1', idPortee: '26-T7-01', statut: 'Engraissement' }),
     ];
-    render(<QuickSevrageForm isOpen onClose={() => undefined} />);
+    renderForm(<QuickSevrageForm isOpen onClose={() => undefined} />);
     expect(
       screen.getByText(/Aucune bande éligible \(sous mère\)/i),
     ).toBeTruthy();
@@ -125,7 +132,7 @@ describe('QuickSevrageForm', () => {
   it('[3] submit happy path : updateBatchByCode + updateSowByCode appelés (avec poids)', async () => {
     mockFarm.bandes = [makeBande()];
 
-    render(
+    renderForm(
       <QuickSevrageForm
         isOpen
         onClose={() => undefined}
@@ -179,7 +186,7 @@ describe('QuickSevrageForm', () => {
     );
     mockFarm.bandes = [makeBande()];
 
-    render(
+    renderForm(
       <QuickSevrageForm
         isOpen
         onClose={() => undefined}
@@ -214,13 +221,13 @@ describe('QuickSevrageForm', () => {
     );
   });
 
-  it('[5] erreur Supabase → setError visible (role=alert), pas de toast', async () => {
+  it('[5] erreur Supabase → toast erreur visible (useToast)', async () => {
     (updateBatchByCode as ReturnType<typeof vi.fn>).mockRejectedValueOnce(
       new Error('Supabase 503'),
     );
     mockFarm.bandes = [makeBande()];
 
-    render(
+    renderForm(
       <QuickSevrageForm
         isOpen
         onClose={() => undefined}
@@ -238,14 +245,14 @@ describe('QuickSevrageForm', () => {
     );
     fireEvent.click(screen.getByRole('button', { name: /Enregistrer/i }));
 
-    const alert = await screen.findByRole('alert');
-    expect(alert.textContent).toMatch(/Supabase 503/);
-    expect(screen.queryByTestId('toast')).toBeNull();
+    // Erreur réseau → toast erreur (FORM_CONTRACT : useToast, plus de setError inline).
+    const toast = await screen.findByTestId('toast');
+    expect(toast.textContent).toMatch(/Supabase 503/);
   });
 
   it('[6] poids vide → bouton submit disabled, updateBatchByCode pas appelée', () => {
     mockFarm.bandes = [makeBande()];
-    render(
+    renderForm(
       <QuickSevrageForm
         isOpen
         onClose={() => undefined}
@@ -267,7 +274,7 @@ describe('QuickSevrageForm', () => {
 
   it('[7] poids hors plage 4-10 → warning visible mais submit possible', async () => {
     mockFarm.bandes = [makeBande()];
-    render(
+    renderForm(
       <QuickSevrageForm
         isOpen
         onClose={() => undefined}

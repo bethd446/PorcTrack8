@@ -13,11 +13,11 @@
  */
 
 import React, { useEffect, useMemo, useState } from 'react';
-import { IonToast } from '@ionic/react';
 import { Stethoscope, ChevronRight, Send } from 'lucide-react';
 
 import { BottomSheet } from '../agritech';
 import { Button, Input, Select, Textarea } from '@/design-system';
+import { useToast } from '../../context/ToastContext';
 import {
   insertHealthLogForPorcelet,
   listPorceletsByBatch,
@@ -50,6 +50,7 @@ const QuickHealthLogPorceletForm: React.FC<QuickHealthLogPorceletFormProps> = ({
   porceletId: presetPorceletId,
   onSuccess,
 }) => {
+  const { showToast } = useToast();
   const [step, setStep] = useState<1 | 2>(presetPorceletId ? 2 : 1);
   const [porcelets, setPorcelets] = useState<PorceletIndividuel[]>([]);
   const [loadingList, setLoadingList] = useState(false);
@@ -63,7 +64,6 @@ const QuickHealthLogPorceletForm: React.FC<QuickHealthLogPorceletFormProps> = ({
   const [notes, setNotes] = useState('');
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
-  const [toast, setToast] = useState('');
 
   // Reset complet à chaque ouverture
   const [lastOpen, setLastOpen] = useState(isOpen);
@@ -149,14 +149,15 @@ const QuickHealthLogPorceletForm: React.FC<QuickHealthLogPorceletFormProps> = ({
         notes: notes.trim() || undefined,
       });
       const boucle = selectedPorcelet?.boucle ?? selectedId;
-      setToast(`Maladie signalée pour porcelet ${boucle}`);
+      showToast(`Maladie signalée pour porcelet ${boucle}`, 'success');
       if (onSuccess) onSuccess();
       onClose();
     } catch (err) {
-      setToast(
+      showToast(
         err instanceof Error
           ? `Erreur : ${err.message}`
           : 'Erreur enregistrement',
+        'error', 4000,
       );
     } finally {
       setSaving(false);
@@ -164,13 +165,12 @@ const QuickHealthLogPorceletForm: React.FC<QuickHealthLogPorceletFormProps> = ({
   };
 
   return (
-    <>
-      <BottomSheet
-        isOpen={isOpen}
-        onClose={onClose}
-        title="Signaler maladie porcelet"
-        height="full"
-      >
+    <BottomSheet
+      isOpen={isOpen}
+      onClose={onClose}
+      title="Signaler maladie porcelet"
+      height="full"
+    >
         <div className="flex items-center gap-3 mb-4">
           <div className="inline-flex h-10 w-10 items-center justify-center rounded-md bg-bg-2 text-red">
             <Stethoscope size={18} aria-hidden="true" />
@@ -443,16 +443,7 @@ const QuickHealthLogPorceletForm: React.FC<QuickHealthLogPorceletFormProps> = ({
             </Button>
           </form>
         )}
-      </BottomSheet>
-
-      <IonToast
-        isOpen={!!toast}
-        message={toast}
-        duration={3000}
-        onDidDismiss={() => setToast('')}
-        position="bottom"
-      />
-    </>
+    </BottomSheet>
   );
 };
 

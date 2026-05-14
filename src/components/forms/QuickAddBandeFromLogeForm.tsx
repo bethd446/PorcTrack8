@@ -12,10 +12,17 @@
  *   - Création : insertBatch + (optionnel) addBatchSource
  *   - Édition d'une bande PENDING : précharge depuis Supabase, UPDATE avec
  *     validation_status='VALIDATED'.
+ *
+ * Migration partielle FORM_CONTRACT (Phase 2 · Batch C) :
+ *   - toast canonique `useToast()` (remplace IonToast local)
+ *   - garde double-clic : `closeTimerRef` + cleanup `useEffect`
+ *   - reset-on-open déjà en render-phase (`lastOpen`)
+ *   Le shell `<QuickActionSheet>` n'est PAS applicable : ce form est un
+ *   wizard 5 étapes avec navigation et footers par étape ; il reste sur
+ *   `<BottomSheet>` + composants DS.
  */
 
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { IonToast } from '@ionic/react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ChevronLeft, ChevronRight, Save, Plus, Shuffle, X } from 'lucide-react';
 
 import { BottomSheet } from '../agritech';
@@ -27,6 +34,7 @@ import {
 } from '../../services/supabaseWrites';
 import { supabase } from '../../services/supabaseClient';
 import { useFarm } from '../../context/FarmContext';
+import { useToast } from '../../context/ToastContext';
 import { useEscapeKey } from './useFormA11y';
 import type { Loge } from '../../types/farm';
 import {
@@ -97,7 +105,9 @@ const QuickAddBandeFromLogeForm: React.FC<QuickAddBandeFromLogeFormProps> = ({
   editPendingBatchId,
 }) => {
   const { truies, verrats, bandes, refreshData } = useFarm();
+  const { showToast } = useToast();
   const isEditMode = !!editPendingBatchId;
+  const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [step, setStep] = useState<Step>(1);
   const [loges, setLoges] = useState<Loge[]>([]);
   const [selectedLogeId, setSelectedLogeId] = useState<string>('');
@@ -110,7 +120,12 @@ const QuickAddBandeFromLogeForm: React.FC<QuickAddBandeFromLogeFormProps> = ({
   const [verratPereId, setVerratPereId] = useState('');
   const [errors, setErrors] = useState<FromLogeValidation['errors']>({});
   const [saving, setSaving] = useState(false);
-  const [toast, setToast] = useState('');
+
+  useEffect(() => {
+    return () => {
+      if (closeTimerRef.current) { clearTimeout(closeTimerRef.current); closeTimerRef.current = null; }
+    };
+  }, []);
 
   // Reset à l'ouverture
   const [lastOpen, setLastOpen] = useState(isOpen);
@@ -228,6 +243,7 @@ const QuickAddBandeFromLogeForm: React.FC<QuickAddBandeFromLogeFormProps> = ({
 
   const handleClose = useCallback(() => {
     if (saving) return;
+    if (closeTimerRef.current) { clearTimeout(closeTimerRef.current); closeTimerRef.current = null; }
     onClose();
   }, [onClose, saving]);
 
@@ -342,7 +358,7 @@ const QuickAddBandeFromLogeForm: React.FC<QuickAddBandeFromLogeFormProps> = ({
             throw new Error(error.message);
           }
         }
-        setToast(`Bande validée : ${logeNumeroPrefixed(selectedLoge)}`);
+        showToast(`Bande validée : ${logeNumeroPrefixed(selectedLoge)}`, 'success', 2200);
       } else {
         // ── INSERT nouvelle bande ───────────────────────────────────────
         const insertPayload: Record<string, unknown> = {
@@ -397,8 +413,9 @@ const QuickAddBandeFromLogeForm: React.FC<QuickAddBandeFromLogeFormProps> = ({
           }
         }
 
-        setToast(
+        showToast(
           `Bande ${generatedCodeId} créée dans ${logeNumeroPrefixed(selectedLoge)}`,
+          'success', 2200,
         );
       }
 
@@ -408,12 +425,18 @@ const QuickAddBandeFromLogeForm: React.FC<QuickAddBandeFromLogeFormProps> = ({
         /* noop */
       }
       onSuccess?.();
-      onClose();
+      // Garder saving=true jusqu'au onClose pour empêcher le double-clic dans
+      // la fenêtre 1.5s entre toast success et fermeture (FORM_CONTRACT).
+      closeTimerRef.current = setTimeout(() => {
+        closeTimerRef.current = null;
+        setSaving(false);
+        onClose();
+      }, 1500);
     } catch (err) {
-      setToast(
+      showToast(
         err instanceof Error ? `Erreur : ${err.message}` : 'Erreur enregistrement',
+        'error', 2200,
       );
-    } finally {
       setSaving(false);
     }
   };
@@ -941,14 +964,6 @@ const QuickAddBandeFromLogeForm: React.FC<QuickAddBandeFromLogeFormProps> = ({
           )}
         </form>
       </BottomSheet>
-
-      <IonToast
-        isOpen={toast !== ''}
-        message={toast}
-        duration={2200}
-        onDidDismiss={() => setToast('')}
-        position="bottom"
-      />
     </>
   );
 };

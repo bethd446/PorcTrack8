@@ -13,6 +13,7 @@ import {
   updateBoarByCode,
 } from '../../services/supabaseWrites';
 import { safeDate } from '../../lib/truieHelpers';
+import { todayIso } from './_formHelpers';
 import type { BandePorcelets, Truie, Verrat } from '../../types/farm';
 import { extractPeseesForBande } from '../../services/growthAnalyzer';
 import { markPeseeEffectuee } from '../../services/peseePlanifieesService';
@@ -275,11 +276,11 @@ const QuickPeseeForm: React.FC<QuickPeseeFormProps> = ({ isOpen, onClose, peseeI
       // la dernière pesée en notes pour audit (le schéma DB ne porte pas ce champ).
       if (subjectType === 'TRUIE') {
         await updateSowByCode(selectedSubject.id, {
-          notes: `Dernière pesée : ${poids} kg (${new Date().toISOString().slice(0, 10)})`,
+          notes: `Dernière pesée : ${poids} kg (${todayIso()})`,
         });
       } else if (subjectType === 'VERRAT') {
         await updateBoarByCode(selectedSubject.id, {
-          notes: `Dernière pesée : ${poids} kg (${new Date().toISOString().slice(0, 10)})`,
+          notes: `Dernière pesée : ${poids} kg (${todayIso()})`,
         });
       }
 

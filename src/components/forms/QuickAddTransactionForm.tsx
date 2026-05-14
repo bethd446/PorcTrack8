@@ -1,38 +1,29 @@
 /**
  * QuickAddTransactionForm — Création rapide d'une transaction FINANCES
  * ════════════════════════════════════════════════════════════════════════
- * BottomSheet : Date · Type · Catégorie · Libellé · Montant · Bande · Notes.
+ * Date · Type · Catégorie · Libellé · Montant · Bande · Notes.
  *
- * Submit → `enqueueAppendRow('FINANCES', [DATE, CATEGORIE, LIBELLE, MONTANT,
- *           TYPE, BANDE_ID, NOTES])` — ordre canonique tel que spécifié mission.
+ * Submit → `insertFinance(...)` depuis la row canonique
+ *   [DATE (dd/MM/yyyy), CATEGORIE, LIBELLE, MONTANT, TYPE, BANDE_ID, NOTES].
  *
- * - Date : input[type=date] (yyyy-MM-dd) → converti en dd/MM/yyyy pour Sheets.
- * - Type : 'REVENU' | 'DEPENSE' (boutons radio).
- * - Catégorie : liste canonique ALIMENT, VETO, VETERINAIRE, MAIN_OEUVRE,
- *   MAINTENANCE, VENTE_PORCS, VENTE_AUTRE, AUTRE.
- * - Libellé : text obligatoire, max 80.
- * - Montant FCFA : number obligatoire, > 0.
- * - Bande liée : select parmi les bandes actives (optionnel).
- * - Notes : textarea max 200.
+ * Conforme FORM_CONTRACT : shell `<QuickActionSheet>`, `<form onSubmit>`,
+ * toast canonique `useToast()`, validation `{ ok, errors, row }` +
+ * `<FieldError>`, reset-on-open `lastOpenKey`, garde double-clic
+ * `closeTimerRef` + cleanup.
  *
- * Toast online/offline + refreshData au succès.
- *
- * Exports nommés (utilisés par les tests) :
- *   - validateAddTransaction()
- *   - buildAddTransactionRow()
- *   - CATEGORIES, TYPES
+ * Compagnon tests : QuickAddTransactionForm.test.tsx
+ * Logique pure : ./quickAddTransactionLogic.ts
  */
 
-import React, { useCallback, useState } from 'react';
-import { IonToast } from '@ionic/react';
-import { Plus, Save } from 'lucide-react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 
-import { BottomSheet } from '../agritech';
-import { FormField, Input, Select, Textarea, Button, RadioGroup } from '@/design-system';
 import { insertFinance } from '../../services/supabaseWrites';
 import { useFarm } from '../../context/FarmContext';
+import { useToast } from '../../context/ToastContext';
 import type { FinanceType } from '../../types/farm';
-import { useEscapeKey, useFocusFirstInput } from './useFormA11y';
+import { useFocusFirstInput } from './useFormA11y';
+import { FieldError } from './_formFields';
+import QuickActionSheet from './QuickActionSheet';
 import {
   CATEGORIES,
   TYPES,
@@ -61,6 +52,7 @@ const QuickAddTransactionForm: React.FC<QuickAddTransactionFormProps> = ({
   defaultType = 'DEPENSE',
 }) => {
   const { bandes, refreshData } = useFarm();
+  const { showToast } = useToast();
 
   const [date, setDate] = useState<string>(() => todayIso());
   const [type, setType] = useState<FinanceType>(defaultType);
@@ -71,15 +63,16 @@ const QuickAddTransactionForm: React.FC<QuickAddTransactionFormProps> = ({
   const [notes, setNotes] = useState<string>('');
   const [errors, setErrors] = useState<AddTransactionValidation['errors']>({});
   const [saving, setSaving] = useState(false);
-  const [toast, setToast] = useState<string>('');
 
-  // Reset à l'ouverture (render-time sync)
-  const [lastKey, setLastKey] = useState<{ isOpen: boolean; defaultType: FinanceType }>({
+  const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Reset-on-open : pattern lastOpenKey render-phase (FORM_CONTRACT).
+  const [lastOpenKey, setLastOpenKey] = useState<{ isOpen: boolean; defaultType: FinanceType }>({
     isOpen,
     defaultType,
   });
-  if (lastKey.isOpen !== isOpen || lastKey.defaultType !== defaultType) {
-    setLastKey({ isOpen, defaultType });
+  if (lastOpenKey.isOpen !== isOpen || lastOpenKey.defaultType !== defaultType) {
+    setLastOpenKey({ isOpen, defaultType });
     if (isOpen) {
       setDate(todayIso());
       setType(defaultType);
@@ -93,13 +86,18 @@ const QuickAddTransactionForm: React.FC<QuickAddTransactionFormProps> = ({
     }
   }
 
+  useEffect(() => {
+    return () => {
+      if (closeTimerRef.current) { clearTimeout(closeTimerRef.current); closeTimerRef.current = null; }
+    };
+  }, []);
+
   const handleClose = useCallback(() => {
     if (saving) return;
+    if (closeTimerRef.current) { clearTimeout(closeTimerRef.current); closeTimerRef.current = null; }
     onClose();
   }, [onClose, saving]);
 
-  // A11y : Esc ferme + focus auto premier input
-  useEscapeKey(isOpen && !saving, handleClose);
   const firstFieldRef = useFocusFirstInput<HTMLInputElement>(isOpen);
 
   const handleSubmit = async (e: React.FormEvent): Promise<void> => {
@@ -129,214 +127,193 @@ const QuickAddTransactionForm: React.FC<QuickAddTransactionFormProps> = ({
         notes: noteParts.join(' · '),
       });
       const online = typeof navigator !== 'undefined' && navigator.onLine;
-      setToast(online ? 'Transaction ajoutée' : 'Transaction en file · sync auto');
+      showToast(
+        online ? 'Transaction ajoutée' : 'Transaction en file · sync auto',
+        online ? 'success' : 'info',
+      );
       try {
         await refreshData(true);
       } catch {
         /* noop */
       }
       if (onSuccess) onSuccess();
-      onClose();
+      // Garde double-clic : saving maintenu jusqu'au onClose (FORM_CONTRACT).
+      closeTimerRef.current = setTimeout(() => {
+        closeTimerRef.current = null;
+        setSaving(false);
+        onClose();
+      }, 1500);
     } catch (err) {
-      setToast(
+      showToast(
         err instanceof Error ? `Erreur : ${err.message}` : 'Erreur enregistrement',
+        'error',
+        4000,
       );
-    } finally {
       setSaving(false);
     }
   };
 
   return (
-    <>
-      <BottomSheet
-        isOpen={isOpen}
-        onClose={handleClose}
-        title="Nouvelle transaction"
-        height="full"
-      >
-        <form
-          onSubmit={handleSubmit}
-          className="space-y-5"
-          noValidate
-          aria-label="Création d'une nouvelle transaction"
+    <QuickActionSheet
+      isOpen={isOpen}
+      onClose={handleClose}
+      eyebrow="Nouvelle transaction"
+      title="Ajouter une transaction"
+      ariaLabel="Création d'une nouvelle transaction"
+      saving={saving}
+      isValid
+      onSubmit={handleSubmit}
+      submitLabel="Ajouter"
+      submitAriaLabel="Ajouter la transaction"
+    >
+      <div className="field">
+        <label className="label--v77" htmlFor="add-tx-date">
+          DATE <span className="req">requis</span>
+        </label>
+        <input
+          id="add-tx-date"
+          ref={firstFieldRef}
+          className={`field__input mono${date ? ' filled' : ' field__input--ghost'}`}
+          type="date"
+          aria-label="Date de la transaction"
+          aria-required="true"
+          aria-invalid={!!errors.date}
+          value={date}
+          onChange={e => setDate(e.target.value)}
+          disabled={saving}
+        />
+        <FieldError message={errors.date} />
+      </div>
+
+      <div className="field">
+        <label className="label--v77" htmlFor="add-tx-type">TYPE</label>
+        <select
+          id="add-tx-type"
+          className={`field__input${type ? ' filled' : ''}`}
+          aria-label="Type"
+          value={type}
+          onChange={e => setType(e.target.value as FinanceType)}
+          disabled={saving}
         >
-          {/* Header */}
-          <div className="flex items-center gap-3">
-            <div className="inline-flex h-10 w-10 items-center justify-center rounded-md bg-bg-2 text-accent">
-              <Plus size={18} aria-hidden="true" />
-            </div>
-            <p className="text-mono-label text-text-1">
-              Ajouter une transaction
-            </p>
-          </div>
+          {TYPES.map(t => (
+            <option key={t} value={t}>
+              {t}
+            </option>
+          ))}
+        </select>
+      </div>
 
-          <FormField label="Date" required error={errors.date}>
-            <Input
-              id="add-tx-date"
-              ref={firstFieldRef}
-              type="date"
-              aria-label="Date de la transaction"
-              aria-required="true"
-              aria-invalid={!!errors.date}
-              aria-describedby={errors.date ? 'add-tx-date-error' : undefined}
-              value={date}
-              onChange={e => setDate(e.target.value)}
-              disabled={saving}
-              invalid={!!errors.date}
-            />
-          </FormField>
+      <div className="field">
+        <label className="label--v77" htmlFor="add-tx-cat">CATÉGORIE</label>
+        <select
+          id="add-tx-cat"
+          className={`field__input${categorie ? ' filled' : ''}`}
+          aria-label="Catégorie de la transaction"
+          value={categorie}
+          onChange={e => setCategorie(e.target.value as TransactionCategorie)}
+          disabled={saving}
+        >
+          {CATEGORIES.map(c => (
+            <option key={c} value={c}>
+              {c}
+            </option>
+          ))}
+        </select>
+      </div>
 
-          {/* V70.9 : Radio DS dédié — remplace le radiogroup custom */}
-          <RadioGroup
-            label="Type"
-            value={type}
-            onChange={(v) => setType(v as typeof type)}
-            disabled={saving}
-            options={TYPES.map((t) => ({ value: t, label: t }))}
-          />
+      <div className="field">
+        <label className="label--v77" htmlFor="add-tx-libelle">
+          LIBELLÉ <span className="req">requis</span>
+        </label>
+        <input
+          id="add-tx-libelle"
+          className={`field__input${libelle ? ' filled' : ' field__input--ghost'}`}
+          type="text"
+          maxLength={80}
+          aria-label="Libellé de la transaction"
+          aria-required="true"
+          aria-invalid={!!errors.libelle}
+          placeholder="Ex: Sac aliment croissance"
+          value={libelle}
+          onChange={e => setLibelle(e.target.value)}
+          disabled={saving}
+          autoComplete="off"
+        />
+        <FieldError message={errors.libelle} />
+        {!errors.libelle ? (
+          <span className="hint">{libelle.trim().length}/80</span>
+        ) : null}
+      </div>
 
-          <FormField label="Catégorie">
-            <Select
-              id="add-tx-cat"
-              aria-label="Catégorie de la transaction"
-              value={categorie}
-              onChange={e => setCategorie(e.target.value as TransactionCategorie)}
-              disabled={saving}
-            >
-              {CATEGORIES.map(c => (
-                <option key={c} value={c}>
-                  {c}
-                </option>
-              ))}
-            </Select>
-          </FormField>
+      <div className="field">
+        <label className="label--v77" htmlFor="add-tx-montant">
+          MONTANT FCFA <span className="req">requis</span>
+        </label>
+        <input
+          id="add-tx-montant"
+          className={`field__input mono${montant ? ' filled' : ' field__input--ghost'}`}
+          type="number"
+          inputMode="decimal"
+          min={0}
+          step={1}
+          aria-label="Montant en FCFA"
+          aria-required="true"
+          aria-invalid={!!errors.montant}
+          placeholder="0"
+          value={montant}
+          onChange={e => setMontant(e.target.value)}
+          disabled={saving}
+        />
+        <FieldError message={errors.montant} />
+        {!errors.montant ? (
+          <span className="hint">Valeur strictement positive</span>
+        ) : null}
+      </div>
 
-          <FormField
-            label="Libellé"
-            required
-            hint={`${libelle.trim().length}/80`}
-            error={errors.libelle}
-          >
-            <Input
-              id="add-tx-libelle"
-              type="text"
-              maxLength={80}
-              aria-label="Libellé de la transaction"
-              aria-required="true"
-              aria-invalid={!!errors.libelle}
-              aria-describedby={
-                errors.libelle ? 'add-tx-libelle-error' : 'add-tx-libelle-hint'
-              }
-              placeholder="Ex: Sac aliment croissance"
-              value={libelle}
-              onChange={e => setLibelle(e.target.value)}
-              disabled={saving}
-              autoComplete="off"
-              invalid={!!errors.libelle}
-            />
-          </FormField>
+      <div className="field">
+        <label className="label--v77" htmlFor="add-tx-bande">
+          BANDE LIÉE <span className="hint">optionnel</span>
+        </label>
+        <select
+          id="add-tx-bande"
+          className={`field__input${bandeId ? ' filled' : ''}`}
+          aria-label="Bande liée à la transaction"
+          value={bandeId}
+          onChange={e => setBandeId(e.target.value)}
+          disabled={saving}
+        >
+          <option value="">— aucune —</option>
+          {bandes.map(b => (
+            <option key={b.id} value={b.id}>
+              {b.idPortee || b.id}
+              {b.truie ? ` · ${b.truie}` : ''}
+            </option>
+          ))}
+        </select>
+      </div>
 
-          <FormField
-            label="Montant FCFA"
-            required
-            hint="Valeur strictement positive"
-            error={errors.montant}
-          >
-            <Input
-              id="add-tx-montant"
-              type="number"
-              inputMode="decimal"
-              min={0}
-              step={1}
-              aria-label="Montant en FCFA"
-              aria-required="true"
-              aria-invalid={!!errors.montant}
-              aria-describedby={
-                errors.montant ? 'add-tx-montant-error' : 'add-tx-montant-hint'
-              }
-              className="font-mono text-[22px] tabular-nums text-right"
-              placeholder="0"
-              value={montant}
-              onChange={e => setMontant(e.target.value)}
-              disabled={saving}
-              invalid={!!errors.montant}
-            />
-          </FormField>
-
-          <FormField label="Bande liée" hint="optionnel">
-            <Select
-              id="add-tx-bande"
-              aria-label="Bande liée à la transaction"
-              value={bandeId}
-              onChange={e => setBandeId(e.target.value)}
-              disabled={saving}
-            >
-              <option value="">— aucune —</option>
-              {bandes.map(b => (
-                <option key={b.id} value={b.id}>
-                  {b.idPortee || b.id}
-                  {b.truie ? ` · ${b.truie}` : ''}
-                </option>
-              ))}
-            </Select>
-          </FormField>
-
-          <FormField
-            label="Notes"
-            hint={errors.notes ? undefined : `${notes.trim().length}/200`}
-            error={errors.notes}
-          >
-            <Textarea
-              id="add-tx-notes"
-              maxLength={200}
-              rows={3}
-              aria-label="Notes libres sur la transaction"
-              aria-invalid={!!errors.notes}
-              aria-describedby={
-                errors.notes ? 'add-tx-notes-error' : 'add-tx-notes-hint'
-              }
-              placeholder="Observations, référence facture…"
-              value={notes}
-              onChange={e => setNotes(e.target.value)}
-              disabled={saving}
-            />
-          </FormField>
-
-          <div className="flex gap-3 justify-end pt-2 sticky bottom-0 bg-bg-1 -mx-4 px-4 pb-2 border-t border-border">
-            <Button
-              variant="secondary"
-              onClick={handleClose}
-              disabled={saving}
-              ariaLabel="Annuler et fermer"
-            >
-              Annuler
-            </Button>
-            <Button
-              type="submit"
-              variant="primary"
-              disabled={saving}
-              aria-busy={saving}
-              ariaLabel="Ajouter la transaction"
-            >
-              {saving ? 'Enregistrement…' : (
-                <span className="inline-flex items-center gap-2">
-                  Ajouter
-                  <Save size={14} aria-hidden="true" />
-                </span>
-              )}
-            </Button>
-          </div>
-        </form>
-      </BottomSheet>
-
-      <IonToast
-        isOpen={toast !== ''}
-        message={toast}
-        duration={1800}
-        onDidDismiss={() => setToast('')}
-        position="bottom"
-      />
-    </>
+      <div className="field">
+        <label className="label--v77" htmlFor="add-tx-notes">
+          NOTES <span className="hint">optionnel</span>
+        </label>
+        <textarea
+          id="add-tx-notes"
+          className={`field__input${notes ? ' filled' : ' field__input--ghost'}`}
+          maxLength={200}
+          rows={3}
+          aria-label="Notes libres sur la transaction"
+          aria-invalid={!!errors.notes}
+          placeholder="Observations, référence facture…"
+          value={notes}
+          onChange={e => setNotes(e.target.value)}
+          disabled={saving}
+        />
+        <FieldError message={errors.notes} />
+        {!errors.notes ? (
+          <span className="hint">{notes.trim().length}/200</span>
+        ) : null}
+      </div>
+    </QuickActionSheet>
   );
 };
 

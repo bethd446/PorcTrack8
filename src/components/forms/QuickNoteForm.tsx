@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { IonSpinner, IonToast } from '@ionic/react';
+import { IonSpinner } from '@ionic/react';
 import { Send, ClipboardList, Mic, MicOff, X, Camera, Loader2 } from 'lucide-react';
 import { insertNote } from '../../services/supabaseWrites';
 import { useFarm } from '../../context/FarmContext';
@@ -8,6 +8,7 @@ import { useToast } from '../../context/ToastContext';
 import { kvGet } from '../../services/kvStore';
 import { uploadAnimalPhoto, deleteAnimalPhoto, PhotoUploadError } from '../../services/photoUpload';
 import { useVoiceDictation } from '../../services/voiceDictation';
+import { FieldError } from './_formFields';
 
 /**
  * QuickNoteForm — Saisie rapide d'une note terrain enrichie (V21 · V78 sheet V77).
@@ -109,10 +110,6 @@ const QuickNoteForm: React.FC<QuickNoteFormProps> = ({ subjectType, subjectId, o
   const [photoError, setPhotoError] = useState<string | null>(null);
   const [tags, setTags] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
-  const [toast, setToast] = useState<{ show: boolean; message: string }>({
-    show: false,
-    message: '',
-  });
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const dictation = useVoiceDictation('fr-FR');
@@ -217,11 +214,12 @@ const QuickNoteForm: React.FC<QuickNoteFormProps> = ({ subjectType, subjectId, o
       setPhotoUrl(null);
       setTags([]);
       const online = typeof navigator !== 'undefined' && navigator.onLine;
-      setToast({
-        show: true,
-        message: online ? 'Note enregistrée' : 'Note mise en file · sync auto',
-      });
-      showToast(`Note ajoutée · ${subjectType} ${subjectId}`, 'success');
+      showToast(
+        online
+          ? `Note ajoutée · ${subjectType} ${subjectId}`
+          : `Note mise en file · sync auto · ${subjectType} ${subjectId}`,
+        online ? 'success' : 'info',
+      );
       try {
         await refreshData(true);
       } catch {
@@ -229,7 +227,6 @@ const QuickNoteForm: React.FC<QuickNoteFormProps> = ({ subjectType, subjectId, o
       }
       if (onSuccess) onSuccess();
     } catch (err) {
-      setToast({ show: true, message: 'Erreur enregistrement local' });
       showToast(
         (err as Error)?.message ?? "Erreur lors de l'enregistrement de la note",
         'error',
@@ -451,7 +448,6 @@ const QuickNoteForm: React.FC<QuickNoteFormProps> = ({ subjectType, subjectId, o
           style={{ minHeight: 96, resize: 'vertical' }}
           aria-label="Note terrain"
           aria-invalid={!!errors.note}
-          aria-describedby={errors.note ? 'quick-note-error' : undefined}
           maxLength={MAX_NOTE_LEN}
           placeholder="Écris ton observation ici…"
           value={note}
@@ -459,13 +455,7 @@ const QuickNoteForm: React.FC<QuickNoteFormProps> = ({ subjectType, subjectId, o
           disabled={loading}
         />
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 4 }}>
-          {errors.note ? (
-            <p id="quick-note-error" role="alert" style={{ fontSize: 11, color: 'var(--pt-danger)', margin: 0 }}>
-              {errors.note}
-            </p>
-          ) : (
-            <span />
-          )}
+          <FieldError message={errors.note} />
           <span style={{ fontFamily: 'var(--pt-font-mono)', fontSize: 10, color: 'var(--pt-subtle)' }}>
             {note.length}/{MAX_NOTE_LEN}
           </span>
@@ -488,14 +478,6 @@ const QuickNoteForm: React.FC<QuickNoteFormProps> = ({ subjectType, subjectId, o
           </>
         )}
       </button>
-
-      <IonToast
-        isOpen={toast.show}
-        message={toast.message}
-        duration={3000}
-        onDidDismiss={() => setToast({ show: false, message: '' })}
-        position="bottom"
-      />
     </form>
   );
 };

@@ -1,25 +1,36 @@
 /**
- * QuickAddBandeForm — Création manuelle d'une bande (Sprint 5 v76)
+ * QuickAddBandeForm — Création manuelle d'une bande.
  * ════════════════════════════════════════════════════════════════════════
- * Sheet bottom v76 · Truie mère (autocomplete) · Date MB · NV/MN steppers
- * · ID portée auto-suggéré (aperçu mensuel "Mai 2026 · M-04").
+ * Migré au FORM_CONTRACT (Phase 2 · Batch C) :
+ *  - shell `<QuickActionSheet>` (form onSubmit + bouton type=submit)
+ *  - toast canonique `useToast()` (remplace useAppToast + <AppToast> local)
+ *  - picker d'entité partagé `<EntityPicker mode="autocomplete">` (truie mère)
+ *  - rendu d'erreur via `<FieldError>` (remplace `errMsg()` inline)
+ *  - helpers date partagés `_formHelpers` (todayIso)
+ *  - reset-on-open via `lastOpen` render-phase
+ *  - garde double-clic : `saving` maintenu jusqu'au `onClose`, `closeTimerRef`
+ *    + cleanup `useEffect`
+ *
+ * Truie mère (autocomplete) · Date MB · NV/MN steppers · ID portée auto-suggéré.
  *
  * NB : 99% des bandes sont auto-créées via la mise-bas. Ce form sert à
  * importer une bande historique.
  */
 
-import React, { useCallback, useMemo, useState } from 'react';
-import { IonModal } from '@ionic/react';
-import { Check, Minus, Plus, X } from 'lucide-react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Minus, Plus } from 'lucide-react';
 
-import { AppToast, useAppToast } from '../agritech';
+import { useToast } from '../../context/ToastContext';
 import {
   insertBatch,
   resolveSowIdByCode,
   resolveBoarIdByCode,
 } from '../../services/supabaseWrites';
 import { useFarm } from '../../context/FarmContext';
-import { useEscapeKey, useFocusFirstInput } from './useFormA11y';
+import { useFocusFirstInput } from './useFormA11y';
+import { FieldError, EntityPicker } from './_formFields';
+import { todayIso } from './_formHelpers';
+import QuickActionSheet from './QuickActionSheet';
 import {
   suggestNextIdPortee,
   validateAddBande,
@@ -31,7 +42,6 @@ import {
   validateDatePresentOrPast,
   validateEffectif,
 } from '../../lib/validation/farmValidators';
-import type { Truie } from '../../types/farm';
 import { formatDateFr } from '../../v70/lib/formatters';
 
 interface QuickAddBandeFormProps {
@@ -42,18 +52,20 @@ interface QuickAddBandeFormProps {
 
 const QuickAddBandeForm: React.FC<QuickAddBandeFormProps> = ({ isOpen, onClose, onSuccess }) => {
   const { truies, verrats, bandes, refreshData } = useFarm();
+  const { showToast } = useToast();
 
   const [idPortee, setIdPortee] = useState<string>('');
   const [truieId, setTruieId] = useState<string>('');
   const [truieQuery, setTruieQuery] = useState<string>('');
   const [verratId, setVerratId] = useState<string>('');
-  const [dateMb, setDateMb] = useState<string>(new Date().toISOString().slice(0, 10));
+  const [dateMb, setDateMb] = useState<string>(todayIso);
   const [nesVivants, setNesVivants] = useState<string>('');
   const [mortsNes, setMortsNes] = useState<string>('');
   const [statut] = useState<BandeStatutInitial>('Sous mère');
   const [errors, setErrors] = useState<AddBandeValidation['errors']>({});
   const [saving, setSaving] = useState(false);
-  const { show: showToast, toastProps } = useAppToast();
+
+  const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const suggestedId = useMemo(() => {
     if (!truieId) return '';
@@ -65,7 +77,7 @@ const QuickAddBandeForm: React.FC<QuickAddBandeFormProps> = ({ isOpen, onClose, 
     setLastOpen(isOpen);
     if (isOpen) {
       setIdPortee(''); setTruieId(''); setTruieQuery(''); setVerratId('');
-      setDateMb(new Date().toISOString().slice(0, 10)); setNesVivants(''); setMortsNes('');
+      setDateMb(todayIso()); setNesVivants(''); setMortsNes('');
       setErrors({}); setSaving(false);
     }
   }
@@ -78,21 +90,18 @@ const QuickAddBandeForm: React.FC<QuickAddBandeFormProps> = ({ isOpen, onClose, 
     }
   }
 
-  const handleClose = useCallback(() => { if (!saving) onClose(); }, [onClose, saving]);
-  useEscapeKey(isOpen && !saving, handleClose);
-  const firstFieldRef = useFocusFirstInput<HTMLInputElement>(isOpen);
+  useEffect(() => {
+    return () => {
+      if (closeTimerRef.current) { clearTimeout(closeTimerRef.current); closeTimerRef.current = null; }
+    };
+  }, []);
 
-  const truieSuggestions = useMemo<Truie[]>(() => {
-    const q = truieQuery.trim().toLowerCase();
-    if (!q) return [];
-    return truies
-      .filter(t => {
-        const code = (t.displayId || t.id || '').toLowerCase();
-        const b = (t.boucle || '').toLowerCase();
-        return code.includes(q) || b.includes(q);
-      })
-      .slice(0, 6);
-  }, [truies, truieQuery]);
+  const handleClose = useCallback(() => {
+    if (saving) return;
+    if (closeTimerRef.current) { clearTimeout(closeTimerRef.current); closeTimerRef.current = null; }
+    onClose();
+  }, [onClose, saving]);
+  const firstFieldRef = useFocusFirstInput<HTMLInputElement>(isOpen);
 
   const adjustNumber = (
     setter: React.Dispatch<React.SetStateAction<string>>,
@@ -115,14 +124,8 @@ const QuickAddBandeForm: React.FC<QuickAddBandeFormProps> = ({ isOpen, onClose, 
 
   const isValid = !!truieId.trim() && !!nesVivants.trim() && !!dateMb;
 
-  const selectTruieMere = (t: Truie): void => {
-    const code = t.displayId || t.id;
-    setTruieId(code);
-    setTruieQuery(code);
-  };
-
-  const handleSubmit = async (e?: React.FormEvent | React.MouseEvent): Promise<void> => {
-    if (e) e.preventDefault();
+  const handleSubmit = async (e: React.FormEvent): Promise<void> => {
+    e.preventDefault();
     const result = validateAddBande({
       idPortee, truieId, verratId, dateMb, nesVivants, mortsNes,
       mortsNesMales: '', mortsNesFemelles: '', statut,
@@ -165,154 +168,148 @@ const QuickAddBandeForm: React.FC<QuickAddBandeFormProps> = ({ isOpen, onClose, 
         poids_initial_kg: result.values.poids_initial_kg,
       } as Parameters<typeof insertBatch>[0]);
       const online = typeof navigator !== 'undefined' && navigator.onLine;
-      showToast(online ? 'Bande créée' : 'Bande en file · sync auto', online ? 'success' : 'info', { duration: 1800 });
+      showToast(online ? 'Bande créée' : 'Bande en file · sync auto', online ? 'success' : 'info', 1800);
       try { await refreshData(true); } catch { /* noop */ }
       if (onSuccess) onSuccess();
-      onClose();
+      // Garder saving=true jusqu'au onClose pour empêcher le double-clic dans
+      // la fenêtre 1.5s entre toast success et fermeture (FORM_CONTRACT).
+      closeTimerRef.current = setTimeout(() => {
+        closeTimerRef.current = null;
+        setSaving(false);
+        onClose();
+      }, 1500);
     } catch (err) {
-      showToast(err instanceof Error ? `Erreur : ${err.message}` : 'Erreur enregistrement', 'error', { duration: 1800 });
-    } finally {
+      showToast(err instanceof Error ? `Erreur : ${err.message}` : 'Erreur enregistrement', 'error', 1800);
       setSaving(false);
     }
   };
 
-  const errMsg = (msg?: string): React.ReactNode =>
-    msg ? <span role="alert" style={{ fontFamily: 'var(--pt-font-mono)', fontSize: 11, color: 'var(--pt-danger)' }}>{msg}</span> : null;
-
   return (
-    <>
-      <IonModal isOpen={isOpen} onDidDismiss={handleClose} breakpoints={[0, 1]} initialBreakpoint={1} className="agritech-bottom-sheet pt-sheet-modal pt-screen" aria-label="Ajouter une bande">
-        <div className="ion-page pt-screen" style={{ position: 'relative', overflow: 'auto' }}>
-          <form className="sheet" onSubmit={handleSubmit} noValidate aria-label="Création d'une bande" style={{ position: 'relative', height: '100%', maxHeight: '100%' }}>
-            <span className="sheet__handle" />
-            <header className="sheet__head">
-              <div>
-                <div className="eyebrow">Nouvelle bande</div>
-                <h2 className="sheet__title">Ajouter une bande</h2>
-              </div>
-              <button type="button" className="sheet__close" onClick={handleClose} aria-label="Fermer" disabled={saving}>
-                <X size={14} aria-hidden="true" />
-              </button>
-            </header>
-            <div className="sheet__body">
-              <div className="field">
-                <label className="label--v77" htmlFor="add-bande-truie">TRUIE MÈRE <span className="req">requis</span></label>
-                <input id="add-bande-truie" ref={firstFieldRef} className={`field__input mono${truieId ? ' filled' : ' field__input--ghost'}`} type="text" aria-label="Truie mère (autocomplete)" aria-required="true" aria-invalid={!!errors.truieId} placeholder="Rechercher T-…" value={truieQuery} onChange={e => { setTruieQuery(e.target.value); if (e.target.value === '') setTruieId(''); }} disabled={saving} autoComplete="off" />
-                {truieSuggestions.length > 0 && truieQuery !== truieId ? (
-                  <div role="listbox" style={{ marginTop: 4, border: '1px solid var(--pt-line)', borderRadius: 10, background: 'var(--pt-bg)', maxHeight: 200, overflowY: 'auto' }}>
-                    {truieSuggestions.map(t => (
-                      <button key={t.id} type="button" role="option" aria-selected={false} onClick={() => selectTruieMere(t)} style={{ display: 'block', width: '100%', textAlign: 'left', padding: '8px 12px', background: 'transparent', border: 'none', fontFamily: 'var(--pt-font-mono)', fontSize: 12, color: 'var(--pt-ink)', cursor: 'pointer', minHeight: 44 }}>
-                        {t.displayId || t.id}{t.nom ? ` · ${t.nom}` : ''}{t.boucle ? ` (${t.boucle})` : ''}
-                      </button>
-                    ))}
-                  </div>
-                ) : null}
-                {errMsg(errors.truieId)}
-              </div>
-              {verrats.length > 0 ? (
-                <div className="field">
-                  <label className="label--v77" htmlFor="add-bande-verrat">VERRAT PÈRE <span className="hint">optionnel</span></label>
-                  <select id="add-bande-verrat" className={`field__input${verratId ? ' mono filled' : ' field__input--ghost'}`} aria-label="Verrat père" value={verratId} onChange={e => setVerratId(e.target.value)} disabled={saving}>
-                    <option value="">— Aucun —</option>
-                    {verrats.map(v => <option key={v.id} value={v.displayId || v.id}>{v.displayId || v.id}{v.nom ? ` · ${v.nom}` : ''}</option>)}
-                  </select>
-                </div>
-              ) : null}
-              <div className="field--inline">
-                <div className="field">
-                  <label className="label--v77" htmlFor="add-bande-date-mb">DATE MB <span className="req">requis</span></label>
-                  <input id="add-bande-date-mb" className={`field__input mono${dateMb ? ' filled' : ' field__input--ghost'}`} type="date" aria-label="Date de mise-bas" aria-required="true" aria-invalid={!!errors.dateMb} value={dateMb} onChange={e => setDateMb(e.target.value)} disabled={saving} />
-                  {errMsg(errors.dateMb)}
-                  {/* v3.6.2 — Fallback "âge approximatif" : si naissance inconnue
-                      (cas import bande existante), saisir le nombre de mois pour
-                      pré-remplir une dateMb théorique. */}
-                  <details style={{ marginTop: 6 }}>
-                    <summary
-                      style={{
-                        fontSize: 11,
-                        color: 'var(--pt-muted)',
-                        cursor: 'pointer',
-                        userSelect: 'none',
-                        padding: '6px 0',
-                      }}
-                    >
-                      Date inconnue ? Estimer par l'âge →
-                    </summary>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 6 }}>
-                      <label htmlFor="add-bande-age-mois" style={{ fontSize: 12 }}>
-                        Âge approximatif
-                      </label>
-                      <input
-                        id="add-bande-age-mois"
-                        type="number"
-                        inputMode="decimal"
-                        min={0}
-                        max={12}
-                        step={0.5}
-                        aria-label="Âge approximatif en mois"
-                        placeholder="ex 2.5"
-                        style={{ width: 80, padding: '4px 8px' }}
-                        disabled={saving}
-                        onChange={(e) => {
-                          const months = parseFloat(e.target.value);
-                          if (!Number.isFinite(months) || months < 0 || months > 12) return;
-                          const today = new Date();
-                          const estimated = new Date(today.getTime() - months * 30 * 24 * 60 * 60 * 1000);
-                          setDateMb(estimated.toISOString().slice(0, 10));
-                        }}
-                      />
-                      <span style={{ fontSize: 11, color: 'var(--pt-muted)' }}>mois</span>
-                    </div>
-                    <p style={{ fontSize: 10, color: 'var(--pt-subtle)', marginTop: 4 }}>
-                      Calcule une date approximative (mois × 30 jours).
-                      Tu pourras la corriger en saisissant directement.
-                    </p>
-                  </details>
-                </div>
-                <div className="field">
-                  <label className="label--v77" htmlFor="add-bande-nv">NV VIVANTS <span className="req">requis</span></label>
-                  <div className="stepper">
-                    <button type="button" onClick={() => adjustNumber(setNesVivants, nesVivants, -1)} aria-label="Diminuer NV" disabled={saving}><Minus size={14} aria-hidden="true" /></button>
-                    <input id="add-bande-nv" type="number" inputMode="numeric" min={0} max={25} step={1} aria-label="Nombre de porcelets nés vivants" aria-required="true" aria-invalid={!!errors.nesVivants} placeholder="0" value={nesVivants} onChange={e => setNesVivants(e.target.value)} disabled={saving} />
-                    <span className="stepper-label">NV</span>
-                    <button type="button" onClick={() => adjustNumber(setNesVivants, nesVivants, 1)} aria-label="Augmenter NV" disabled={saving}><Plus size={14} aria-hidden="true" /></button>
-                  </div>
-                  {errMsg(errors.nesVivants)}
-                </div>
-              </div>
-              <div className="field">
-                <label className="label--v77" htmlFor="add-bande-mn">MORTS-NÉS <span className="hint">optionnel</span></label>
-                <div className="stepper">
-                  <button type="button" onClick={() => adjustNumber(setMortsNes, mortsNes, -1)} aria-label="Diminuer mort-nés" disabled={saving}><Minus size={14} aria-hidden="true" /></button>
-                  <input id="add-bande-mn" type="number" inputMode="numeric" min={0} max={25} step={1} aria-label="Mort-nés" aria-invalid={!!errors.mortsNes} placeholder="0" value={mortsNes} onChange={e => setMortsNes(e.target.value)} disabled={saving} />
-                  <span className="stepper-label">MN</span>
-                  <button type="button" onClick={() => adjustNumber(setMortsNes, mortsNes, 1)} aria-label="Augmenter mort-nés" disabled={saving}><Plus size={14} aria-hidden="true" /></button>
-                </div>
-                {errMsg(errors.mortsNes)}
-              </div>
-              <div className="field">
-                <label className="label--v77" htmlFor="add-bande-id">IDENTIFIANT PORTÉE <span className="hint">aperçu auto</span></label>
-                <input id="add-bande-id" className={`field__input mono${idPortee ? ' filled' : ' field__input--ghost'}`} type="text" maxLength={30} aria-label="Identifiant de la portée" aria-invalid={!!errors.idPortee} placeholder="Mai 2026 · M-—" value={idPorteeMonthlyPreview || idPortee} readOnly />
-                {dateMb ? (
-                  <span style={{ fontFamily: 'var(--pt-font-mono)', fontSize: 10.5, color: 'var(--pt-subtle)' }}>
-                    Code interne : {idPortee || '—'} · MB {formatDateFr(dateMb)}
-                  </span>
-                ) : null}
-                {errMsg(errors.idPortee)}
-              </div>
-              {errors.coherence ? <span role="alert" style={{ fontFamily: 'var(--pt-font-mono)', fontSize: 11, color: 'var(--pt-danger)' }}>{errors.coherence}</span> : null}
-            </div>
-            <footer className="sheet__foot">
-              <button type="button" className="btn btn--ghost" onClick={handleClose} disabled={saving} aria-label="Annuler et fermer">Annuler</button>
-              <button type="submit" className="btn btn--primary btn--lg btn--block" disabled={saving || !isValid} aria-busy={saving} aria-label="Créer la bande">
-                {saving ? 'Enregistrement…' : <><Check size={14} aria-hidden="true" /> Créer la bande</>}
-              </button>
-            </footer>
-          </form>
+    <QuickActionSheet
+      isOpen={isOpen}
+      onClose={handleClose}
+      eyebrow="Nouvelle bande"
+      title="Ajouter une bande"
+      ariaLabel="Création d'une bande"
+      saving={saving}
+      isValid={isValid}
+      onSubmit={handleSubmit}
+      submitLabel="Créer la bande"
+      submitAriaLabel="Créer la bande"
+    >
+      <div className="field">
+        <label className="label--v77" htmlFor="add-bande-truie">TRUIE MÈRE <span className="req">requis</span></label>
+        <EntityPicker
+          mode="autocomplete"
+          entities={truies}
+          value={truieId}
+          onChange={setTruieId}
+          query={truieQuery}
+          onQueryChange={setTruieQuery}
+          entityLabel="la truie"
+          groupLabel="Truie mère (autocomplete)"
+          emptyText="Aucune truie disponible"
+          disabled={saving}
+          inputId="add-bande-truie"
+          inputRef={firstFieldRef}
+          invalid={!!errors.truieId}
+          placeholder="Rechercher T-…"
+        />
+        <FieldError message={errors.truieId} />
+      </div>
+      {verrats.length > 0 ? (
+        <div className="field">
+          <label className="label--v77" htmlFor="add-bande-verrat">VERRAT PÈRE <span className="hint">optionnel</span></label>
+          <select id="add-bande-verrat" className={`field__input${verratId ? ' mono filled' : ' field__input--ghost'}`} aria-label="Verrat père" value={verratId} onChange={e => setVerratId(e.target.value)} disabled={saving}>
+            <option value="">— Aucun —</option>
+            {verrats.map(v => <option key={v.id} value={v.displayId || v.id}>{v.displayId || v.id}{v.nom ? ` · ${v.nom}` : ''}</option>)}
+          </select>
         </div>
-      </IonModal>
-      <AppToast {...toastProps} />
-    </>
+      ) : null}
+      <div className="field--inline">
+        <div className="field">
+          <label className="label--v77" htmlFor="add-bande-date-mb">DATE MB <span className="req">requis</span></label>
+          <input id="add-bande-date-mb" className={`field__input mono${dateMb ? ' filled' : ' field__input--ghost'}`} type="date" aria-label="Date de mise-bas" aria-required="true" aria-invalid={!!errors.dateMb} value={dateMb} onChange={e => setDateMb(e.target.value)} disabled={saving} />
+          <FieldError message={errors.dateMb} />
+          {/* v3.6.2 — Fallback "âge approximatif" : si naissance inconnue
+              (cas import bande existante), saisir le nombre de mois pour
+              pré-remplir une dateMb théorique. */}
+          <details style={{ marginTop: 6 }}>
+            <summary
+              style={{
+                fontSize: 11,
+                color: 'var(--pt-muted)',
+                cursor: 'pointer',
+                userSelect: 'none',
+                padding: '6px 0',
+              }}
+            >
+              Date inconnue ? Estimer par l'âge →
+            </summary>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 6 }}>
+              <label htmlFor="add-bande-age-mois" style={{ fontSize: 12 }}>
+                Âge approximatif
+              </label>
+              <input
+                id="add-bande-age-mois"
+                type="number"
+                inputMode="decimal"
+                min={0}
+                max={12}
+                step={0.5}
+                aria-label="Âge approximatif en mois"
+                placeholder="ex 2.5"
+                style={{ width: 80, padding: '4px 8px' }}
+                disabled={saving}
+                onChange={(e) => {
+                  const months = parseFloat(e.target.value);
+                  if (!Number.isFinite(months) || months < 0 || months > 12) return;
+                  const today = new Date();
+                  const estimated = new Date(today.getTime() - months * 30 * 24 * 60 * 60 * 1000);
+                  setDateMb(todayIso(estimated));
+                }}
+              />
+              <span style={{ fontSize: 11, color: 'var(--pt-muted)' }}>mois</span>
+            </div>
+            <p style={{ fontSize: 10, color: 'var(--pt-subtle)', marginTop: 4 }}>
+              Calcule une date approximative (mois × 30 jours).
+              Tu pourras la corriger en saisissant directement.
+            </p>
+          </details>
+        </div>
+        <div className="field">
+          <label className="label--v77" htmlFor="add-bande-nv">NV VIVANTS <span className="req">requis</span></label>
+          <div className="stepper">
+            <button type="button" onClick={() => adjustNumber(setNesVivants, nesVivants, -1)} aria-label="Diminuer NV" disabled={saving}><Minus size={14} aria-hidden="true" /></button>
+            <input id="add-bande-nv" type="number" inputMode="numeric" min={0} max={25} step={1} aria-label="Nombre de porcelets nés vivants" aria-required="true" aria-invalid={!!errors.nesVivants} placeholder="0" value={nesVivants} onChange={e => setNesVivants(e.target.value)} disabled={saving} />
+            <span className="stepper-label">NV</span>
+            <button type="button" onClick={() => adjustNumber(setNesVivants, nesVivants, 1)} aria-label="Augmenter NV" disabled={saving}><Plus size={14} aria-hidden="true" /></button>
+          </div>
+          <FieldError message={errors.nesVivants} />
+        </div>
+      </div>
+      <div className="field">
+        <label className="label--v77" htmlFor="add-bande-mn">MORTS-NÉS <span className="hint">optionnel</span></label>
+        <div className="stepper">
+          <button type="button" onClick={() => adjustNumber(setMortsNes, mortsNes, -1)} aria-label="Diminuer mort-nés" disabled={saving}><Minus size={14} aria-hidden="true" /></button>
+          <input id="add-bande-mn" type="number" inputMode="numeric" min={0} max={25} step={1} aria-label="Mort-nés" aria-invalid={!!errors.mortsNes} placeholder="0" value={mortsNes} onChange={e => setMortsNes(e.target.value)} disabled={saving} />
+          <span className="stepper-label">MN</span>
+          <button type="button" onClick={() => adjustNumber(setMortsNes, mortsNes, 1)} aria-label="Augmenter mort-nés" disabled={saving}><Plus size={14} aria-hidden="true" /></button>
+        </div>
+        <FieldError message={errors.mortsNes} />
+      </div>
+      <div className="field">
+        <label className="label--v77" htmlFor="add-bande-id">IDENTIFIANT PORTÉE <span className="hint">aperçu auto</span></label>
+        <input id="add-bande-id" className={`field__input mono${idPortee ? ' filled' : ' field__input--ghost'}`} type="text" maxLength={30} aria-label="Identifiant de la portée" aria-invalid={!!errors.idPortee} placeholder="Mai 2026 · M-—" value={idPorteeMonthlyPreview || idPortee} readOnly />
+        {dateMb ? (
+          <span style={{ fontFamily: 'var(--pt-font-mono)', fontSize: 10.5, color: 'var(--pt-subtle)' }}>
+            Code interne : {idPortee || '—'} · MB {formatDateFr(dateMb)}
+          </span>
+        ) : null}
+        <FieldError message={errors.idPortee} />
+      </div>
+      {errors.coherence ? <span role="alert" style={{ fontFamily: 'var(--pt-font-mono)', fontSize: 11, color: 'var(--pt-danger)' }}>{errors.coherence}</span> : null}
+    </QuickActionSheet>
   );
 };
 
