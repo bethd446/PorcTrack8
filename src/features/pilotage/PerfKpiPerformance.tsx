@@ -1,5 +1,5 @@
 import React from 'react';
-import { Card, StatsGrid, Stat } from '@/design-system';
+import { Card } from '@/design-system';
 
 type StatTone = 'default' | 'accent' | 'danger';
 
@@ -17,6 +17,69 @@ interface PerfKpiPerformanceProps {
   formatNum: (n: number) => string;
 }
 
+const TONE_COLOR: Record<StatTone, string> = {
+  default: 'var(--pt-ink)',
+  accent: 'var(--pt-accent)',
+  danger: 'var(--pt-danger)',
+};
+
+interface KpiLineProps {
+  label: string;
+  value: string;
+  tone?: StatTone;
+  cible?: string;
+}
+
+/** Ligne dense clé/valeur : le label métier à gauche, le chiffre tabular à
+ *  droite teinté par son état, la cible en pied — lecture diagonale rapide. */
+const KpiLine: React.FC<KpiLineProps> = ({ label, value, tone = 'default', cible }) => (
+  <div
+    style={{
+      display: 'flex',
+      alignItems: 'baseline',
+      justifyContent: 'space-between',
+      gap: 12,
+      padding: '10px 0',
+      borderBottom: '1px solid var(--pt-line)',
+    }}
+  >
+    <div style={{ minWidth: 0 }}>
+      <div style={{ fontSize: 13, color: 'var(--pt-ink)', fontWeight: 600 }}>{label}</div>
+      {cible ? (
+        <div
+          style={{
+            fontFamily: 'var(--pt-font-mono)',
+            fontSize: 10.5,
+            color: 'var(--pt-text-subtle)',
+            marginTop: 1,
+          }}
+        >
+          {cible}
+        </div>
+      ) : null}
+    </div>
+    <span
+      className="num"
+      style={{
+        fontFamily: 'var(--pt-font-display)',
+        fontWeight: 900,
+        fontSize: 22,
+        letterSpacing: '-0.01em',
+        color: TONE_COLOR[tone],
+        fontVariantNumeric: 'tabular-nums',
+        flexShrink: 0,
+      }}
+    >
+      {value}
+    </span>
+  </div>
+);
+
+/**
+ * Performance technique repro. L'ISSE (intervalle sevrage → saillie) est le
+ * KPI roi du naisseur — il passe en hero. Les autres indicateurs s'enchaînent
+ * en lignes denses cible-en-pied, pas en grille où tout se vaut.
+ */
 const PerfKpiPerformance: React.FC<PerfKpiPerformanceProps> = ({
   isseMoyJours,
   iemMoyJours,
@@ -30,40 +93,94 @@ const PerfKpiPerformance: React.FC<PerfKpiPerformanceProps> = ({
   renouvTone,
   formatNum,
 }) => {
+  const isseKnown = isseMoyJours !== null;
   return (
     <Card>
-      <StatsGrid cols={3}>
-        <Stat
-          value={isseMoyJours !== null ? `${formatNum(isseMoyJours)} j` : '—'}
-          label="Sevrage › saillie"
-          tone={isseTone}
-        />
-        <Stat
-          value={iemMoyJours !== null ? `${formatNum(iemMoyJours)} j` : '—'}
+      <div style={{ marginBottom: 4 }}>
+        <span
+          style={{
+            fontFamily: 'var(--pt-font-mono)',
+            fontSize: 10,
+            fontWeight: 600,
+            letterSpacing: '0.14em',
+            textTransform: 'uppercase',
+            color: 'var(--pt-text-subtle)',
+          }}
+        >
+          Sevrage › saillie · cible 3-7 j
+        </span>
+        <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
+          <span
+            className="num"
+            style={{
+              fontFamily: 'var(--pt-font-display)',
+              fontWeight: 900,
+              fontSize: 44,
+              lineHeight: 0.9,
+              letterSpacing: '-0.02em',
+              color: isseKnown ? TONE_COLOR[isseTone] : 'var(--pt-text-subtle)',
+              fontVariantNumeric: 'tabular-nums',
+            }}
+          >
+            {isseKnown ? formatNum(isseMoyJours) : '—'}
+          </span>
+          {isseKnown ? (
+            <span style={{ fontSize: 18, color: 'var(--pt-text-muted)' }}>jours</span>
+          ) : null}
+        </div>
+      </div>
+
+      <div style={{ marginTop: 8 }}>
+        <KpiLine
           label="Entre mises-bas"
+          value={iemMoyJours !== null ? `${formatNum(iemMoyJours)} j` : '—'}
           tone={iemTone}
+          cible="cible 140-150 j"
         />
-        <Stat
+        <KpiLine
+          label="Saillies réussies"
           value={tauxMBPct !== null ? `${formatNum(tauxMBPct)} %` : '—'}
-          label="% saillies réussies"
           tone={tauxMBTone}
+          cible="cible ≥ 88 %"
         />
-        <Stat
+        <KpiLine
+          label="Renouvellement annuel"
           value={tauxRenouvellementPct !== null ? `${formatNum(tauxRenouvellementPct)} %` : '—'}
-          label="Renouv. annuel"
           tone={renouvTone}
+          cible="cible 30-40 %/an"
         />
-        <Stat
+        <KpiLine
+          label="Intervalle sevrage-saillie médian"
           value={intervalSevrageSaillieMoyJours !== null
             ? `${formatNum(intervalSevrageSaillieMoyJours)} j`
             : '—'}
-          label="Interv. sev-sail."
         />
-        <Stat value={nbMbAVenir30j} label="MB à venir 30 j" />
-      </StatsGrid>
-      <p style={{ marginTop: 12, fontSize: 11, color: 'var(--pt-text-subtle)' }}>
-        Cibles : ISSE 3-7 j · IEM 140-150 j · Taux MB ≥ 88 % · Renouv. 30-40 %/an
-      </p>
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'baseline',
+            justifyContent: 'space-between',
+            gap: 12,
+            padding: '10px 0 0',
+          }}
+        >
+          <div style={{ fontSize: 13, color: 'var(--pt-ink)', fontWeight: 600 }}>
+            Mises-bas sous 30 jours
+          </div>
+          <span
+            className="num"
+            style={{
+              fontFamily: 'var(--pt-font-display)',
+              fontWeight: 900,
+              fontSize: 22,
+              color: 'var(--pt-ink)',
+              fontVariantNumeric: 'tabular-nums',
+            }}
+          >
+            {nbMbAVenir30j}
+          </span>
+        </div>
+      </div>
     </Card>
   );
 };

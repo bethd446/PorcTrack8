@@ -146,34 +146,112 @@ export const EngraissementV70: React.FC = () => {
         </div>
       </header>
 
-      {/* 4 KPI strip */}
+      {/* Synthèse engraissement — hiérarchie tranchée : l'effectif en stock et
+          le GMQ sont le couple roi (mes porcs grossissent-ils ?), lots et
+          mortalité en appui mono sous la ligne. Pas de strip 4-up uniforme. */}
       <div
-        className="kpis-strip"
-        aria-label="Indicateurs clés engraissement"
         data-pt-strip="engraissement"
-        style={{ marginBottom: 16 }}
+        aria-label="Indicateurs clés engraissement"
+        style={{
+          marginBottom: 16,
+          padding: 16,
+          background: 'var(--pt-warm)',
+          border: '1px solid var(--pt-line)',
+          borderRadius: 16,
+        }}
       >
-        <div className="kpi">
-          {/* v3.4.9 : labels raccourcis pour ne pas tronquer à 360px */}
-          <div className="kpi__label">Lots</div>
-          <div className="kpi__val">{kpis.totalLotsActifs}</div>
-        </div>
-        <div className="kpi">
-          <div className="kpi__label">Effectif</div>
-          <div className="kpi__val">{kpis.porcsEnStock}</div>
-        </div>
-        <div className="kpi">
-          <div className="kpi__label">GMQ g/j</div>
-          <div
-            className="kpi__val"
-            title={kpis.gmqMoy == null ? '2 pesées minimum requises sur au moins 1 lot' : undefined}
-          >
-            {fmt(kpis.gmqMoy, 0)}
+        <div style={{ display: 'flex', alignItems: 'flex-end', gap: 18, flexWrap: 'wrap' }}>
+          <div>
+            <div
+              style={{
+                fontFamily: 'var(--pt-font-mono)',
+                fontSize: 10,
+                fontWeight: 600,
+                letterSpacing: '0.14em',
+                textTransform: 'uppercase',
+                color: 'var(--pt-muted)',
+              }}
+            >
+              Porcs en engraissement
+            </div>
+            <div
+              className="num"
+              style={{
+                fontFamily: 'var(--pt-font-display)',
+                fontWeight: 900,
+                fontSize: 48,
+                lineHeight: 0.9,
+                letterSpacing: '-0.02em',
+                color: 'var(--pt-primary)',
+                fontVariantNumeric: 'tabular-nums',
+              }}
+            >
+              {kpis.porcsEnStock}
+            </div>
+          </div>
+          <div style={{ paddingBottom: 4 }}>
+            <div
+              style={{
+                fontFamily: 'var(--pt-font-mono)',
+                fontSize: 10,
+                fontWeight: 600,
+                letterSpacing: '0.14em',
+                textTransform: 'uppercase',
+                color: 'var(--pt-muted)',
+              }}
+            >
+              GMQ moyen
+            </div>
+            <div
+              className="num"
+              title={kpis.gmqMoy == null ? '2 pesées minimum requises sur au moins 1 lot' : undefined}
+              style={{
+                fontFamily: 'var(--pt-font-display)',
+                fontWeight: 900,
+                fontSize: 30,
+                lineHeight: 1,
+                letterSpacing: '-0.01em',
+                color: kpis.gmqMoy == null ? 'var(--pt-subtle)' : 'var(--pt-accent)',
+                fontVariantNumeric: 'tabular-nums',
+              }}
+            >
+              {fmt(kpis.gmqMoy, 0)}
+              {kpis.gmqMoy != null && (
+                <span style={{ fontSize: 14, color: 'var(--pt-muted)' }}> g/j</span>
+              )}
+            </div>
           </div>
         </div>
-        <div className="kpi">
-          <div className="kpi__label">Mortalité</div>
-          <div className="kpi__val">{fmt(kpis.mortaliteMoy, 1, '%')}</div>
+        <div
+          style={{
+            marginTop: 12,
+            paddingTop: 10,
+            borderTop: '1px solid var(--pt-line)',
+            display: 'flex',
+            justifyContent: 'space-between',
+            fontFamily: 'var(--pt-font-mono)',
+            fontSize: 12,
+            color: 'var(--pt-muted)',
+            fontVariantNumeric: 'tabular-nums',
+          }}
+        >
+          <span>
+            <strong style={{ color: 'var(--pt-ink)' }}>{kpis.totalLotsActifs}</strong>{' '}
+            lot{kpis.totalLotsActifs > 1 ? 's' : ''} en cours
+          </span>
+          <span>
+            mortalité{' '}
+            <strong
+              style={{
+                color:
+                  kpis.mortaliteMoy != null && kpis.mortaliteMoy > 15
+                    ? 'var(--pt-danger)'
+                    : 'var(--pt-ink)',
+              }}
+            >
+              {fmt(kpis.mortaliteMoy, 1, ' %')}
+            </strong>
+          </span>
         </div>
       </div>
 
@@ -218,11 +296,12 @@ export const EngraissementV70: React.FC = () => {
             aria-label="Réceptionner un lot"
             style={{
               marginTop: 6,
+              minHeight: 44,
               background: 'var(--pt-primary)',
               color: 'var(--pt-warm)',
               border: 'none',
               borderRadius: 12,
-              padding: '11px 18px',
+              padding: '12px 20px',
               fontFamily: 'var(--pt-font-mono)',
               fontWeight: 600,
               fontSize: 11,

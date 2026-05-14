@@ -248,7 +248,7 @@ export const PerformanceV70: React.FC = () => {
   const showSkeleton = farmLoading && bandes.length === 0 && truies.length === 0;
   if (showSkeleton) {
     const skeletonStyle = {
-      background: 'var(--pt-warm, #F5E9D8)',
+      background: 'var(--pt-warm)',
       borderRadius: 16,
       marginBottom: 12,
     } as const;
@@ -462,7 +462,7 @@ export const PerformanceV70: React.FC = () => {
                 <>
                   <div
                     style={{
-                      fontFamily: 'var(--pt-font-display, sans-serif)',
+                      fontFamily: 'var(--pt-font-display)',
                       fontSize: 32,
                       fontWeight: 900,
                       color: aSignal ? 'var(--pt-success)' : 'var(--pt-muted)',
@@ -596,7 +596,7 @@ export const PerformanceV70: React.FC = () => {
                 <div
                   className="kpi-billboard"
                   style={{
-                    fontFamily: 'var(--pt-font-display, sans-serif)',
+                    fontFamily: 'var(--pt-font-display)',
                     fontSize: 32,
                     fontWeight: 900,
                     color: 'var(--pt-muted)',
@@ -638,7 +638,7 @@ export const PerformanceV70: React.FC = () => {
             <div
               style={{
                 padding: 18,
-                background: 'var(--pt-warm, #F5E9D8)',
+                background: 'var(--pt-warm)',
                 border: '1px solid var(--pt-line)',
                 borderRadius: 18,
                 marginBottom: 14,
@@ -647,7 +647,7 @@ export const PerformanceV70: React.FC = () => {
               <div
                 style={{
                   fontSize: 11,
-                  fontFamily: 'var(--pt-font-mono, monospace)',
+                  fontFamily: 'var(--pt-font-mono)',
                   letterSpacing: '0.14em',
                   textTransform: 'uppercase',
                   color: 'var(--pt-muted)',
@@ -670,7 +670,7 @@ export const PerformanceV70: React.FC = () => {
                 <div
                   className={`kpi-billboard num ${financeMonthly.current.marge >= 0 ? 'amount--positive' : 'amount--negative'}`}
                   style={{
-                    fontFamily: 'var(--pt-font-display, sans-serif)',
+                    fontFamily: 'var(--pt-font-display)',
                     fontWeight: 900,
                     fontSize: 64,
                     lineHeight: 0.9,
@@ -684,7 +684,7 @@ export const PerformanceV70: React.FC = () => {
                   <div
                     className={`num ${financeMonthly.deltaPct >= 0 ? 'amount--positive' : 'amount--negative'}`}
                     style={{
-                      fontFamily: 'var(--pt-font-mono, monospace)',
+                      fontFamily: 'var(--pt-font-mono)',
                       fontWeight: 600,
                       fontSize: 14,
                       display: 'inline-flex',
@@ -704,7 +704,7 @@ export const PerformanceV70: React.FC = () => {
               <div
                 style={{
                   marginTop: 8,
-                  fontFamily: 'var(--pt-font-mono, monospace)',
+                  fontFamily: 'var(--pt-font-mono)',
                   fontSize: 11,
                   color: 'var(--pt-muted)',
                 }}
@@ -718,7 +718,7 @@ export const PerformanceV70: React.FC = () => {
             <div
               style={{
                 padding: 14,
-                background: 'var(--pt-bg, #FFFFFF)',
+                background: 'var(--pt-bg)',
                 border: '1px solid var(--pt-line)',
                 borderRadius: 14,
                 marginBottom: 14,
@@ -736,7 +736,7 @@ export const PerformanceV70: React.FC = () => {
                   x2={320}
                   y1={100}
                   y2={100}
-                  stroke="rgba(26,26,26,0.08)"
+                  stroke="var(--pt-line)"
                   strokeWidth={2}
                 />
                 {financeMonthly.series.map((m, i) => {
@@ -746,10 +746,10 @@ export const PerformanceV70: React.FC = () => {
                   const x = i * 26 + 6;
                   const y = isPositive ? 100 - barH : 100;
                   const fill = isCurrent
-                    ? 'var(--pt-accent, #B8703D)'
+                    ? 'var(--pt-accent)'
                     : isPositive
-                      ? 'var(--pt-primary, #2D4A1F)'
-                      : 'var(--pt-danger, #a4453d)';
+                      ? 'var(--pt-primary)'
+                      : 'var(--pt-danger)';
                   return (
                     <g key={m.key}>
                       <rect
@@ -763,10 +763,10 @@ export const PerformanceV70: React.FC = () => {
                         x={x + 3}
                         y={115}
                         style={{
-                          fontFamily: 'var(--pt-font-mono, monospace)',
+                          fontFamily: 'var(--pt-font-mono)',
                           fontSize: 8.5,
                           fill: isCurrent
-                            ? 'var(--pt-accent, #B8703D)'
+                            ? 'var(--pt-accent)'
                             : 'var(--pt-muted)',
                         }}
                       >
@@ -787,26 +787,26 @@ export const PerformanceV70: React.FC = () => {
                 gap: 0,
                 border: '1px solid var(--pt-line)',
                 borderRadius: 14,
-                background: 'var(--pt-bg, #FFFFFF)',
+                background: 'var(--pt-bg)',
                 overflow: 'hidden',
                 marginBottom: 14,
               }}
             >
               <div className="kpi" style={{ padding: 14, borderRight: '1px solid var(--pt-line)' }}>
-                <div className="kpi__label" style={{ fontFamily: 'var(--pt-font-mono, monospace)', fontSize: 10, fontWeight: 600, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--pt-muted)' }}>Revenus</div>
-                <div className="kpi__val num amount--positive" style={{ fontFamily: 'var(--pt-font-display, sans-serif)', fontWeight: 900, fontSize: 24, lineHeight: 0.95, marginTop: 6 }}>
+                <div className="kpi__label" style={{ fontFamily: 'var(--pt-font-mono)', fontSize: 10, fontWeight: 600, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--pt-muted)' }}>Revenus</div>
+                <div className="kpi__val num amount--positive" style={{ fontFamily: 'var(--pt-font-display)', fontWeight: 900, fontSize: 24, lineHeight: 0.95, marginTop: 6 }}>
                   +{formatMontant(financeMonthly.current.revenus, currency)}
                 </div>
               </div>
               <div className="kpi" style={{ padding: 14, borderRight: '1px solid var(--pt-line)' }}>
-                <div className="kpi__label" style={{ fontFamily: 'var(--pt-font-mono, monospace)', fontSize: 10, fontWeight: 600, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--pt-muted)' }}>Charges</div>
-                <div className="kpi__val num amount--negative" style={{ fontFamily: 'var(--pt-font-display, sans-serif)', fontWeight: 900, fontSize: 24, lineHeight: 0.95, marginTop: 6 }}>
+                <div className="kpi__label" style={{ fontFamily: 'var(--pt-font-mono)', fontSize: 10, fontWeight: 600, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--pt-muted)' }}>Charges</div>
+                <div className="kpi__val num amount--negative" style={{ fontFamily: 'var(--pt-font-display)', fontWeight: 900, fontSize: 24, lineHeight: 0.95, marginTop: 6 }}>
                   {MINUS_PERF}{formatMontant(financeMonthly.current.charges, currency)}
                 </div>
               </div>
               <div className="kpi" style={{ padding: 14 }}>
-                <div className="kpi__label" style={{ fontFamily: 'var(--pt-font-mono, monospace)', fontSize: 10, fontWeight: 600, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--pt-muted)' }}>Marge</div>
-                <div className={`kpi__val num ${financeMonthly.current.marge >= 0 ? 'amount--positive' : 'amount--negative'}`} style={{ fontFamily: 'var(--pt-font-display, sans-serif)', fontWeight: 900, fontSize: 24, lineHeight: 0.95, marginTop: 6 }}>
+                <div className="kpi__label" style={{ fontFamily: 'var(--pt-font-mono)', fontSize: 10, fontWeight: 600, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--pt-muted)' }}>Marge</div>
+                <div className={`kpi__val num ${financeMonthly.current.marge >= 0 ? 'amount--positive' : 'amount--negative'}`} style={{ fontFamily: 'var(--pt-font-display)', fontWeight: 900, fontSize: 24, lineHeight: 0.95, marginTop: 6 }}>
                   {financeMonthly.current.marge >= 0 ? '+' : MINUS_PERF}{formatMontant(Math.abs(financeMonthly.current.marge), currency)}
                 </div>
               </div>
@@ -824,8 +824,8 @@ export const PerformanceV70: React.FC = () => {
                   alignItems: 'center',
                   gap: 14,
                   padding: 14,
-                  background: 'var(--pt-primary, #2D4A1F)',
-                  color: 'var(--pt-warm, #F5E9D8)',
+                  background: 'var(--pt-primary)',
+                  color: 'var(--pt-warm)',
                   border: 'none',
                   borderRadius: 14,
                   textDecoration: 'none',
@@ -835,7 +835,7 @@ export const PerformanceV70: React.FC = () => {
                 }}
               >
                 <FileText size={18} strokeWidth={2} aria-hidden />
-                <span style={{ flex: 1, fontFamily: 'var(--pt-font-mono, monospace)', fontWeight: 600, fontSize: 12, letterSpacing: '0.12em', textTransform: 'uppercase' }}>
+                <span style={{ flex: 1, fontFamily: 'var(--pt-font-mono)', fontWeight: 600, fontSize: 12, letterSpacing: '0.12em', textTransform: 'uppercase' }}>
                   Rapport financier complet
                 </span>
                 <ChevronRight size={16} aria-hidden />

@@ -226,11 +226,12 @@ const FinancesView: React.FC = () => {
                   className="btn btn--primary"
                   style={{
                     marginTop: 22,
+                    minHeight: 44,
                     background: 'var(--pt-primary)',
-                    color: 'var(--pt-warm, white)',
+                    color: 'var(--pt-warm)',
                     border: 'none',
                     borderRadius: 12,
-                    padding: '12px 18px',
+                    padding: '12px 20px',
                     fontFamily: 'var(--pt-font-mono)',
                     fontSize: 11,
                     fontWeight: 600,
@@ -252,7 +253,7 @@ const FinancesView: React.FC = () => {
                   <div
                     style={{
                       padding: 18,
-                      background: 'var(--pt-warm, #FAF7F0)',
+                      background: 'var(--pt-warm)',
                       border: '1px solid var(--pt-line)',
                       borderRadius: 18,
                     }}
@@ -344,7 +345,7 @@ const FinancesView: React.FC = () => {
                   <div
                     style={{
                       padding: 14,
-                      background: 'var(--pt-bg, #FAF7F0)',
+                      background: 'var(--pt-bg)',
                       border: '1px solid var(--pt-line)',
                       borderRadius: 14,
                     }}
@@ -360,7 +361,7 @@ const FinancesView: React.FC = () => {
                         x2={320}
                         y1={100}
                         y2={100}
-                        stroke="rgba(26,26,26,0.08)"
+                        stroke="var(--pt-line)"
                         strokeWidth={2}
                       />
                       {monthly.map((m, i) => {
@@ -370,10 +371,10 @@ const FinancesView: React.FC = () => {
                         const x = i * 26 + 6;
                         const y = isPositive ? 100 - barH : 100;
                         const fill = isCurrent
-                          ? 'var(--pt-accent, #B8703D)'
+                          ? 'var(--pt-accent)'
                           : isPositive
-                            ? 'var(--pt-primary, #2D4A1F)'
-                            : 'var(--pt-rose-ink, #a4453d)';
+                            ? 'var(--pt-primary)'
+                            : 'var(--pt-danger)';
                         return (
                           <g key={m.key}>
                             <rect
@@ -390,8 +391,8 @@ const FinancesView: React.FC = () => {
                                 fontFamily: 'var(--pt-font-mono)',
                                 fontSize: 8.5,
                                 fill: isCurrent
-                                  ? 'var(--pt-accent, #B8703D)'
-                                  : 'var(--pt-subtle, #a39888)',
+                                  ? 'var(--pt-accent)'
+                                  : 'var(--pt-subtle)',
                               }}
                             >
                               {m.initial}
@@ -415,7 +416,7 @@ const FinancesView: React.FC = () => {
                         {formatMontant(Math.abs(margeMinVal === Infinity ? 0 : margeMinVal), currency)}
                       </span>
                       <span>
-                        max <b style={{ color: 'var(--pt-accent, #B8703D)' }}>
+                        max <b style={{ color: 'var(--pt-accent)' }}>
                           {margeMaxVal >= 0 ? '+' : MINUS}
                           {formatMontant(Math.abs(margeMaxVal === -Infinity ? 0 : margeMaxVal), currency)}
                         </b>
@@ -441,7 +442,7 @@ const FinancesView: React.FC = () => {
                   </div>
                   <div
                     className="kpis-strip"
-                    style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 0, border: '1px solid var(--pt-line)', borderRadius: 14, background: 'var(--pt-bg, #FAF7F0)', overflow: 'hidden' }}
+                    style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 0, border: '1px solid var(--pt-line)', borderRadius: 14, background: 'var(--pt-bg)', overflow: 'hidden' }}
                   >
                     <div className="kpi" style={{ padding: 14, borderRight: '1px solid var(--pt-line)' }}>
                       <div className="kpi__label" style={{ fontFamily: 'var(--pt-font-mono)', fontSize: 10, fontWeight: 600, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--pt-subtle)' }}>Revenus</div>
@@ -491,7 +492,7 @@ const FinancesView: React.FC = () => {
                   <div
                     style={{
                       padding: 16,
-                      background: 'var(--pt-bg, #FAF7F0)',
+                      background: 'var(--pt-bg)',
                       border: '1px solid var(--pt-line)',
                       borderRadius: 14,
                     }}

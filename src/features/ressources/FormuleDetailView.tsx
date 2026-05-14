@@ -234,9 +234,6 @@ const FormuleNotFound: React.FC<{ onBack: () => void }> = ({ onBack }) => (
                 marginTop: 12,
                 padding: '10px 16px',
                 borderRadius: 12,
-                background: 'var(--pt-primary)',
-                color: 'white',
-                border: 'none',
                 fontFamily: 'var(--pt-font-mono)',
                 fontSize: 12,
                 fontWeight: 700,
@@ -287,7 +284,7 @@ const FormuleDetailView: React.FC = () => {
                   style={{
                     width: '100%',
                     borderCollapse: 'collapse',
-                    fontFamily: 'var(--pt-font-base)',
+                    fontFamily: 'var(--pt-font-body)',
                   }}
                 >
                   <thead>

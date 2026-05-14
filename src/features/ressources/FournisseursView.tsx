@@ -240,8 +240,8 @@ const FournisseursView: React.FC = () => {
                     <div
                       className="card-link__icon"
                       style={{
-                        background: 'var(--pt-emerald-bg)',
-                        color: 'var(--pt-emerald-ink)',
+                        background: pill.bg,
+                        color: pill.fg,
                       }}
                       aria-hidden
                     >

@@ -7,9 +7,15 @@
  *  - BottomSheet form (email + rôle) → INSERT farm_members
  *  - vérification user existant via lookup `profiles.email` (RLS-safe)
  *
- * V77.1 — polish : KPI tiles et lignes membre extraits dans des styles
- * partagés (avatar 44px, nom mono 600, badge rôle pill mono). Boutons CTA
- * via `.btn--primary btn--block` (constitution V77.1 — pas de --lg).
+ * V77.1 — polish : styles partagés extraits. Boutons CTA via
+ * `.btn--primary btn--block` (constitution V77.1 — pas de --lg).
+ *
+ * Phase 3 (design senior) — l'écran porte le rôle, pas un annuaire plat :
+ *  - bandeau d'effectif en langage éleveur (« 4 personnes : 1 responsable… »)
+ *    au lieu de 3 KPI tiles génériques
+ *  - fiche membre : avatar teinté au rôle, ce que le rôle autorise sous le
+ *    nom, badge de rôle assumé ; la ligne « vous » a un liseré primary
+ *  - empty state concret (« Tu es seul sur la ferme » + action utile)
  */
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -31,17 +37,25 @@ interface TeamMember {
 }
 
 // V78.4: roles colors — tokenisés sur var(--pt-role-*).
-const ROLE_LABELS: Record<string, { label: string; color: string; bg: string }> = {
-  OWNER:    { label: 'Owner',    color: 'var(--pt-role-owner-fg)',     bg: 'var(--pt-role-owner-bg)' },
-  ADMIN:    { label: 'Admin',    color: 'var(--pt-role-admin-fg)',     bg: 'var(--pt-role-admin-bg)' },
-  PORCHER:  { label: 'Porcher',  color: 'var(--pt-role-porcher-fg)',   bg: 'var(--pt-role-porcher-bg)' },
-  WORKER:   { label: 'Porcher',  color: 'var(--pt-role-porcher-fg)',   bg: 'var(--pt-role-porcher-bg)' },
-  ASSISTANT:{ label: 'Assistant',color: 'var(--pt-role-assistant-fg)', bg: 'var(--pt-role-assistant-bg)' },
-  GERANT:   { label: 'Gérant',   color: 'var(--pt-role-gerant-fg)',    bg: 'var(--pt-role-gerant-bg)' },
+// Phase 3 : `can` = ce que le rôle autorise concrètement, affiché sous le nom.
+// C'est l'info qui porte l'écran (qui peut faire quoi sur la ferme).
+interface RoleMeta {
+  label: string;
+  color: string;
+  bg: string;
+  can: string;
+}
+const ROLE_LABELS: Record<string, RoleMeta> = {
+  OWNER:    { label: 'Owner',    color: 'var(--pt-role-owner-fg)',     bg: 'var(--pt-role-owner-bg)',     can: 'Tous droits, y compris finances' },
+  ADMIN:    { label: 'Admin',    color: 'var(--pt-role-admin-fg)',     bg: 'var(--pt-role-admin-bg)',     can: 'Gère la ferme et l’équipe' },
+  PORCHER:  { label: 'Porcher',  color: 'var(--pt-role-porcher-fg)',   bg: 'var(--pt-role-porcher-bg)',   can: 'Saisie terrain, pas les finances' },
+  WORKER:   { label: 'Porcher',  color: 'var(--pt-role-porcher-fg)',   bg: 'var(--pt-role-porcher-bg)',   can: 'Saisie terrain, pas les finances' },
+  ASSISTANT:{ label: 'Assistant',color: 'var(--pt-role-assistant-fg)', bg: 'var(--pt-role-assistant-bg)', can: 'Consultation, saisie limitée' },
+  GERANT:   { label: 'Gérant',   color: 'var(--pt-role-gerant-fg)',    bg: 'var(--pt-role-gerant-bg)',    can: 'Suivi et gestion courante' },
 };
 
-function getRoleStyle(role: string) {
-  return ROLE_LABELS[role] ?? { label: role || 'Membre', color: 'var(--pt-role-gerant-fg)', bg: 'var(--pt-role-gerant-bg)' };
+function getRoleStyle(role: string): RoleMeta {
+  return ROLE_LABELS[role] ?? { label: role || 'Membre', color: 'var(--pt-role-gerant-fg)', bg: 'var(--pt-role-gerant-bg)', can: 'Accès de base' };
 }
 
 function initialOf(member: TeamMember): string {
@@ -49,70 +63,79 @@ function initialOf(member: TeamMember): string {
   return (src.charAt(0) || '?').toUpperCase();
 }
 
-const statTileStyle: React.CSSProperties = {
-  background: 'var(--pt-bg)',
+/* ── Bandeau de tête équipe : effectif réel en une phrase, pas 3 KPI tiles
+ * génériques. On annonce la composition de l'équipe comme un éleveur le
+ * dirait : « 4 personnes : 1 owner, 3 porchers ». */
+const teamBannerStyle: React.CSSProperties = {
+  background: 'var(--pt-warm)',
+  border: '1px solid var(--pt-warm-deep)',
   borderRadius: 'var(--radius-card, 24px)',
-  padding: '18px 12px',
-  border: '1px solid var(--pt-line)',
-  textAlign: 'center',
+  padding: '18px 20px',
 };
 
-const statValueStyle: React.CSSProperties = {
+const teamCountStyle: React.CSSProperties = {
   fontFamily: 'var(--pt-font-display)',
-  fontSize: 28,
+  fontSize: 34,
   fontWeight: 800,
   color: 'var(--pt-ink)',
   lineHeight: 1,
+  letterSpacing: '-0.01em',
 };
 
-const statLabelStyle: React.CSSProperties = {
-  fontFamily: 'var(--pt-font-mono)',
-  fontSize: 10,
-  letterSpacing: '0.14em',
-  textTransform: 'uppercase',
-  color: 'var(--pt-muted)',
+const teamBreakdownStyle: React.CSSProperties = {
+  fontFamily: 'var(--pt-font-body)',
+  fontSize: 13,
+  color: 'var(--pt-accent-deep)',
   marginTop: 6,
-  fontWeight: 600,
+  lineHeight: 1.4,
 };
 
+/* ── Fiche membre ─────────────────────────────────────────────────────────
+ * Plus une row plate : avatar coloré au rôle + nom + ce que le rôle autorise.
+ * Le badge de rôle est assumé (pas un micro-pill à 10px coincé à droite). */
 const memberRowStyle: React.CSSProperties = {
   display: 'flex',
   alignItems: 'center',
-  gap: 12,
+  gap: 13,
   padding: '14px 16px',
   background: 'var(--pt-bg)',
   border: '1px solid var(--pt-line)',
-  borderRadius: 16,
+  borderRadius: 18,
   marginBottom: 8,
 };
 
+const memberRowYouStyle: React.CSSProperties = {
+  ...memberRowStyle,
+  border: '1.5px solid var(--pt-primary)',
+  background: 'var(--pt-warm)',
+};
+
 const memberAvatarStyle: React.CSSProperties = {
-  width: 44,
-  height: 44,
-  borderRadius: 14,
-  background: 'var(--pt-primary, #2D4A1F)',
-  color: 'white',
+  width: 46,
+  height: 46,
+  borderRadius: 15,
   display: 'inline-flex',
   alignItems: 'center',
   justifyContent: 'center',
   fontFamily: 'var(--pt-font-display)',
   fontWeight: 800,
-  fontSize: 16,
+  fontSize: 17,
   flexShrink: 0,
 };
 
 const memberNameStyle: React.CSSProperties = {
-  fontFamily: 'var(--pt-font-mono)',
-  fontSize: 13,
-  fontWeight: 600,
+  fontFamily: 'var(--pt-font-body)',
+  fontSize: 14,
+  fontWeight: 700,
   color: 'var(--pt-ink)',
   overflow: 'hidden',
   textOverflow: 'ellipsis',
   whiteSpace: 'nowrap',
 };
 
-const memberSubStyle: React.CSSProperties = {
-  fontSize: 11,
+const memberCanStyle: React.CSSProperties = {
+  fontFamily: 'var(--pt-font-body)',
+  fontSize: 11.5,
   color: 'var(--pt-muted)',
   marginTop: 2,
   overflow: 'hidden',
@@ -124,20 +147,44 @@ const roleBadgeStyle: React.CSSProperties = {
   fontFamily: 'var(--pt-font-mono)',
   fontSize: 10,
   fontWeight: 700,
-  letterSpacing: '0.08em',
+  letterSpacing: '0.1em',
   textTransform: 'uppercase',
-  padding: '5px 10px',
-  borderRadius: 999,
+  padding: '6px 11px',
+  borderRadius: 8,
   flexShrink: 0,
+  alignSelf: 'flex-start',
 };
 
-const emptyStateStyle: React.CSSProperties = {
+const youTagStyle: React.CSSProperties = {
+  fontFamily: 'var(--pt-font-mono)',
+  fontSize: 9,
+  fontWeight: 700,
+  letterSpacing: '0.1em',
+  textTransform: 'uppercase',
+  color: 'var(--pt-primary)',
+  background: 'var(--pt-bg)',
+  border: '1px solid var(--pt-primary)',
+  borderRadius: 6,
+  padding: '2px 6px',
+  marginLeft: 8,
+  verticalAlign: 'middle',
+};
+
+const stateBoxStyle: React.CSSProperties = {
   padding: 18,
   background: 'var(--pt-bg)',
   border: '1px solid var(--pt-line)',
   borderRadius: 16,
   fontSize: 13,
   color: 'var(--pt-muted)',
+  textAlign: 'center',
+};
+
+const emptyStateStyle: React.CSSProperties = {
+  padding: '28px 20px',
+  background: 'var(--pt-bg)',
+  border: '1px dashed var(--pt-line-strong)',
+  borderRadius: 18,
   textAlign: 'center',
 };
 
@@ -437,11 +484,19 @@ export const MonEquipeV70: React.FC = () => {
       const k = (m.role || 'AUTRE').toUpperCase();
       byRole[k] = (byRole[k] ?? 0) + 1;
     });
+    const owners = (byRole.OWNER ?? 0) + (byRole.ADMIN ?? 0);
+    const porchers = (byRole.PORCHER ?? 0) + (byRole.WORKER ?? 0);
+    const autres = members.length - owners - porchers;
+    const parts: string[] = [];
+    if (owners > 0) parts.push(`${owners} ${owners > 1 ? 'responsables' : 'responsable'}`);
+    if (porchers > 0) parts.push(`${porchers} ${porchers > 1 ? 'porchers' : 'porcher'}`);
+    if (autres > 0) parts.push(`${autres} ${autres > 1 ? 'autres' : 'autre'}`);
     return {
       total: members.length,
-      owners: (byRole.OWNER ?? 0) + (byRole.ADMIN ?? 0),
-      porchers: (byRole.PORCHER ?? 0) + (byRole.WORKER ?? 0),
-      autres: members.length - ((byRole.OWNER ?? 0) + (byRole.ADMIN ?? 0) + (byRole.PORCHER ?? 0) + (byRole.WORKER ?? 0)),
+      owners,
+      porchers,
+      autres,
+      breakdown: parts.join(' · '),
     };
   }, [members]);
 
@@ -474,20 +529,18 @@ export const MonEquipeV70: React.FC = () => {
           <FarmSwitcher />
         </div>
 
-        <section className="section">
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10 }}>
-            {[
-              { value: stats.total, label: 'Membres' },
-              { value: stats.owners, label: 'Owners' },
-              { value: stats.porchers, label: 'Porchers' },
-            ].map((kpi) => (
-              <article key={kpi.label} style={statTileStyle}>
-                <div style={statValueStyle}>{kpi.value}</div>
-                <div style={statLabelStyle}>{kpi.label}</div>
-              </article>
-            ))}
-          </div>
-        </section>
+        {!loading && !error && members.length > 0 && (
+          <section className="section">
+            <div style={teamBannerStyle}>
+              <div style={teamCountStyle}>
+                {stats.total} {stats.total > 1 ? 'personnes' : 'personne'}
+              </div>
+              {stats.breakdown && (
+                <div style={teamBreakdownStyle}>{stats.breakdown} sur la ferme</div>
+              )}
+            </div>
+          </section>
+        )}
 
         {canInvite && (
           <section className="section">
@@ -504,16 +557,34 @@ export const MonEquipeV70: React.FC = () => {
         )}
 
         <section className="section">
-          <div className="section__label">Membres</div>
+          <div className="section__label">Qui travaille ici</div>
 
-          {loading && <div style={emptyStateStyle}>Chargement…</div>}
+          {loading && <div style={stateBoxStyle}>Chargement de l’équipe…</div>}
 
           {!loading && error && (
-            <div style={{ ...emptyStateStyle, color: 'var(--pt-danger)' }}>{error}</div>
+            <div style={{ ...stateBoxStyle, color: 'var(--pt-danger)' }}>{error}</div>
           )}
 
           {!loading && !error && members.length === 0 && (
-            <div style={emptyStateStyle}>Aucun membre enregistré.</div>
+            <div style={emptyStateStyle}>
+              <div
+                style={{
+                  fontFamily: 'var(--pt-font-display)',
+                  fontSize: 17,
+                  fontWeight: 800,
+                  textTransform: 'uppercase',
+                  color: 'var(--pt-ink)',
+                  marginBottom: 6,
+                }}
+              >
+                Tu es seul sur la ferme
+              </div>
+              <p style={{ fontSize: 13, color: 'var(--pt-muted)', lineHeight: 1.5, margin: 0 }}>
+                {canInvite
+                  ? 'Ajoute un porcher pour qu’il puisse saisir les pesées et les soins depuis son téléphone.'
+                  : 'Le propriétaire n’a encore invité personne d’autre.'}
+              </p>
+            </div>
           )}
 
           {!loading && !error && members.map((m) => {
@@ -521,20 +592,23 @@ export const MonEquipeV70: React.FC = () => {
             const isYou = profile?.id === m.user_id;
             const displayName = m.full_name?.trim() || m.email || m.user_id.substring(0, 8) + '…';
             return (
-              <article key={m.user_id} style={memberRowStyle}>
-                <span aria-hidden style={memberAvatarStyle}>{initialOf(m)}</span>
+              <article key={m.user_id} style={isYou ? memberRowYouStyle : memberRowStyle}>
+                <span
+                  aria-hidden
+                  style={{
+                    ...memberAvatarStyle,
+                    background: roleStyle.bg,
+                    color: roleStyle.color,
+                  }}
+                >
+                  {initialOf(m)}
+                </span>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={memberNameStyle}>
                     {displayName}
-                    {isYou && (
-                      <span style={{ fontSize: 10, color: 'var(--pt-muted)', fontWeight: 500, marginLeft: 6 }}>
-                        (vous)
-                      </span>
-                    )}
+                    {isYou && <span style={youTagStyle}>Vous</span>}
                   </div>
-                  {m.email && m.email !== displayName && (
-                    <div style={memberSubStyle}>{m.email}</div>
-                  )}
+                  <div style={memberCanStyle}>{roleStyle.can}</div>
                 </div>
                 <span style={{ ...roleBadgeStyle, color: roleStyle.color, background: roleStyle.bg }}>
                   {roleStyle.label}

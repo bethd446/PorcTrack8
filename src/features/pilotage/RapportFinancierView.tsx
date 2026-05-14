@@ -79,10 +79,10 @@ const BUCKET_META: Record<
   'ALIMENT' | 'VETO' | 'ENERGIE' | 'AUTRES',
   { label: string; color: string }
 > = {
-  ALIMENT: { label: 'Aliment', color: 'var(--pt-primary, #2D4A1F)' },
-  VETO: { label: 'Vétérinaire', color: 'var(--pt-accent, #B8703D)' },
-  ENERGIE: { label: 'Énergie · eau', color: 'var(--pt-info, #4a6e8a)' },
-  AUTRES: { label: 'Autres', color: 'var(--pt-muted, #6b6357)' },
+  ALIMENT: { label: 'Aliment', color: 'var(--pt-primary)' },
+  VETO: { label: 'Vétérinaire', color: 'var(--pt-accent)' },
+  ENERGIE: { label: 'Énergie · eau', color: 'var(--pt-info)' },
+  AUTRES: { label: 'Autres', color: 'var(--pt-muted)' },
 };
 
 // ─── Composant ──────────────────────────────────────────────────────────────
@@ -265,7 +265,7 @@ const RapportFinancierView: React.FC = () => {
                       gridTemplateColumns: 'repeat(3, 1fr)',
                       border: '1px solid var(--pt-line)',
                       borderRadius: 14,
-                      background: 'var(--pt-bg, #FAF7F0)',
+                      background: 'var(--pt-bg)',
                       overflow: 'hidden',
                     }}
                   >
@@ -405,7 +405,7 @@ const RapportFinancierView: React.FC = () => {
                   <div
                     style={{
                       padding: 14,
-                      background: 'var(--pt-bg, #FAF7F0)',
+                      background: 'var(--pt-bg)',
                       border: '1px solid var(--pt-line)',
                       borderRadius: 14,
                     }}
@@ -425,7 +425,8 @@ const RapportFinancierView: React.FC = () => {
                       style={{ width: '100%', height: 60, display: 'block', marginBottom: 12 }}
                     >
                       <polyline
-                        fill="rgba(45,74,31,0.10)"
+                        fill="var(--pt-primary)"
+                        fillOpacity={0.1}
                         stroke="none"
                         points={
                           [`1,58`]
@@ -442,7 +443,7 @@ const RapportFinancierView: React.FC = () => {
                       />
                       <polyline
                         fill="none"
-                        stroke="var(--pt-emerald-ink, #2D4A1F)"
+                        stroke="var(--pt-primary)"
                         strokeWidth={2}
                         strokeLinecap="round"
                         strokeLinejoin="round"
@@ -472,7 +473,7 @@ const RapportFinancierView: React.FC = () => {
                     >
                       <polyline
                         fill="none"
-                        stroke="var(--pt-rose-ink, #a4453d)"
+                        stroke="var(--pt-danger)"
                         strokeWidth={2}
                         strokeLinecap="round"
                         strokeLinejoin="round"
@@ -506,7 +507,7 @@ const RapportFinancierView: React.FC = () => {
                   <div
                     style={{
                       padding: 14,
-                      background: 'var(--pt-bg, #FAF7F0)',
+                      background: 'var(--pt-bg)',
                       border: '1px solid var(--pt-line)',
                       borderRadius: 14,
                     }}
@@ -575,7 +576,7 @@ const RapportFinancierView: React.FC = () => {
                             style={{
                               height: 6,
                               borderRadius: 99,
-                              background: 'var(--pt-bg-app, #F1ECE0)',
+                              background: 'var(--pt-bg-app)',
                               overflow: 'hidden',
                             }}
                           >
@@ -584,7 +585,7 @@ const RapportFinancierView: React.FC = () => {
                                 width: `${Math.min(100, b.pct)}%`,
                                 height: '100%',
                                 background: b.color,
-                                transition: 'width .2s ease',
+                                transition: 'width 240ms var(--pt-ease)',
                               }}
                             />
                           </div>
@@ -612,7 +613,7 @@ const RapportFinancierView: React.FC = () => {
                   <div
                     style={{
                       padding: '6px 10px',
-                      background: 'var(--pt-bg, #FAF7F0)',
+                      background: 'var(--pt-bg)',
                       border: '1px solid var(--pt-line)',
                       borderRadius: 14,
                     }}
@@ -633,7 +634,7 @@ const RapportFinancierView: React.FC = () => {
                           return (
                             <tr
                               key={m.periode}
-                              style={isCurrent ? { background: 'rgba(184,112,61,0.06)' } : undefined}
+                              style={isCurrent ? { background: 'var(--pt-warm)' } : undefined}
                             >
                               <td>{isCurrent ? <b>{m.label} {m.periode.slice(2, 4)}</b> : m.label}</td>
                               <td className="num-r">

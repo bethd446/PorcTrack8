@@ -7,16 +7,19 @@
  * V77 — hint devise corrigé : "Devise plateforme — FCFA" (cohérent V43.3,
  * la plateforme est FCFA only, pas dérivée du pays).
  *
- * V77.1 — polish visuel : InfoCard + StatTile partagent un style cohérent
- * (label mono uppercase, valeur display 800, hint muted). CTA bas via
- * `.btn--primary btn--block` (constitution V77.1, plus de variantes --lg).
+ * V77.1 — polish visuel : StatTile + styles partagés.
+ *
+ * Phase 3 (design senior) — hiérarchie tranchée : plaque d'identité de tête
+ * (monogramme + nom + code) au lieu de rows uniformes ; champs regroupés en
+ * panneaux denses (FieldRow, filets internes) ; cartes profil avec marqueur
+ * de sélection assumé. La valeur porte le poids, le label reste discret.
  *
  * L'édition réelle (formulaire farm, profil, mot de passe) reste pour
  * l'instant déléguée au legacy /reglages/systeme via le CTA bas de page.
  */
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Check } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useFarm, useMeta } from '../../context/FarmContext';
 import { fetchFarm, type FarmInfo } from '../../services/settingsService';
@@ -30,51 +33,121 @@ import {
 import { useToast } from '../../context/ToastContext';
 import { PPABiosecurityChecklist } from '../components/PPABiosecurityChecklist';
 
-const infoCardStyle: React.CSSProperties = {
-  background: 'var(--pt-bg)',
+/* ── Plaque d'identité ferme ──────────────────────────────────────────────
+ * Bloc de tête : monogramme + nom + code. C'est la présence de la ferme,
+ * pas une row de formulaire. Traité comme l'en-tête d'un cahier d'éleveur. */
+const farmPlateStyle: React.CSSProperties = {
+  display: 'flex',
+  alignItems: 'center',
+  gap: 16,
+  background: 'var(--pt-warm)',
+  border: '1px solid var(--pt-warm-deep)',
   borderRadius: 'var(--radius-card, 24px)',
-  padding: '18px 20px',
-  border: '1px solid var(--pt-line)',
-  marginBottom: 10,
+  padding: '20px 20px',
+  marginBottom: 12,
 };
 
-const infoLabelStyle: React.CSSProperties = {
+const farmMonogramStyle: React.CSSProperties = {
+  width: 60,
+  height: 60,
+  borderRadius: 18,
+  background: 'var(--pt-primary)',
+  color: 'var(--pt-warm)',
+  display: 'inline-flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  fontFamily: 'var(--pt-font-display)',
+  fontWeight: 800,
+  fontSize: 26,
+  lineHeight: 1,
+  flexShrink: 0,
+};
+
+const farmNameStyle: React.CSSProperties = {
+  fontFamily: 'var(--pt-font-display)',
+  fontSize: 24,
+  fontWeight: 800,
+  color: 'var(--pt-ink)',
+  lineHeight: 1.05,
+  letterSpacing: '-0.01em',
+  textTransform: 'uppercase',
+};
+
+const farmCodeStyle: React.CSSProperties = {
+  fontFamily: 'var(--pt-font-mono)',
+  fontSize: 12,
+  letterSpacing: '0.08em',
+  color: 'var(--pt-accent-deep)',
+  marginTop: 5,
+};
+
+/* ── Lignes de fiche (paires label/valeur denses) ─────────────────────────
+ * Plus de cards-rows uniformes : un seul panneau, lignes séparées par un
+ * filet. La valeur porte le poids, le label reste discret en mono. */
+const fieldPanelStyle: React.CSSProperties = {
+  background: 'var(--pt-bg)',
+  border: '1px solid var(--pt-line)',
+  borderRadius: 'var(--radius-card, 24px)',
+  overflow: 'hidden',
+};
+
+const fieldRowStyle: React.CSSProperties = {
+  display: 'flex',
+  alignItems: 'baseline',
+  justifyContent: 'space-between',
+  gap: 16,
+  padding: '14px 18px',
+  borderTop: '1px solid var(--pt-line)',
+};
+
+const fieldRowFirstStyle: React.CSSProperties = {
+  ...fieldRowStyle,
+  borderTop: 'none',
+};
+
+const fieldLabelStyle: React.CSSProperties = {
   fontFamily: 'var(--pt-font-mono)',
   fontSize: 10,
   letterSpacing: '0.14em',
   textTransform: 'uppercase',
   color: 'var(--pt-muted)',
-  marginBottom: 6,
   fontWeight: 600,
+  flexShrink: 0,
 };
 
-const infoValueStyle: React.CSSProperties = {
+const fieldValueStyle: React.CSSProperties = {
   fontFamily: 'var(--pt-font-display)',
-  fontSize: 18,
+  fontSize: 16,
   fontWeight: 800,
   color: 'var(--pt-ink)',
-  lineHeight: 1.25,
-  letterSpacing: '-0.005em',
+  lineHeight: 1.2,
+  textAlign: 'right',
+  minWidth: 0,
 };
 
-const infoHintStyle: React.CSSProperties = {
-  fontSize: 12,
-  color: 'var(--pt-muted)',
-  marginTop: 6,
+const fieldHintStyle: React.CSSProperties = {
+  fontFamily: 'var(--pt-font-body)',
+  fontSize: 11,
+  fontWeight: 400,
+  color: 'var(--pt-subtle)',
+  marginTop: 2,
 };
 
-interface InfoCardProps {
+interface FieldRowProps {
   label: string;
   value: React.ReactNode;
   hint?: string;
+  first?: boolean;
 }
 
-const InfoCard: React.FC<InfoCardProps> = ({ label, value, hint }) => (
-  <article style={infoCardStyle}>
-    <div style={infoLabelStyle}>{label}</div>
-    <div style={infoValueStyle}>{value}</div>
-    {hint && <div style={infoHintStyle}>{hint}</div>}
-  </article>
+const FieldRow: React.FC<FieldRowProps> = ({ label, value, hint, first }) => (
+  <div style={first ? fieldRowFirstStyle : fieldRowStyle}>
+    <span style={fieldLabelStyle}>{label}</span>
+    <span style={{ textAlign: 'right', minWidth: 0 }}>
+      <span style={fieldValueStyle}>{value}</span>
+      {hint && <span style={{ ...fieldHintStyle, display: 'block' }}>{hint}</span>}
+    </span>
+  </div>
 );
 
 const statTileStyle: React.CSSProperties = {
@@ -87,7 +160,7 @@ const statTileStyle: React.CSSProperties = {
 
 const statValueStyle: React.CSSProperties = {
   fontFamily: 'var(--pt-font-display)',
-  fontSize: 28,
+  fontSize: 30,
   fontWeight: 800,
   color: 'var(--pt-ink)',
   lineHeight: 1,
@@ -114,6 +187,43 @@ const StatTile: React.FC<StatTileProps> = ({ value, label }) => (
     <div style={statLabelStyle}>{label}</div>
   </article>
 );
+
+/* ── Carte de profil d'élevage (sélecteur) ────────────────────────────── */
+const profileCardBase: React.CSSProperties = {
+  textAlign: 'left',
+  padding: '14px 16px',
+  borderRadius: 16,
+  display: 'flex',
+  gap: 13,
+  alignItems: 'center',
+  fontFamily: 'var(--pt-font-body)',
+  transition:
+    'border-color 160ms var(--pt-ease), background 160ms var(--pt-ease), opacity 160ms var(--pt-ease)',
+};
+
+const profileCardSelected: React.CSSProperties = {
+  ...profileCardBase,
+  border: '1.5px solid var(--pt-primary)',
+  background: 'var(--pt-warm)',
+};
+
+const profileCardIdle: React.CSSProperties = {
+  ...profileCardBase,
+  border: '1.5px solid var(--pt-line-strong)',
+  background: 'var(--pt-bg)',
+};
+
+const profileCheckStyle: React.CSSProperties = {
+  width: 24,
+  height: 24,
+  borderRadius: 999,
+  background: 'var(--pt-primary)',
+  color: 'var(--pt-warm)',
+  display: 'inline-flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  flexShrink: 0,
+};
 
 export const MaFermeV70: React.FC = () => {
   const navigate = useNavigate();
@@ -161,6 +271,9 @@ export const MaFermeV70: React.FC = () => {
   const sector = farm?.secteur ?? '—';
   const country = farm?.pays || pays || '—';
   const ownerLabel = profile?.full_name?.trim() || profile?.email || 'Owner';
+  const farmMonogram =
+    farmName.trim().replace(/[^\p{L}\p{N}]/gu, '').slice(0, 2).toUpperCase() || 'PT';
+  const cheptelTotal = (truies?.length ?? 0) + (verrats?.length ?? 0);
 
   return (
     <div className="pt-screen">
@@ -193,30 +306,34 @@ export const MaFermeV70: React.FC = () => {
 
         <section className="section">
           <div className="section__label">Identité</div>
-          <InfoCard label="Nom de la ferme" value={farmName} />
-          <InfoCard
-            label="Code"
-            value={
-              <span
-                style={{ fontFamily: 'var(--pt-font-mono)', fontSize: 14, letterSpacing: '0.06em' }}
-              >
-                {farmShortId}
-              </span>
-            }
-            hint="Identifiant interne"
-          />
-          <InfoCard label="Propriétaire" value={ownerLabel} />
+          <div style={farmPlateStyle}>
+            <span aria-hidden style={farmMonogramStyle}>{farmMonogram}</span>
+            <div style={{ minWidth: 0 }}>
+              <div style={farmNameStyle}>{farmName}</div>
+              <div style={farmCodeStyle}>{farmShortId}</div>
+            </div>
+          </div>
+          <div style={fieldPanelStyle}>
+            <FieldRow first label="Propriétaire" value={ownerLabel} />
+            <FieldRow
+              label="Cheptel"
+              value={`${cheptelTotal} ${cheptelTotal > 1 ? 'reproducteurs' : 'reproducteur'}`}
+              hint={`${truies?.length ?? 0} truies · ${verrats?.length ?? 0} verrats`}
+            />
+          </div>
         </section>
 
         <section className="section">
-          <div className="section__label">Localisation</div>
-          <InfoCard label="Pays" value={country} />
-          <InfoCard label="Secteur" value={sector} />
-          <InfoCard
-            label="Devise"
-            value={currency || 'FCFA'}
-            hint="Devise plateforme — FCFA"
-          />
+          <div className="section__label">Implantation &amp; devise</div>
+          <div style={fieldPanelStyle}>
+            <FieldRow first label="Pays" value={country} />
+            <FieldRow label="Secteur" value={sector} />
+            <FieldRow
+              label="Devise"
+              value={currency || 'FCFA'}
+              hint="Plateforme en FCFA — non modifiable"
+            />
+          </div>
         </section>
 
         {/* V80 P0 #1 — Type d'élevage : permet de switcher le profil après
@@ -236,44 +353,54 @@ export const MaFermeV70: React.FC = () => {
                   data-pt-profile-card={opt.value}
                   aria-pressed={selected}
                   style={{
-                    textAlign: 'left',
-                    padding: 14,
-                    borderRadius: 12,
-                    border: selected
-                      ? '2px solid var(--pt-primary)'
-                      : '1px solid var(--pt-line-strong)',
-                    background: selected ? 'var(--pt-warm)' : 'var(--pt-bg)',
+                    ...(selected ? profileCardSelected : profileCardIdle),
                     cursor: savingProfil ? 'wait' : 'pointer',
-                    display: 'flex',
-                    gap: 12,
-                    alignItems: 'flex-start',
                     opacity: savingProfil && !selected ? 0.5 : 1,
                   }}
                 >
                   <span
                     aria-hidden
                     style={{
-                      marginTop: 2,
                       color: selected ? 'var(--pt-primary)' : 'var(--pt-muted)',
+                      flexShrink: 0,
                     }}
                   >
                     <Icon size={22} strokeWidth={2} />
                   </span>
                   <span style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 4 }}>{opt.label}</div>
-                    <div style={{ fontSize: 12, color: 'var(--pt-muted)' }}>{opt.description}</div>
+                    <div
+                      style={{
+                        fontFamily: 'var(--pt-font-display)',
+                        fontWeight: 800,
+                        fontSize: 14,
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.01em',
+                        color: 'var(--pt-ink)',
+                        marginBottom: 3,
+                      }}
+                    >
+                      {opt.label}
+                    </div>
+                    <div style={{ fontSize: 12, color: 'var(--pt-muted)', lineHeight: 1.4 }}>
+                      {opt.description}
+                    </div>
                   </span>
+                  {selected && (
+                    <span aria-hidden style={profileCheckStyle}>
+                      <Check size={14} strokeWidth={3} />
+                    </span>
+                  )}
                 </button>
               );
             })}
           </div>
-          <p style={{ fontSize: 11, color: 'var(--pt-muted)', marginTop: 8 }}>
+          <p style={{ fontSize: 11, color: 'var(--pt-muted)', marginTop: 8, lineHeight: 1.45 }}>
             Le changement adapte le bottom-nav, les KPIs Performance et le FAB Saisir.
           </p>
         </section>
 
         <section className="section">
-          <div className="section__label">Bilan</div>
+          <div className="section__label">Ce que compte la ferme</div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10 }}>
             <StatTile value={truies?.length ?? 0} label="Truies" />
             <StatTile value={verrats?.length ?? 0} label="Verrats" />

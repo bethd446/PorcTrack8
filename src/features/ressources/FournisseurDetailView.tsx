@@ -343,7 +343,7 @@ const FournisseurDetailView: React.FC = () => {
                     alignItems: 'flex-start',
                     gap: 12,
                     padding: '12px 14px',
-                    background: 'white',
+                    background: 'var(--pt-bg)',
                     border: '1px solid var(--pt-line)',
                     borderRadius: 12,
                     marginBottom: 8,

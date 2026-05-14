@@ -164,6 +164,46 @@ const PlanAlimentationView: React.FC = () => {
               </section>
             )}
 
+            {/* ── Bandeau couverture critique (rupture imminente) ─── */}
+            {counts.critique > 0 && (
+              <div
+                role="alert"
+                style={{
+                  display: 'flex',
+                  gap: 12,
+                  alignItems: 'flex-start',
+                  padding: '14px 16px',
+                  background: 'var(--pt-danger-bg-soft)',
+                  border: '1px solid var(--pt-danger)',
+                  borderRadius: 14,
+                }}
+              >
+                <AlertTriangle
+                  size={20}
+                  strokeWidth={2.2}
+                  style={{ color: 'var(--pt-danger)', flexShrink: 0, marginTop: 1 }}
+                  aria-hidden
+                />
+                <div style={{ minWidth: 0 }}>
+                  <div
+                    style={{
+                      fontFamily: 'var(--pt-font-display)',
+                      fontWeight: 800,
+                      fontSize: 15,
+                      textTransform: 'uppercase',
+                      letterSpacing: '-0.005em',
+                      color: 'var(--pt-danger)',
+                    }}
+                  >
+                    {counts.critique} aliment{counts.critique > 1 ? 's' : ''} sous 7 jours de stock
+                  </div>
+                  <div style={{ fontSize: 13, color: 'var(--pt-ink)', marginTop: 2, lineHeight: 1.4 }}>
+                    Réappro urgente — rupture imminente, le cheptel risque d'être à court.
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* ── Section couverture stocks ──────────────────────── */}
             <section>
               <Section
@@ -172,14 +212,32 @@ const PlanAlimentationView: React.FC = () => {
               />
               {sortedCoverages.length === 0 ? (
                 <Card compact>
-                  <div className="text-[13px] text-text-2 text-center py-4 flex items-center justify-center gap-2">
-                    <AlertTriangle size={14} className="text-amber" />
-                    <span>Aucun aliment en stock.</span>
+                  <div
+                    style={{
+                      fontSize: 13,
+                      color: 'var(--pt-muted)',
+                      textAlign: 'center',
+                      padding: '16px 0',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: 8,
+                    }}
+                  >
+                    <AlertTriangle size={14} style={{ color: 'var(--pt-warning)' }} aria-hidden />
+                    <span>Aucun aliment en stock — ajoute tes sacs depuis l'écran Aliments.</span>
                   </div>
                 </Card>
               ) : filteredCoverages.length === 0 ? (
                 <Card compact>
-                  <div className="text-[13px] text-text-2 text-center py-4">
+                  <div
+                    style={{
+                      fontSize: 13,
+                      color: 'var(--pt-muted)',
+                      textAlign: 'center',
+                      padding: '16px 0',
+                    }}
+                  >
                     {query ? `Aucun résultat pour « ${query} ».` : 'Aucun aliment dans ce filtre.'}
                   </div>
                 </Card>
@@ -206,11 +264,14 @@ const PlanAlimentationView: React.FC = () => {
             {plan.consommationJournaliereTotale > 0 && (
               <div
                 style={{
-                  fontFamily: 'var(--font-mono)',
-                  fontSize: 10.5,
-                  letterSpacing: '0.10em',
+                  fontFamily: 'var(--pt-font-mono)',
+                  fontVariantNumeric: 'tabular-nums',
+                  fontSize: 11,
+                  letterSpacing: '0.06em',
                   textTransform: 'uppercase',
-                  color: 'var(--muted)',
+                  color: 'var(--pt-subtle)',
+                  paddingTop: 4,
+                  borderTop: '1px solid var(--pt-line)',
                 }}
                 aria-live="polite"
               >

@@ -11,7 +11,7 @@ import React, { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { IonContent, IonPage } from '@ionic/react';
 import {
-  Stethoscope, Plus, ExternalLink, Settings, AlertOctagon, ChevronLeft,
+  Stethoscope, Plus, ExternalLink, Settings, AlertOctagon, AlertTriangle, ChevronLeft,
 } from 'lucide-react';
 import EditableNumber from '../../components/EditableNumber';
 import EditableText from '../../components/EditableText';
@@ -110,6 +110,13 @@ const VetoRow: React.FC<VetoRowProps> = ({ item, farmName, onRefresh }) => {
         gap: 12,
         padding: '14px 16px',
         flexDirection: 'column',
+        cursor: 'default',
+        borderLeft:
+          treatment === 'urgent'
+            ? '3px solid var(--pt-danger)'
+            : treatment === 'normal'
+              ? '3px solid var(--pt-warning)'
+              : '1px solid var(--pt-line)',
       }}
     >
       <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, width: '100%' }}>
@@ -205,10 +212,11 @@ const VetoRow: React.FC<VetoRowProps> = ({ item, farmName, onRefresh }) => {
           aria-label={`Commander ${item.produit} via WhatsApp`}
           className="btn btn--primary"
           style={{
-            padding: '8px 14px',
+            padding: '10px 16px',
             borderRadius: 999,
-            minHeight: 36,
-            fontSize: 11,
+            minHeight: 44,
+            fontSize: 12,
+            fontWeight: 700,
             alignSelf: 'flex-start',
             textDecoration: 'none',
             background:
@@ -356,6 +364,20 @@ const PharmacieView: React.FC = () => {
                   </div>
                   <div className="alert-card__text">
                     Commander d’urgence pour ne pas interrompre les traitements.
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {stats.rupture === 0 && stats.bas > 0 && (
+              <div role="alert" className="alert-card alert-card--warning">
+                <AlertTriangle size={18} className="alert-card__icon" aria-hidden />
+                <div className="alert-card__body">
+                  <div className="alert-card__title">
+                    {stats.bas} produit{stats.bas > 1 ? 's' : ''} sous le seuil bas
+                  </div>
+                  <div className="alert-card__text">
+                    À recommander avant de tomber en rupture de traitement.
                   </div>
                 </div>
               </div>

@@ -12,7 +12,7 @@ import React, { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { IonContent, IonPage } from '@ionic/react';
 import {
-  Wheat, ExternalLink, Settings, Plus, AlertOctagon, ChevronLeft,
+  Wheat, ExternalLink, Settings, Plus, AlertOctagon, AlertTriangle, ChevronLeft,
 } from 'lucide-react';
 import EditableNumber from '../../components/EditableNumber';
 import EditableText from '../../components/EditableText';
@@ -160,6 +160,13 @@ const AlimentRow: React.FC<AlimentRowProps> = ({
         gap: 12,
         padding: '14px 16px',
         flexDirection: 'column',
+        cursor: 'default',
+        borderLeft:
+          treatment === 'urgent'
+            ? '3px solid var(--pt-danger)'
+            : treatment === 'normal'
+              ? '3px solid var(--pt-warning)'
+              : '1px solid var(--pt-line)',
       }}
     >
       <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, width: '100%' }}>
@@ -259,10 +266,11 @@ const AlimentRow: React.FC<AlimentRowProps> = ({
           aria-label={`Commander ${item.libelle || item.id} via WhatsApp`}
           className="btn btn--primary"
           style={{
-            padding: '8px 14px',
+            padding: '10px 16px',
             borderRadius: 999,
-            minHeight: 36,
-            fontSize: 11,
+            minHeight: 44,
+            fontSize: 12,
+            fontWeight: 700,
             alignSelf: 'flex-start',
             textDecoration: 'none',
             background:
@@ -408,6 +416,20 @@ const AlimentsView: React.FC = () => {
                   </div>
                   <div className="alert-card__text">
                     Commander d’urgence — production à l’arrêt si non réapprovisionné.
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {stats.rupture === 0 && stats.bas > 0 && (
+              <div role="alert" className="alert-card alert-card--warning">
+                <AlertTriangle size={18} className="alert-card__icon" aria-hidden />
+                <div className="alert-card__body">
+                  <div className="alert-card__title">
+                    {stats.bas} stock{stats.bas > 1 ? 's' : ''} sous le seuil bas
+                  </div>
+                  <div className="alert-card__text">
+                    À commander cette semaine pour éviter la rupture.
                   </div>
                 </div>
               </div>
