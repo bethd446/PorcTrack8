@@ -328,7 +328,7 @@ const RapportFinancierView: React.FC = () => {
                           className={`num ${deltaPctMarge >= 0 ? 'amount--positive' : 'amount--negative'}`}
                           style={{
                             fontFamily: 'var(--pt-font-mono)',
-                            fontSize: 10.5,
+                            fontSize: 11,
                             marginTop: 4,
                           }}
                         >
@@ -376,7 +376,7 @@ const RapportFinancierView: React.FC = () => {
                       <div
                         style={{
                           fontFamily: 'var(--pt-font-mono)',
-                          fontSize: 10.5,
+                          fontSize: 11,
                           color: 'var(--pt-muted)',
                           marginTop: 4,
                         }}

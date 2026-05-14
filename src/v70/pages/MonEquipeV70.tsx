@@ -69,7 +69,7 @@ function initialOf(member: TeamMember): string {
 const teamBannerStyle: React.CSSProperties = {
   background: 'var(--pt-warm)',
   border: '1px solid var(--pt-warm-deep)',
-  borderRadius: 'var(--radius-card, 24px)',
+  borderRadius: 'var(--pt-radius-lg)',
   padding: '18px 20px',
 };
 
@@ -96,7 +96,7 @@ const teamBreakdownStyle: React.CSSProperties = {
 const memberRowStyle: React.CSSProperties = {
   display: 'flex',
   alignItems: 'center',
-  gap: 13,
+  gap: 12,
   padding: '14px 16px',
   background: 'var(--pt-bg)',
   border: '1px solid var(--pt-line)',
@@ -135,7 +135,7 @@ const memberNameStyle: React.CSSProperties = {
 
 const memberCanStyle: React.CSSProperties = {
   fontFamily: 'var(--pt-font-body)',
-  fontSize: 11.5,
+  fontSize: 12,
   color: 'var(--pt-muted)',
   marginTop: 2,
   overflow: 'hidden',

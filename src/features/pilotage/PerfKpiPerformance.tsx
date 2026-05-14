@@ -49,7 +49,7 @@ const KpiLine: React.FC<KpiLineProps> = ({ label, value, tone = 'default', cible
         <div
           style={{
             fontFamily: 'var(--pt-font-mono)',
-            fontSize: 10.5,
+            fontSize: 11,
             color: 'var(--pt-text-subtle)',
             marginTop: 1,
           }}

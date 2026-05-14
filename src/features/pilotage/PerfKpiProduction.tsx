@@ -74,7 +74,7 @@ const ProdLine: React.FC<ProdLineProps> = ({ label, value, cible, danger }) => (
         <span
           style={{
             fontFamily: 'var(--pt-font-mono)',
-            fontSize: 10.5,
+            fontSize: 11,
             color: 'var(--pt-text-subtle)',
             marginLeft: 8,
           }}
@@ -177,7 +177,7 @@ const PerfKpiProduction: React.FC<PerfKpiProductionProps> = ({
                 <span
                   style={{
                     fontFamily: 'var(--pt-font-mono)',
-                    fontSize: 10.5,
+                    fontSize: 11,
                     color: 'var(--pt-text-subtle)',
                     marginLeft: 8,
                   }}

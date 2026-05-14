@@ -149,7 +149,7 @@ const headTitleStyle: React.CSSProperties = {
 
 const headSubStyle: React.CSSProperties = {
   fontFamily: 'var(--pt-font-mono)',
-  fontSize: 10.5,
+  fontSize: 11,
   textTransform: 'uppercase',
   letterSpacing: '0.12em',
   color: 'var(--pt-subtle)',
@@ -279,7 +279,7 @@ const MariusOffline: React.FC<OfflineCardProps> = ({ onRetry, onClose }) => (
     </h3>
     <p
       style={{
-        fontSize: 13.5,
+        fontSize: 14,
         color: 'rgba(245,233,216,0.78)',
         lineHeight: 1.5,
         margin: 0,

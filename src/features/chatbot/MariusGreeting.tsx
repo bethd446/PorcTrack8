@@ -72,7 +72,7 @@ export const MariusGreeting: React.FC<MariusGreetingProps> = ({ onClick, pageCon
             style={{
               fontFamily: 'var(--pt-font-mono)',
               fontWeight: 600,
-              fontSize: 9.5,
+              fontSize: 10,
               color: 'var(--pt-accent)',
               letterSpacing: '0.14em',
               textTransform: 'uppercase',

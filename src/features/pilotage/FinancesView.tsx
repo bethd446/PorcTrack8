@@ -389,7 +389,7 @@ const FinancesView: React.FC = () => {
                               y={115}
                               style={{
                                 fontFamily: 'var(--pt-font-mono)',
-                                fontSize: 8.5,
+                                fontSize: 9,
                                 fill: isCurrent
                                   ? 'var(--pt-accent)'
                                   : 'var(--pt-subtle)',

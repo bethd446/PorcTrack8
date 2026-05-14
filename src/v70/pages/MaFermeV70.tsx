@@ -42,7 +42,7 @@ const farmPlateStyle: React.CSSProperties = {
   gap: 16,
   background: 'var(--pt-warm)',
   border: '1px solid var(--pt-warm-deep)',
-  borderRadius: 'var(--radius-card, 24px)',
+  borderRadius: 'var(--pt-radius-lg)',
   padding: '20px 20px',
   marginBottom: 12,
 };
@@ -87,7 +87,7 @@ const farmCodeStyle: React.CSSProperties = {
 const fieldPanelStyle: React.CSSProperties = {
   background: 'var(--pt-bg)',
   border: '1px solid var(--pt-line)',
-  borderRadius: 'var(--radius-card, 24px)',
+  borderRadius: 'var(--pt-radius-lg)',
   overflow: 'hidden',
 };
 
@@ -152,7 +152,7 @@ const FieldRow: React.FC<FieldRowProps> = ({ label, value, hint, first }) => (
 
 const statTileStyle: React.CSSProperties = {
   background: 'var(--pt-bg)',
-  borderRadius: 'var(--radius-card, 24px)',
+  borderRadius: 'var(--pt-radius-lg)',
   padding: '18px 12px',
   border: '1px solid var(--pt-line)',
   textAlign: 'center',
@@ -194,7 +194,7 @@ const profileCardBase: React.CSSProperties = {
   padding: '14px 16px',
   borderRadius: 16,
   display: 'flex',
-  gap: 13,
+  gap: 12,
   alignItems: 'center',
   fontFamily: 'var(--pt-font-body)',
   transition:

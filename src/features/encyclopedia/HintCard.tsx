@@ -22,9 +22,9 @@ const LEVEL_BORDER: Record<FarmHint['level'], string> = {
 };
 
 const LEVEL_LINK: Record<FarmHint['level'], string> = {
-  info: 'var(--pt-amber-deep, #c2662b)',
-  soon: 'var(--pt-emerald-premium, #064e3b)',
-  critical: 'var(--pt-danger, #a4453d)',
+  info: 'var(--pt-accent-deep)',
+  soon: 'var(--pt-primary)',
+  critical: 'var(--pt-danger)',
 };
 
 export const HintCard: React.FC<{ hint: FarmHint }> = ({ hint }) => {

@@ -25,13 +25,13 @@ const ErrorRow: React.FC<{ record: ErrorRecord }> = ({ record }) => {
     <div className="card" style={{ marginBottom: 8, padding: '12px 14px' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div className="ft-code" style={{ fontSize: 11, color: 'var(--pt-muted)', marginBottom: 2 }}>
+          <div style={{ fontFamily: 'var(--pt-font-mono)', fontSize: 11, color: 'var(--pt-muted)', marginBottom: 2 }}>
             {formatTs(record.timestamp)} · {record.scope}
           </div>
           <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--pt-ink)', wordBreak: 'break-word' }}>
             {record.message}
           </div>
-          <div className="ft-code" style={{ fontSize: 11, color: 'var(--pt-muted)', marginTop: 2 }}>
+          <div style={{ fontFamily: 'var(--pt-font-mono)', fontSize: 11, color: 'var(--pt-muted)', marginTop: 2 }}>
             {record.url}
           </div>
         </div>
@@ -48,8 +48,8 @@ const ErrorRow: React.FC<{ record: ErrorRecord }> = ({ record }) => {
       </div>
       {expanded && record.stack && (
         <pre
-          className="ft-code"
           style={{
+            fontFamily: 'var(--pt-font-mono)',
             marginTop: 10,
             padding: 10,
             background: 'var(--pt-bg)',
@@ -101,23 +101,25 @@ export const DiagnosticView: React.FC = () => {
 
   return (
     <div className="pt-screen">
-      {/* Header */}
-      <div className="ph ph--primary">
-        <button
-          type="button"
-          className="ph__back"
-          onClick={() => navigate('/reglages')}
-          aria-label="Retour aux réglages"
-        >
-          <ChevronLeft size={20} />
-        </button>
-        <div className="ph__title">
-          <span className="ft-heading" style={{ textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-            Diagnostic
-          </span>
-          <span className="ph__subtitle">Erreurs capturées en local</span>
+      {/* Header — pattern canonique V70 (.ph--primary / .ph__row / .iconbtn) */}
+      <header className="ph ph--primary">
+        <div className="ph__row">
+          <div style={{ flex: 1 }}>
+            <button
+              type="button"
+              className="iconbtn"
+              onClick={() => navigate('/reglages')}
+              aria-label="Retour aux réglages"
+              style={{ marginBottom: 10 }}
+            >
+              <ChevronLeft size={16} strokeWidth={2} aria-hidden />
+            </button>
+            <div className="ph__eyebrow">Configuration</div>
+            <h1 className="ph__h1">Diagnostic</h1>
+            <p className="ph__sub">Erreurs capturées en local</p>
+          </div>
         </div>
-      </div>
+      </header>
 
       <div style={{ padding: '16px 16px 80px' }}>
         {isSuperAdmin === null && (
@@ -129,7 +131,7 @@ export const DiagnosticView: React.FC = () => {
         {isSuperAdmin === false && (
           <div className="card" style={{ padding: 24, textAlign: 'center' }}>
             <AlertTriangle size={32} style={{ color: 'var(--pt-muted)', margin: '0 auto 12px' }} />
-            <div className="ft-heading" style={{ fontSize: 16, textTransform: 'uppercase' }}>
+            <div style={{ fontFamily: 'var(--pt-font-display)', fontWeight: 800, fontSize: 16, textTransform: 'uppercase' }}>
               Accès réservé
             </div>
             <div style={{ fontSize: 14, color: 'var(--pt-muted)', marginTop: 6 }}>
@@ -141,7 +143,7 @@ export const DiagnosticView: React.FC = () => {
         {isSuperAdmin === true && (
           <>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-              <span className="ft-heading" style={{ fontSize: 13, textTransform: 'uppercase', color: 'var(--pt-muted)' }}>
+              <span style={{ fontFamily: 'var(--pt-font-display)', fontWeight: 800, fontSize: 13, textTransform: 'uppercase', color: 'var(--pt-muted)' }}>
                 {errors.length} erreur{errors.length !== 1 ? 's' : ''} (max 50)
               </span>
               {errors.length > 0 && (

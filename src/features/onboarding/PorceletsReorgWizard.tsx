@@ -563,7 +563,7 @@ export default function PorceletsReorgWizard() {
         <div
           style={{
             padding: 8,
-            background: 'var(--pt-danger-soft, rgba(239,68,68,0.08))',
+            background: 'var(--pt-danger-bg-soft)',
             borderRadius: 8,
             fontSize: 12,
             color: 'var(--pt-danger)',
@@ -680,7 +680,7 @@ export default function PorceletsReorgWizard() {
         <div
           style={{
             padding: 8,
-            background: 'var(--pt-danger-soft, rgba(239,68,68,0.08))',
+            background: 'var(--pt-danger-bg-soft)',
             borderRadius: 8,
             fontSize: 12,
             color: 'var(--pt-danger)',
@@ -695,7 +695,7 @@ export default function PorceletsReorgWizard() {
         <div
           style={{
             padding: 8,
-            background: 'var(--pt-danger-soft, rgba(239,68,68,0.08))',
+            background: 'var(--pt-danger-bg-soft)',
             borderRadius: 8,
             fontSize: 12,
             color: 'var(--pt-danger)',
@@ -772,7 +772,7 @@ export default function PorceletsReorgWizard() {
                     <div
                       style={{
                         padding: 8,
-                        background: 'var(--pt-danger-soft, rgba(239,68,68,0.08))',
+                        background: 'var(--pt-danger-bg-soft)',
                         borderRadius: 8,
                         fontSize: 12,
                         color: 'var(--pt-danger)',

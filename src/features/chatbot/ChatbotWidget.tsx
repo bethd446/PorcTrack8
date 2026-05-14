@@ -675,7 +675,7 @@ export const ChatbotWidget: React.FC = () => {
           style={{
             outline: 'none',
             fontFamily: 'var(--pt-font-body)',
-            fontSize: 13.5,
+            fontSize: 14,
           }}
         />
         <button
