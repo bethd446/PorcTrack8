@@ -39,6 +39,8 @@ shared/*.js
 shared/*.d.ts
 
 .claude/worktrees/
+# Screenshots de session (artefacts de debug/audit — lourds, non versionnés)
+.claude/audits/*-screens/
 
 # APK release artifacts — bloqués par défaut, sauf releases officielles
 releases/*.aab

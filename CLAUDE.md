@@ -113,45 +113,44 @@ npx cap open android   # ou: npx cap run android
 - **Icons** : Ionicons + Lucide React
 - **Dates** : date-fns (locale fr)
 
-## Design system
+## Design system — V70 (canonique)
 
-### Palette "Terrain Vivant"
+> L'app sert **exclusivement V70** : `src/App.tsx` rend `<V70Routes />` (feature flag `v70Enabled`, défaut `true` depuis 2026-05-07). Tout travail visuel cible `src/v70/`. Le système **legacy** (`src/index.css` → `--color-accent-*`, classes `.premium-*` / `.ft-*`, `src/components/`, `src/pages/`) est **déprécié et non routé** — ne pas l'utiliser pour du nouveau code.
+
+### Source de vérité tokens
+- `src/v70/theme/v70-tokens.css` — tokens `--pt-*` (couleurs, sémantiques, entity avatars, rôles)
+- `src/design-system/tokens/tokens.css` — tokens `--pt-font-*`
+- `src/v70/theme/v70-global.css` — styles globaux V70
+
+### Palette "Terrain Vivant" (tokens `--pt-*`)
 | Token | Hex | Usage |
 |-------|-----|-------|
-| emerald-premium | #064e3b | Primary / header gradient end |
-| forest-mid | #065f46 | Header gradient |
-| forest-light | #d1fae5 | Success backgrounds |
-| amber-pork | #F4A261 | Accent signature |
-| amber-deep | #c2662b | Accent foncé |
-| bg-app | #f0f4f3 | Background global |
+| `--pt-primary` | #2D4A1F | Vert forêt — primary, headers, CTA |
+| `--pt-primary-deep` | #1f3414 | Hover / active |
+| `--pt-primary-light` | #4a7a2f | Secondary |
+| `--pt-warm` | #F5E9D8 | Crème — tabs, surfaces chaudes |
+| `--pt-accent` | #B8703D | Terre — FAB, signatures |
+| `--pt-bg-app` | #FAFAFA | Background global |
+| `--pt-ink` / `--pt-muted` | #1a1a1a / #6b6357 | Texte |
+| `--pt-success` / `warning` / `danger` / `info` | #4a7a2f / #c08a3d / #a4453d / #4a6e8a | Sémantiques |
 
-### Typographie (4 polices)
-| Classe | Police | Usage |
-|--------|--------|-------|
-| `.ft-heading` | BigShoulders Bold | Titres, KPIs, nav labels |
-| body (default) | InstrumentSans | Texte courant |
-| `.ft-values` | BricolageGrotesque | Nombres, statuts |
-| `.ft-code` | DMMono | IDs, codes, métadonnées |
+**Interdits** : tout hex hardcodé, et les valeurs legacy `#064e3b`, `#065f46`, `#2d5a1b`. Toujours `var(--pt-*)`.
 
-### Composants CSS clés
-- `.premium-header` — Header avec gradient, rounded-b-[36px], ombre
-- `.premium-card` — Cards blanches, rounded-[28px], shadow subtile
-- `.premium-btn` — Boutons BigShoulders, uppercase, h-[58px]
-- `.premium-badge` — Badges DMMono, rounded-full
-- `.premium-segment` — Tabs Ionic stylisés
+### Typographie (2 polices réelles)
+| Variable | Police | Usage |
+|----------|--------|-------|
+| `--pt-font-display` | Big Shoulders Display 700 | Titres uppercase, KPIs, nombres |
+| `--pt-font-body` | Instrument Sans | Texte courant, boutons, labels |
+| `--pt-font-mono` | = Instrument Sans (`tabular-nums`) | IDs, codes, dates — **pas de vraie monospace** |
 
-### Header (`PremiumHeader.tsx`)
-Le header accepte un slot `children` pour intégrer des éléments (tabs, barre de recherche, filtres) DANS le header. **Ne JAMAIS utiliser de margin-top négative** (-mt-10, etc.) pour positionner du contenu sous le header. Utiliser le slot children à la place.
+### Composants V70
+- Atomiques (`src/v70/components/ds/`) : `PageHeader` · `Section` · `Card` · `Button` · `Pill` · `ListItem` · `CycleTimeline` · `StatsGrid` · `TabsMini`
+- Applicatifs (`src/v70/components/v70/`) : `BottomNav`, `DataTable`, `Dialog`, `EduCard`, `EmptyEdu`, `EmptyState`, `Skeleton`, `Toast`, `Tooltip`, `PhotoUpload`/`PhotoGallery`, etc.
 
-```tsx
-<PremiumHeader title="Alertes" subtitle="Suivi technique">
-  {/* Tabs intégrés proprement dans le header */}
-  <div className="flex gap-2">
-    <button className="...">Tab 1</button>
-    <button className="...">Tab 2</button>
-  </div>
-</PremiumHeader>
-```
+### Règles layout
+- **Jamais de margin-top négative** pour positionner du contenu — utiliser flex/grid/slots.
+- `PageHeader` accepte des children pour intégrer tabs/filtres dans le header.
+- Touch targets ≥ 44×44 px (porcher avec gants). Contraste ≥ 4.5:1 (7:1 plein soleil).
 
 ## Logique métier GTTT
 
