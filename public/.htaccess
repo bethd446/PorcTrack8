@@ -29,3 +29,18 @@ RewriteRule ^ - [R=404,L]
 RewriteCond %{HTTP_HOST} ^(www\.)?porctrack\.tech$ [NC]
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteRule ^ /index.html [L]
+
+# ── Cache-Control PWA (fix 2026-05-14) ───────────────────────────────────
+# Le service worker, le manifeste et le shell HTML ne doivent JAMAIS être
+# mis en cache longue durée : sinon les utilisateurs restent bloqués sur une
+# ancienne version de l'app même après un déploiement réussi (le SW gelé
+# continue de servir les anciens bundles précachés). Bug constaté le
+# 2026-05-14 : sw.js servi avec max-age=604800 par défaut Hostinger.
+# Les assets dans /assets/ sont content-hashés → cache long assumé (défaut OK).
+<IfModule mod_headers.c>
+  <FilesMatch "^(sw\.js|registerSW\.js|workbox-.+\.js|push-handler\.js|index\.html|manifest\.webmanifest|manifest\.json)$">
+    Header set Cache-Control "no-cache, no-store, must-revalidate"
+    Header set Pragma "no-cache"
+    Header set Expires "0"
+  </FilesMatch>
+</IfModule>
