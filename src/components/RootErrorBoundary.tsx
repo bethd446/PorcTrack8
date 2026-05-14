@@ -1,5 +1,8 @@
 import React from 'react';
 import { isChunkError, reloadForChunkError } from '../lib/chunkError';
+import { recordError } from '../services/errorStore';
+import { APP_VERSION } from '../config';
+import { kvGet } from '../services/kvStore';
 
 interface Props {
   children: React.ReactNode;
@@ -36,6 +39,20 @@ export class RootErrorBoundary extends React.Component<Props, State> {
   componentDidCatch(error: Error, info: React.ErrorInfo) {
     if (import.meta.env.DEV) {
       console.error('[RootErrorBoundary]', error, info);
+    }
+    try {
+      const ua = navigator.userAgent.slice(0, 80);
+      recordError({
+        timestamp: Date.now(),
+        scope: 'RootErrorBoundary',
+        message: error.message || String(error),
+        stack: (error.stack ?? '') + '\n\nComponent stack:' + (info.componentStack ?? ''),
+        url: typeof window !== 'undefined' ? window.location.href : '',
+        userId: kvGet('pt:user_id') ?? undefined,
+        version: APP_VERSION + ' ua:' + ua,
+      });
+    } catch {
+      // ne pas casser le rendu d'urgence
     }
   }
 

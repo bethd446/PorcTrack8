@@ -417,7 +417,6 @@ const AnimalsV70Inner: React.FC = () => {
               style={{
                 width: '100%',
                 border: 'none',
-                outline: 'none',
                 fontSize: 13,
                 background: 'transparent',
                 fontFamily: 'inherit',

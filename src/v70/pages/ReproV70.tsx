@@ -715,14 +715,11 @@ export const ReproV70: React.FC = () => {
                     : '/troupeau';
 
                 return (
-                  <a
+                  <button
                     key={c.key}
+                    type="button"
                     className="cycle-card"
-                    href={`#cycle-${c.key}`}
-                    onClick={e => {
-                      e.preventDefault();
-                      navigate(targetRoute);
-                    }}
+                    onClick={() => navigate(targetRoute)}
                     aria-label={`Cycle ${c.truieCode} — ${label} — voir détail`}
                     style={{ marginBottom: 8 }}
                   >
@@ -739,7 +736,7 @@ export const ReproV70: React.FC = () => {
                       </span>
                     </div>
                     <CycleMiniRail railPos={c.railPos} currentLabel={currentLabel} />
-                  </a>
+                  </button>
                 );
               })
             )}

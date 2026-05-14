@@ -650,7 +650,7 @@ export const PerformanceV70: React.FC = () => {
                   fontFamily: 'var(--pt-font-mono, monospace)',
                   letterSpacing: '0.14em',
                   textTransform: 'uppercase',
-                  color: 'var(--pt-subtle, #a39888)',
+                  color: 'var(--pt-muted)',
                   marginBottom: 6,
                   display: 'inline-flex',
                   alignItems: 'center',
@@ -766,7 +766,7 @@ export const PerformanceV70: React.FC = () => {
                           fontSize: 8.5,
                           fill: isCurrent
                             ? 'var(--pt-accent, #B8703D)'
-                            : 'var(--pt-subtle, #a39888)',
+                            : 'var(--pt-muted)',
                         }}
                       >
                         {m.initial}
@@ -792,19 +792,19 @@ export const PerformanceV70: React.FC = () => {
               }}
             >
               <div className="kpi" style={{ padding: 14, borderRight: '1px solid var(--pt-line)' }}>
-                <div className="kpi__label" style={{ fontFamily: 'var(--pt-font-mono, monospace)', fontSize: 10, fontWeight: 600, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--pt-subtle)' }}>Revenus</div>
+                <div className="kpi__label" style={{ fontFamily: 'var(--pt-font-mono, monospace)', fontSize: 10, fontWeight: 600, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--pt-muted)' }}>Revenus</div>
                 <div className="kpi__val num amount--positive" style={{ fontFamily: 'var(--pt-font-display, sans-serif)', fontWeight: 900, fontSize: 24, lineHeight: 0.95, marginTop: 6 }}>
                   +{formatMontant(financeMonthly.current.revenus, currency)}
                 </div>
               </div>
               <div className="kpi" style={{ padding: 14, borderRight: '1px solid var(--pt-line)' }}>
-                <div className="kpi__label" style={{ fontFamily: 'var(--pt-font-mono, monospace)', fontSize: 10, fontWeight: 600, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--pt-subtle)' }}>Charges</div>
+                <div className="kpi__label" style={{ fontFamily: 'var(--pt-font-mono, monospace)', fontSize: 10, fontWeight: 600, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--pt-muted)' }}>Charges</div>
                 <div className="kpi__val num amount--negative" style={{ fontFamily: 'var(--pt-font-display, sans-serif)', fontWeight: 900, fontSize: 24, lineHeight: 0.95, marginTop: 6 }}>
                   {MINUS_PERF}{formatMontant(financeMonthly.current.charges, currency)}
                 </div>
               </div>
               <div className="kpi" style={{ padding: 14 }}>
-                <div className="kpi__label" style={{ fontFamily: 'var(--pt-font-mono, monospace)', fontSize: 10, fontWeight: 600, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--pt-subtle)' }}>Marge</div>
+                <div className="kpi__label" style={{ fontFamily: 'var(--pt-font-mono, monospace)', fontSize: 10, fontWeight: 600, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--pt-muted)' }}>Marge</div>
                 <div className={`kpi__val num ${financeMonthly.current.marge >= 0 ? 'amount--positive' : 'amount--negative'}`} style={{ fontFamily: 'var(--pt-font-display, sans-serif)', fontWeight: 900, fontSize: 24, lineHeight: 0.95, marginTop: 6 }}>
                   {financeMonthly.current.marge >= 0 ? '+' : MINUS_PERF}{formatMontant(Math.abs(financeMonthly.current.marge), currency)}
                 </div>

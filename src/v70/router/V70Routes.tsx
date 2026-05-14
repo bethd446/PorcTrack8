@@ -103,6 +103,9 @@ const MariusChatFullscreen = React.lazy(() =>
     default: m.default,
   })),
 );
+const DiagnosticView = React.lazy(() =>
+  import('../pages/DiagnosticView').then((m) => ({ default: m.DiagnosticView })),
+);
 
 const OnboardingRoute: React.FC = () => {
   const navigate = useNavigate();
@@ -197,6 +200,7 @@ export const V70Routes: React.FC = () => (
           <Route path="/reglages/encyclopedie" element={<EncyclopediaPage />} />
           <Route path="/reglages/onboarding" element={<OnboardingRoute />} />
           <Route path="/reglages/sync" element={<V70ErrorBoundary pageName="Synchronisation"><SynchronisationV70 /></V70ErrorBoundary>} />
+          <Route path="/reglages/diagnostic" element={<V70ErrorBoundary pageName="Diagnostic"><DiagnosticView /></V70ErrorBoundary>} />
 
           {/* V71-P3 — Wizard ré-organisation porcelets→bandes→loges (bloquant) */}
           <Route path="/porcelets-reorg" element={<PorceletsReorgWizard />} />

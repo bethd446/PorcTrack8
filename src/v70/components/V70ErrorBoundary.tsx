@@ -1,5 +1,8 @@
 import React from 'react';
 import { isChunkError, reloadForChunkError } from '../../lib/chunkError';
+import { recordError } from '../../services/errorStore';
+import { APP_VERSION } from '../../config';
+import { kvGet } from '../../services/kvStore';
 
 interface Props { children: React.ReactNode; pageName?: string; }
 interface State { hasError: boolean; error?: Error; }
@@ -21,6 +24,19 @@ export class V70ErrorBoundary extends React.Component<Props, State> {
   componentDidCatch(error: Error, info: React.ErrorInfo) {
     if (import.meta.env.DEV) {
       console.error('[V70ErrorBoundary]', error, info);
+    }
+    try {
+      recordError({
+        timestamp: Date.now(),
+        scope: `V70ErrorBoundary(${this.props.pageName ?? 'unknown'})`,
+        message: error.message || String(error),
+        stack: (error.stack ?? '') + '\n\nComponent stack:' + (info.componentStack ?? ''),
+        url: typeof window !== 'undefined' ? window.location.href : '',
+        userId: kvGet('pt:user_id') ?? undefined,
+        version: APP_VERSION,
+      });
+    } catch {
+      // ne pas casser le rendu d'urgence
     }
   }
 

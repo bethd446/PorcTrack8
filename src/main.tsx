@@ -63,6 +63,8 @@ import { setupIonicReact } from '@ionic/react';
 import { initQueue, tryFlushIfOnline } from './services/offlineQueue';
 import { initRegistry } from './features/tables/tablesRegistry';
 import { logger } from './services/logger';
+import { recordError } from './services/errorStore';
+import { APP_VERSION } from './config';
 import { requestPermission as requestNotifPermission } from './services/notifications';
 import { hydrateKvStore, migrateLegacyLocalStorage, kvGet, kvSet } from './services/kvStore';
 // Migration Sheets → Supabase complète : toutes les lectures et écritures
@@ -71,6 +73,23 @@ import { FARM_CONFIG } from './config/farm';
 import { getSupportWhatsapp, setSupportWhatsapp } from './services/supportContact';
 
 setupIonicReact();
+
+// Sprint 15 — Brancher le hook logger.error → errorStore (local, pas de réseau)
+logger.setErrorHook((entry) => {
+  try {
+    recordError({
+      timestamp: entry.timestamp,
+      scope: entry.scope,
+      message: entry.message,
+      stack: entry.data instanceof Error ? entry.data.stack : undefined,
+      url: typeof window !== 'undefined' ? window.location.href : '',
+      userId: undefined,
+      version: APP_VERSION,
+    });
+  } catch {
+    // silencieux
+  }
+});
 
 // ── Force le thème jour AVANT le premier rendu (Terrain Vivant v6, light-first).
 // L'app n'expose plus de surface dark — quel que soit le mode OS, on reste
