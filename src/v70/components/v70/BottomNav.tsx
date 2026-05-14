@@ -85,7 +85,7 @@ export const BottomNavV70: React.FC = () => {
     <nav
       className="bottom-nav"
       role="tablist"
-      aria-label="Navigation principale V70"
+      aria-label="Navigation principale"
       data-pt-profil={profil}
     >
       {visibleTabs.map((tab) => {
@@ -97,12 +97,11 @@ export const BottomNavV70: React.FC = () => {
             role="tab"
             aria-selected={active}
             aria-current={active ? 'page' : undefined}
-            aria-label={tab.label}
             className={`bn-item${active ? ' active' : ''}`}
             onClick={() => navigate(tab.href)}
           >
             <span className="bn-icon" aria-hidden="true">{tab.icon}</span>
-            <span>{tab.label}</span>
+            <span className="bn-label">{tab.label}</span>
           </button>
         );
       })}

@@ -238,18 +238,23 @@ export const EncyclopediaPage: React.FC = () => {
 
   return (
     <div className="pt-screen">
-      <header className="ph--primary">
-        <button
-          type="button"
-          className="back"
-          aria-label="Retour"
-          onClick={() => navigate('/reglages')}
-        >
-          <ChevronLeft size={18} strokeWidth={2} />
-        </button>
-        <div className="eyebrow">Apprendre</div>
-        <h1>Encyclopédie porcine</h1>
-        <div className="sub">{ARTICLES.length} articles — cycles, santé, économie</div>
+      <header className="ph ph--primary">
+        <div className="ph__row">
+          <div style={{ flex: 1 }}>
+            <button
+              type="button"
+              onClick={() => navigate('/reglages')}
+              aria-label="Retour aux réglages"
+              className="iconbtn"
+              style={{ marginBottom: 10 }}
+            >
+              <ChevronLeft size={16} strokeWidth={2} aria-hidden />
+            </button>
+            <div className="ph__eyebrow">Apprendre</div>
+            <h1 className="ph__h1">Encyclopédie porcine</h1>
+            <p className="ph__sub">{ARTICLES.length} articles — cycles, santé, économie</p>
+          </div>
+        </div>
       </header>
 
       <div className="searchbar">

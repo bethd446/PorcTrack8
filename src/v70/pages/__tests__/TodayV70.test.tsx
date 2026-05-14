@@ -99,7 +99,8 @@ describe('TodayV70 — Phase 3 archétype Dashboard', () => {
       </MemoryRouter>,
     );
     expect(screen.getByText(/à traiter \(0\)/i)).toBeTruthy();
-    expect(screen.getByText(/toutes les alertes sont traitées/i)).toBeTruthy();
+    // Copy V80 — empty state Today réécrit (ancien : "toutes les alertes sont traitées").
+    expect(screen.getByText(/rien d’urgent ce matin/i)).toBeTruthy();
   });
 
   it('V75-B1 — affiche les MB R1 (alertEngine) avec leur titre dans À traiter', () => {

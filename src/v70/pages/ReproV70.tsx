@@ -23,7 +23,7 @@
  */
 import React, { useEffect, useMemo, useState, lazy, Suspense } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Archive, BookOpen } from 'lucide-react';
+import { Archive, BookOpen, CalendarCheck, Sprout } from 'lucide-react';
 import { useFarm } from '../../context/FarmContext';
 import { safeDate } from '../../lib/truieHelpers';
 import { Section } from '../components/ds/Section';
@@ -558,18 +558,16 @@ export const ReproV70: React.FC = () => {
           ) : (
             <section className="section">
               <div className="section__label">Cycle reproduction</div>
-              <Card>
-                <div
-                  style={{
-                    padding: 16,
-                    textAlign: 'center',
-                    color: 'var(--pt-muted)',
-                    fontSize: 13,
-                  }}
-                >
-                  Aucune bande en cycle. Crée une saillie pour démarrer un cycle.
+              <div className="empty-state">
+                <div className="empty-state__icon">
+                  <Sprout size={30} strokeWidth={2} aria-hidden="true" />
                 </div>
-              </Card>
+                <div className="empty-state__title">Aucun cycle démarré</div>
+                <div className="empty-state__sub">
+                  Aucune truie pleine pour l’instant. Enregistre une saillie avec
+                  le bouton + pour lancer un premier cycle de gestation.
+                </div>
+              </div>
             </section>
           )}
 
@@ -579,13 +577,16 @@ export const ReproV70: React.FC = () => {
               {upcomingItems.length === 0 ? (
                 <div
                   style={{
-                    padding: '12px 0',
+                    padding: '14px 8px',
                     textAlign: 'center',
                     color: 'var(--pt-muted)',
                     fontSize: 13,
+                    lineHeight: 1.5,
                   }}
                 >
-                  Aucun événement dans les 7 prochains jours
+                  Aucune mise-bas, écho ou sevrage prévu cette semaine.
+                  <br />
+                  Semaine calme côté reproduction.
                 </div>
               ) : (
                 upcomingItems.map(item => (
@@ -753,7 +754,13 @@ export const ReproV70: React.FC = () => {
           <Card>
             {upcomingItems.length === 0 ? (
               <div className="empty-state" style={{ padding: 12 }}>
-                <div className="empty-state__sub">Aucun événement dans les 7 prochains jours</div>
+                <div className="empty-state__icon">
+                  <CalendarCheck size={28} strokeWidth={2} aria-hidden="true" />
+                </div>
+                <div className="empty-state__title">Semaine dégagée</div>
+                <div className="empty-state__sub">
+                  Aucune mise-bas, échographie ni sevrage planifié dans les 7 prochains jours.
+                </div>
               </div>
             ) : (
               upcomingItems.map(item => (

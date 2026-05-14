@@ -13,7 +13,7 @@
  */
 import React, { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { AlertTriangle, CalendarDays, CheckCircle2, Info, ClipboardList, Play, ChevronRight } from 'lucide-react';
+import { AlertTriangle, CalendarDays, CalendarClock, CheckCircle2, Info, ClipboardList, Play, ChevronRight } from 'lucide-react';
 import { useFarm, useMeta } from '../../context/FarmContext';
 import { useFarmProfile } from '../../hooks/useFarmProfile';
 import { filterAlertsByProfile } from '../../services/alertProfileFilter';
@@ -30,16 +30,46 @@ import { HintCard } from '../../features/encyclopedia/HintCard';
 import { NotificationsPermissionPrompt } from '../../components/NotificationsPermissionPrompt';
 import { isReformed, needsReformConsideration, alreadySortedOut, reformReason } from '../lib';
 import type { Truie } from '../../types/farm';
+import type { AlertPriority } from '../../services/alertEngine';
 
 interface AlertItem {
   id: string;
-  variant: 'warning' | 'info' | 'danger';
+  /**
+   * Priorité métier — les 4 niveaux d'alertEngine (CRITIQUE / HAUTE / NORMALE /
+   * INFO). G2 : on ne réduit plus à 3 variantes ; chaque priorité a sa propre
+   * classe CSS pour que HAUTE et NORMALE soient visuellement distinctes.
+   */
+  priority: AlertPriority;
   /** Étiquette courte type "Urgent", "J-2", "Action" — affichée en eyebrow ligne. */
   tag: string;
   title: string;
   meta: string;
   to: string;
 }
+
+/** G2 — mapping priorité métier → classe CSS `.priority-line.{classe}`. */
+const PRIORITY_CLASS: Record<AlertPriority, string> = {
+  CRITIQUE: 'critique',
+  HAUTE: 'haute',
+  NORMALE: 'normale',
+  INFO: 'info',
+};
+
+/** Icône par priorité — distincte pour chaque niveau (lecture 3 secondes). */
+const PRIORITY_ICON: Record<AlertPriority, typeof AlertTriangle> = {
+  CRITIQUE: AlertTriangle,
+  HAUTE: CalendarClock,
+  NORMALE: CalendarDays,
+  INFO: Info,
+};
+
+/** Libellé priorité — annoncé par les lecteurs d'écran avant le titre. */
+const PRIORITY_LABEL: Record<AlertPriority, string> = {
+  CRITIQUE: 'Critique',
+  HAUTE: 'Priorité haute',
+  NORMALE: 'À planifier',
+  INFO: 'Information',
+};
 
 export const TodayV70: React.FC = () => {
   const navigate = useNavigate();
@@ -64,7 +94,6 @@ export const TodayV70: React.FC = () => {
       if (!a.title.startsWith('Mise-Bas')) return;
       const offset = a.daysOffset ?? 0;
       // offset < 0 : avance (ex. -2 → "J-2") | offset >= 0 : jour-même ou retard.
-      const isUrgent = a.priority === 'CRITIQUE' || offset >= 0;
       const tag =
         offset > 0
           ? `J+${offset}`
@@ -73,7 +102,8 @@ export const TodayV70: React.FC = () => {
             : `J${offset}`;
       result.push({
         id: a.id,
-        variant: isUrgent ? 'danger' : 'warning',
+        // G2 — on propage la priorité native d'alertEngine (R1 : HAUTE→CRITIQUE).
+        priority: a.priority,
         tag,
         title: a.title,
         meta: a.message,
@@ -94,10 +124,11 @@ export const TodayV70: React.FC = () => {
       const diffDays = Math.ceil((d.getTime() - now.getTime()) / 86400000);
       result.push({
         id: `mb-${b.id}`,
-        variant: diffDays <= 1 ? 'danger' : 'warning',
+        // Aligné R1 : mise-bas à J-1 ou imminente = CRITIQUE, sinon HAUTE.
+        priority: diffDays <= 1 ? 'CRITIQUE' : 'HAUTE',
         tag: diffDays <= 0 ? 'Urgent' : `J-${diffDays}`,
         title: `Mise-bas${b.truie ? ` — ${b.truie}` : ''}`,
-        meta: `${b.idPortee || b.id} · dans ${diffDays <= 0 ? 'aujourd’hui' : `${diffDays}j`}`,
+        meta: `${b.idPortee || b.id} · ${diffDays <= 0 ? 'aujourd’hui' : `dans ${diffDays}j`}`,
         to: b.truie ? `/troupeau/truies/${b.truie}` : `/troupeau/bandes/${b.id}`,
       });
     });
@@ -108,7 +139,8 @@ export const TodayV70: React.FC = () => {
       .forEach(t => {
         result.push({
           id: `reform-suggest-${t.id}`,
-          variant: 'warning',
+          // R11/R12 — suggestion de réforme à évaluer, pas d'urgence biologique : NORMALE.
+          priority: 'NORMALE',
           tag: 'Bientôt',
           title: `À sortir bientôt — ${formatAnimalIdentity(t)}`,
           meta: reformReason(t),
@@ -122,7 +154,8 @@ export const TodayV70: React.FC = () => {
       .forEach(t => {
         result.push({
           id: `reform-action-${t.id}`,
-          variant: 'warning',
+          // Truie déjà réformée : action commerciale concrète attendue cette semaine.
+          priority: 'HAUTE',
           tag: 'Cette semaine',
           title: `À vendre — ${formatAnimalIdentity(t)}`,
           meta: 'Marquer comme vendue ou abattue depuis sa fiche',
@@ -130,6 +163,10 @@ export const TodayV70: React.FC = () => {
         });
       });
 
+    // Tri par priorité décroissante : une CRITIQUE ne doit jamais être coupée
+    // par le slice(0, 5) au profit d'une NORMALE arrivée plus tôt dans la boucle.
+    const order: Record<AlertPriority, number> = { CRITIQUE: 0, HAUTE: 1, NORMALE: 2, INFO: 3 };
+    result.sort((a, b) => order[a.priority] - order[b.priority]);
     return result.slice(0, 5);
   }, [truies, bandes, engineAlerts]);
 
@@ -143,6 +180,13 @@ export const TodayV70: React.FC = () => {
   const alerts = useMemo(
     () => filterAlertsByProfile(computedAlerts, profil),
     [computedAlerts, profil],
+  );
+
+  // Décompte de criticité — sert à l'en-tête "À traiter" : l'éleveur doit
+  // savoir EN UN COUP D'ŒIL s'il y a une urgence vitale avant tout le reste.
+  const critiqueCount = useMemo(
+    () => alerts.filter((a) => a.priority === 'CRITIQUE').length,
+    [alerts],
   );
 
   // MB imminente dans 3j → hero card
@@ -247,6 +291,36 @@ export const TodayV70: React.FC = () => {
 
       {/* Section 2 : À TRAITER (registre journal — anti-AI feel, plus de cards uniformes) */}
       <Section label={`À traiter (${alerts.length})`}>
+        {/* Bandeau de criticité — visible uniquement s'il y a au moins une
+            CRITIQUE. Position en tête : l'urgence vitale se lit avant la liste. */}
+        {critiqueCount > 0 && (
+          <div
+            role="status"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8,
+              padding: '9px 12px',
+              marginBottom: 12,
+              borderRadius: 10,
+              background: 'var(--pt-danger-bg-soft)',
+              color: 'var(--pt-danger)',
+              borderLeft: '3px solid var(--pt-danger)',
+              fontFamily: 'var(--pt-font-display)',
+              fontWeight: 700,
+              textTransform: 'uppercase',
+              fontSize: 12,
+              letterSpacing: '0.02em',
+            }}
+          >
+            <AlertTriangle size={15} strokeWidth={2.4} aria-hidden />
+            <span>
+              {critiqueCount === 1
+                ? '1 urgence vitale — à traiter en premier'
+                : `${critiqueCount} urgences vitales — à traiter en premier`}
+            </span>
+          </div>
+        )}
         {farmLoading && truies.length === 0 && bandes.length === 0 ? (
           // V74 Vague V — pendant le chargement initial : skeleton plutôt que
           // "Carnet vide". Évite le flash "tout va bien" pendant 1-2s avant que
@@ -263,7 +337,21 @@ export const TodayV70: React.FC = () => {
           </div>
         ) : alerts.length === 0 ? (
           <div data-testid="today-empty-state" className="empty">
-            <CheckCircle2 size={38} strokeWidth={2} color="var(--pt-success)" aria-hidden />
+            <div
+              aria-hidden
+              style={{
+                width: 60,
+                height: 60,
+                borderRadius: 16,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                background: 'var(--pt-success-bg-soft)',
+                color: 'var(--pt-success)',
+              }}
+            >
+              <CheckCircle2 size={34} strokeWidth={2.2} />
+            </div>
             <div
               style={{
                 fontFamily: 'var(--pt-font-display)',
@@ -274,31 +362,28 @@ export const TodayV70: React.FC = () => {
                 color: 'var(--pt-ink)',
               }}
             >
-              Carnet vide
+              Rien d’urgent ce matin
             </div>
-            <div style={{ fontSize: 13, color: 'var(--pt-muted)', maxWidth: '32ch' }}>
-              Toutes les alertes sont traitées. Bonne tournée.
+            <div style={{ fontSize: 13, color: 'var(--pt-muted)', maxWidth: '34ch', lineHeight: 1.5 }}>
+              Aucune mise-bas, rupture ni truie à surveiller dans les jours qui
+              viennent. Le cheptel suit son cycle — fais ta tournée tranquille.
             </div>
           </div>
         ) : (
           <div role="list" aria-label="Registre des alertes à traiter">
             {alerts.map((alert) => {
-              const variantClass =
-                alert.variant === 'danger' ? 'crit' : alert.variant === 'warning' ? 'warm' : 'info';
-              const Icon =
-                alert.variant === 'danger'
-                  ? AlertTriangle
-                  : alert.variant === 'warning'
-                    ? CalendarDays
-                    : Info;
+              // G2 — 4 classes distinctes : CRITIQUE / HAUTE / NORMALE / INFO.
+              const priorityClass = PRIORITY_CLASS[alert.priority];
+              const Icon = PRIORITY_ICON[alert.priority];
+              const priorityLabel = PRIORITY_LABEL[alert.priority];
               return (
                 <button
                   key={alert.id}
                   type="button"
                   role="listitem"
-                  className={`priority-line ${variantClass}`}
+                  className={`priority-line ${priorityClass}`}
                   onClick={() => navigate(alert.to)}
-                  aria-label={`${alert.title} — ${alert.tag} — ouvrir le détail`}
+                  aria-label={`${priorityLabel} — ${alert.title} — ${alert.tag} — ouvrir le détail`}
                 >
                   <span className="priority-line__icon" aria-hidden>
                     <Icon size={14} strokeWidth={2} />

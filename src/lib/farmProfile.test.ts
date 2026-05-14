@@ -74,11 +74,11 @@ describe('FARM_PROFILES', () => {
     ]);
   });
 
-  it('chaque profil a un label, une description et un emoji non-vides', () => {
+  it('chaque profil a un label, une description et une icône', () => {
     for (const p of FARM_PROFILES) {
       expect(p.label.length).toBeGreaterThan(0);
       expect(p.description.length).toBeGreaterThan(0);
-      expect(p.emoji.length).toBeGreaterThan(0);
+      expect(p.icon).toBeDefined();
     }
   });
 });

@@ -8,6 +8,7 @@
  * Fallback `cycle_complet` = comportement historique = aucune régression
  * pour les comptes qui n'ont jamais touché le step onboarding profil.
  */
+import { PiggyBank, Beef, RefreshCw, type LucideIcon } from 'lucide-react';
 import { supabase } from '../services/supabaseClient';
 
 export type FarmProfile = 'naisseur' | 'engraisseur' | 'cycle_complet';
@@ -16,27 +17,27 @@ export interface FarmProfileOption {
   value: FarmProfile;
   label: string;
   description: string;
-  /** Emoji court pour les cards onboarding (mobile terrain). */
-  emoji: string;
+  /** Icône Lucide pour les cards onboarding (mobile terrain). */
+  icon: LucideIcon;
 }
 
 export const FARM_PROFILES: FarmProfileOption[] = [
   {
     value: 'naisseur',
     label: 'Naisseur',
-    emoji: '🤰',
+    icon: PiggyBank,
     description: 'Truies, saillies, mises-bas, vente porcelets sevrés',
   },
   {
     value: 'engraisseur',
     label: 'Engraisseur',
-    emoji: '🐷',
+    icon: Beef,
     description: 'Achat porcelets, pesées, finition, vente carcasses',
   },
   {
     value: 'cycle_complet',
     label: 'Cycle complet',
-    emoji: '🔄',
+    icon: RefreshCw,
     description: 'Naisseur + engraisseur (de la saillie à la vente)',
   },
 ];

@@ -253,7 +253,7 @@ export const SynchronisationV70: React.FC = () => {
           }}
         >
           {online ? (
-            <Cloud size={16} aria-hidden color="var(--pt-primary, #064e3b)" />
+            <Cloud size={16} aria-hidden color="var(--pt-primary, #2D4A1F)" />
           ) : (
             <CloudOff size={16} aria-hidden color="var(--pt-amber-ink)" />
           )}

@@ -149,7 +149,7 @@ export const DiagnosticView: React.FC = () => {
                   type="button"
                   className="btn btn--ghost btn--sm"
                   onClick={handleClear}
-                  style={{ color: 'var(--pt-danger, #ef4444)', display: 'flex', alignItems: 'center', gap: 4 }}
+                  style={{ color: 'var(--pt-danger, #a4453d)', display: 'flex', alignItems: 'center', gap: 4 }}
                 >
                   <Trash2 size={14} />
                   Effacer tout

@@ -67,7 +67,7 @@ export function DataTable<T extends Record<string, unknown>>({
     <div
       className={className}
       style={{
-        background: 'white',
+        background: 'var(--pt-bg)',
         border: '1px solid var(--pt-line)',
         borderRadius: 12,
         overflow: 'auto',
@@ -80,7 +80,7 @@ export function DataTable<T extends Record<string, unknown>>({
               <th
                 key={col.key}
                 style={{
-                  padding: '10px 12px',
+                  padding: col.sortable ? '14px 12px' : '12px 12px',
                   textAlign: col.align ?? 'left',
                   fontSize: 11,
                   fontWeight: 700,
@@ -89,6 +89,7 @@ export function DataTable<T extends Record<string, unknown>>({
                   color: 'var(--pt-ink)',
                   cursor: col.sortable ? 'pointer' : 'default',
                   userSelect: 'none',
+                  whiteSpace: 'nowrap',
                 }}
                 onClick={col.sortable ? () => toggleSort(col.key) : undefined}
                 aria-sort={sortKey === col.key ? (sortDir === 'asc' ? 'ascending' : 'descending') : undefined}

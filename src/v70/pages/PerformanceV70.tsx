@@ -248,7 +248,7 @@ export const PerformanceV70: React.FC = () => {
   const showSkeleton = farmLoading && bandes.length === 0 && truies.length === 0;
   if (showSkeleton) {
     const skeletonStyle = {
-      background: 'var(--pt-warm, #faf6ef)',
+      background: 'var(--pt-warm, #F5E9D8)',
       borderRadius: 16,
       marginBottom: 12,
     } as const;
@@ -638,7 +638,7 @@ export const PerformanceV70: React.FC = () => {
             <div
               style={{
                 padding: 18,
-                background: 'var(--pt-warm, #FAF7F0)',
+                background: 'var(--pt-warm, #F5E9D8)',
                 border: '1px solid var(--pt-line)',
                 borderRadius: 18,
                 marginBottom: 14,
@@ -718,7 +718,7 @@ export const PerformanceV70: React.FC = () => {
             <div
               style={{
                 padding: 14,
-                background: 'var(--pt-bg, #FAF7F0)',
+                background: 'var(--pt-bg, #FFFFFF)',
                 border: '1px solid var(--pt-line)',
                 borderRadius: 14,
                 marginBottom: 14,
@@ -749,7 +749,7 @@ export const PerformanceV70: React.FC = () => {
                     ? 'var(--pt-accent, #B8703D)'
                     : isPositive
                       ? 'var(--pt-primary, #2D4A1F)'
-                      : 'var(--pt-rose-ink, #a4453d)';
+                      : 'var(--pt-danger, #a4453d)';
                   return (
                     <g key={m.key}>
                       <rect
@@ -787,7 +787,7 @@ export const PerformanceV70: React.FC = () => {
                 gap: 0,
                 border: '1px solid var(--pt-line)',
                 borderRadius: 14,
-                background: 'var(--pt-bg, #FAF7F0)',
+                background: 'var(--pt-bg, #FFFFFF)',
                 overflow: 'hidden',
                 marginBottom: 14,
               }}

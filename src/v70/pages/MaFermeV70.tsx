@@ -226,6 +226,7 @@ export const MaFermeV70: React.FC = () => {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             {FARM_PROFILES.map((opt) => {
               const selected = opt.value === profil;
+              const Icon = opt.icon;
               return (
                 <button
                   key={opt.value}
@@ -249,8 +250,14 @@ export const MaFermeV70: React.FC = () => {
                     opacity: savingProfil && !selected ? 0.5 : 1,
                   }}
                 >
-                  <span aria-hidden style={{ fontSize: 22, lineHeight: 1, marginTop: 2 }}>
-                    {opt.emoji}
+                  <span
+                    aria-hidden
+                    style={{
+                      marginTop: 2,
+                      color: selected ? 'var(--pt-primary)' : 'var(--pt-muted)',
+                    }}
+                  >
+                    <Icon size={22} strokeWidth={2} />
                   </span>
                   <span style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 4 }}>{opt.label}</div>

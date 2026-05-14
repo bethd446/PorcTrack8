@@ -1,7 +1,19 @@
-/* PORCTRACK DS v2.0 — TOKENS · SOURCE UNIQUE DE VÉRITÉ */
+/* PORCTRACK DS v2.0 — TOKENS NON-COULEUR + RESET GLOBAL
+ *
+ * Partage de responsabilité (réconciliation 2026-05-14, designer-systeme) :
+ *   - src/v70/theme/v70-tokens.css  → SOURCE UNIQUE des couleurs --pt-* (DNA)
+ *   - ce fichier                    → typo, échelle de texte, espacements,
+ *                                     radius, ombres, transitions + reset CSS
+ *
+ * Aucune couleur de marque n'est définie ici : --pt-primary / --pt-accent /
+ * --pt-accent-deep ont été retirés (ils portaient les valeurs legacy
+ * emerald #064e3b / #065f46 et un accent amber divergent — interdits DNA).
+ * Les surfaces, textes et dividers spécifiques au DS legacy restent ici car
+ * encore consommés par src/features/* et src/components/*.
+ */
 
 :root {
-  /* === FONDS === */
+  /* === FONDS (surfaces DS legacy — encore consommées hors V70) === */
   /* --pt-bg défini dans src/v70/theme/v70-tokens.css (autoritaire #FFFFFF) */
   --pt-surface:            #FBF8F1;
   --pt-surface-alt:        #EFEBE0;
@@ -10,16 +22,12 @@
   --pt-surface-danger:     #FBE9E5;
   --pt-surface-warning:    #FDF1DC;
 
-  /* === MARQUE — Terrain Vivant (post-mockup, audit 2026-05-07) === */
-  --pt-primary:            #064e3b; /* emerald-premium (était #2D4A1F olive) */
-  --pt-primary-hover:      #065f46; /* forest-mid */
+  /* === MARQUE — soft/text dérivés (les hex de base vivent dans v70-tokens.css) === */
+  --pt-primary-hover:      #065f46; /* forest-mid — héritage DS legacy */
   --pt-primary-soft:       rgba(6, 78, 59, 0.08);
   --pt-primary-text:       #FFFFFF;
-
-  --pt-accent:             #F4A261; /* amber-pork (était #D4915C) */
   --pt-accent-soft:        #FCE4C9;
   --pt-accent-pill:        #E8B07A;
-  --pt-accent-deep:        #c2662b; /* amber-deep (était #B8703D) */
 
   /* === TEXTE === */
   --pt-text:               #1A1A1A;
@@ -35,9 +43,9 @@
   --pt-font-body:          'InstrumentSans', -apple-system, system-ui, sans-serif;
   --pt-font-mono:          'InstrumentSans', -apple-system, system-ui, sans-serif;
 
+  /* Échelle de texte — purge 2026-05-14 : --pt-text-h2 retiré (0 usage). */
   --pt-text-display: 32px;
   --pt-text-h1: 24px;
-  --pt-text-h2: 20px;
   --pt-text-body: 16px;
   --pt-text-small: 14px;
   --pt-text-label: 11px;
@@ -46,27 +54,19 @@
   --pt-tracking-button: 0.12em;
 
   /* === ESPACEMENTS === */
-  --pt-space-1: 4px;
+  /* purge 2026-05-14 : --pt-space-1/6/7/8 retirés (0 usage dans src/). */
   --pt-space-2: 8px;
   --pt-space-3: 12px;
   --pt-space-4: 16px;
   --pt-space-5: 20px;
-  --pt-space-6: 24px;
-  --pt-space-7: 32px;
-  --pt-space-8: 48px;
 
   /* === RADIUS === */
-  --pt-radius-sm: 8px;
+  /* purge 2026-05-14 : --pt-radius-sm retiré (0 usage dans src/). */
   --pt-radius-md: 16px;
   --pt-radius-lg: 24px;
   --pt-radius-pill: 9999px;
 
-  /* Alias rétrocompat (tests V29/V30) — ne pas utiliser en code neuf. */
-  --ds-radius-pill: var(--pt-radius-pill);
-  --ds-primary: var(--pt-primary);
-  --ds-accent: var(--pt-accent);
-  --ds-text-subtle: var(--pt-text-subtle);
-  --ds-divider: var(--pt-divider);
+  /* Alias --ds-* rétrocompat retirés 2026-05-14 (0 usage, y compris tests). */
 
   /* === OMBRES === */
   --pt-shadow-card:        0 1px 3px rgba(45, 74, 31, 0.04);
@@ -77,6 +77,8 @@
   /* === TRANSITIONS === */
   --pt-t-fast: 120ms ease-out;
   --pt-t-normal: 200ms ease-out;
+  /* Easing DNA "Emil" — courbe unique pour transitions/animations V70 */
+  --pt-ease: cubic-bezier(0.23, 1, 0.32, 1);
 }
 
 /* === RESET DE BASE === */

@@ -215,7 +215,7 @@ const PorceletDetailView: React.FC = () => {
           data-testid="porcelet-detail-view"
           className="pt-screen"
           style={{
-            background: 'var(--pt-bg, var(--bg-app))',
+            background: 'var(--pt-bg-app)',
             minHeight: '100%',
             paddingBottom: 168,
           }}
@@ -316,7 +316,7 @@ const PorceletDetailView: React.FC = () => {
                   <Section label="IDENTITÉ" />
                   <div
                     style={{
-                      background: 'var(--bg-surface, var(--pt-bg))',
+                      background: 'var(--pt-bg)',
                       borderRadius: 12,
                       padding: '6px 16px',
                       boxShadow: 'var(--pt-shadow-card)',
@@ -343,7 +343,7 @@ const PorceletDetailView: React.FC = () => {
                   <Section label="CROISSANCE" />
                   <div
                     style={{
-                      background: 'var(--bg-surface, var(--pt-bg))',
+                      background: 'var(--pt-bg)',
                       borderRadius: 12,
                       padding: 16,
                       boxShadow: 'var(--pt-shadow-card)',
@@ -364,7 +364,7 @@ const PorceletDetailView: React.FC = () => {
                         <Scale
                           size={38}
                           strokeWidth={2}
-                          color="var(--pt-subtle, var(--text-2))"
+                          color="var(--pt-subtle)"
                           aria-hidden
                         />
                         <div style={{ fontWeight: 600 }}>
@@ -373,7 +373,7 @@ const PorceletDetailView: React.FC = () => {
                         <div
                           style={{
                             fontSize: 12,
-                            color: 'var(--pt-muted, var(--text-2))',
+                            color: 'var(--pt-muted)',
                           }}
                         >
                           {peseesLoading
@@ -424,7 +424,7 @@ const PorceletDetailView: React.FC = () => {
                     style={{
                       padding: 24,
                       textAlign: 'center',
-                      color: 'var(--pt-muted, var(--text-2))',
+                      color: 'var(--pt-muted)',
                       fontSize: 13,
                     }}
                   >
@@ -438,7 +438,7 @@ const PorceletDetailView: React.FC = () => {
                       listStyle: 'none',
                       margin: 0,
                       padding: 0,
-                      background: 'var(--bg-surface, var(--pt-bg))',
+                      background: 'var(--pt-bg)',
                       borderRadius: 12,
                       overflow: 'hidden',
                     }}
@@ -451,12 +451,12 @@ const PorceletDetailView: React.FC = () => {
                           alignItems: 'center',
                           gap: 10,
                           padding: '12px 16px',
-                          borderBottom: '1px solid var(--pt-line, var(--border))',
+                          borderBottom: '1px solid var(--pt-line)',
                         }}
                       >
                         <Scale
                           size={16}
-                          color="var(--pt-muted, var(--text-2))"
+                          color="var(--pt-muted)"
                           aria-hidden
                         />
                         <span
@@ -471,7 +471,7 @@ const PorceletDetailView: React.FC = () => {
                         <span
                           style={{
                             fontSize: 12,
-                            color: 'var(--pt-muted, var(--text-2))',
+                            color: 'var(--pt-muted)',
                           }}
                         >
                           {formatDateFr(p.date_pesee)}
@@ -491,7 +491,7 @@ const PorceletDetailView: React.FC = () => {
                     style={{
                       padding: 24,
                       textAlign: 'center',
-                      color: 'var(--pt-muted, var(--text-2))',
+                      color: 'var(--pt-muted)',
                       fontSize: 13,
                     }}
                   >
@@ -503,7 +503,7 @@ const PorceletDetailView: React.FC = () => {
                       listStyle: 'none',
                       margin: 0,
                       padding: 0,
-                      background: 'var(--bg-surface, var(--pt-bg))',
+                      background: 'var(--pt-bg)',
                       borderRadius: 12,
                       overflow: 'hidden',
                     }}
@@ -516,12 +516,12 @@ const PorceletDetailView: React.FC = () => {
                           alignItems: 'flex-start',
                           gap: 10,
                           padding: '12px 16px',
-                          borderBottom: '1px solid var(--pt-line, var(--border))',
+                          borderBottom: '1px solid var(--pt-line)',
                         }}
                       >
                         <Syringe
                           size={16}
-                          color="var(--pt-muted, var(--text-2))"
+                          color="var(--pt-muted)"
                           aria-hidden
                         />
                         <div style={{ flex: 1, minWidth: 0 }}>
@@ -537,7 +537,7 @@ const PorceletDetailView: React.FC = () => {
                           <div
                             style={{
                               fontSize: 12,
-                              color: 'var(--pt-muted, var(--text-2))',
+                              color: 'var(--pt-muted)',
                               marginTop: 2,
                             }}
                           >
@@ -575,10 +575,10 @@ const DetailRow: React.FC<DetailRowProps> = ({ label, value, mono }) => {
         alignItems: 'center',
         justifyContent: 'space-between',
         padding: '12px 6px',
-        borderBottom: '1px solid var(--pt-line, var(--border))',
+        borderBottom: '1px solid var(--pt-line)',
       }}
     >
-      <span style={{ fontSize: 13, color: 'var(--pt-muted, var(--text-1))' }}>
+      <span style={{ fontSize: 13, color: 'var(--pt-muted)' }}>
         {label}
       </span>
       <span

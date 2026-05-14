@@ -209,7 +209,7 @@ const VerratDetailView: React.FC = () => {
         <div
           className="pt-screen"
           style={{
-            background: 'var(--bg-app)',
+            background: 'var(--pt-bg-app)',
             minHeight: '100%',
             position: 'relative',
             paddingBottom: 168,
@@ -314,7 +314,7 @@ const VerratDetailView: React.FC = () => {
               <Section label="IDENTITÉ" />
               <div
                 style={{
-                  background: 'var(--bg-surface)',
+                  background: 'var(--pt-bg)',
                   borderRadius: 12,
                   padding: '6px 16px',
                   boxShadow: 'var(--pt-shadow-card)',
@@ -387,7 +387,7 @@ const VerratDetailView: React.FC = () => {
 
               <div
                 style={{
-                  background: 'var(--bg-surface)',
+                  background: 'var(--pt-bg)',
                   borderRadius: 12,
                   padding: '6px 16px',
                   boxShadow: 'var(--pt-shadow-card)',
@@ -426,7 +426,7 @@ const VerratDetailView: React.FC = () => {
               <Section label="JOURNAL TERRAIN" />
               <div
                 style={{
-                  background: 'var(--bg-surface)',
+                  background: 'var(--pt-bg)',
                   borderRadius: 12,
                   padding: 16,
                   boxShadow: 'var(--pt-shadow-card)',
@@ -505,10 +505,10 @@ const VerratDetailView: React.FC = () => {
                 <div className="card-dense text-center py-6 mt-3 flex flex-col items-center gap-2.5">
                   <p
                     style={{
-                      fontFamily: 'var(--font-heading)',
+                      fontFamily: 'var(--pt-font-display)',
                       fontSize: 16,
                       fontWeight: 600,
-                      color: 'var(--ink)',
+                      color: 'var(--pt-ink)',
                       letterSpacing: '-0.01em',
                       margin: 0,
                     }}
@@ -588,12 +588,12 @@ const VerratDetailView: React.FC = () => {
                           className="w-8 h-8 rounded-lg bg-bg-1 border border-border flex items-center justify-center shrink-0 mt-0.5"
                           style={{
                             color: soinTone === 'accent'
-                              ? 'var(--accent)'
+                              ? 'var(--pt-accent)'
                               : soinTone === 'amber'
-                                ? 'var(--amber)'
+                                ? 'var(--pt-warning)'
                                 : soinTone === 'blue'
-                                  ? 'var(--blue)'
-                                  : 'var(--text-1)',
+                                  ? 'var(--pt-info)'
+                                  : 'var(--pt-muted)',
                           }}
                         >
                           {soinTone === 'blue' ? (
@@ -706,7 +706,7 @@ const DetailRow: React.FC<DetailRowProps> = ({ label, value, mono, accent }) => 
       <span
         className={`${mono ? 'tabular-nums' : ''} text-[13px] font-medium`}
         style={{
-          color: accent || 'var(--text-0)',
+          color: accent || 'var(--pt-ink)',
           opacity: isEmpty ? 0.4 : 1,
           cursor: isEmpty ? 'help' : 'default',
         }}

@@ -162,7 +162,7 @@ const LogeDetailView: React.FC = () => {
             <div className="px-4 pt-5 pb-44" style={{ maxWidth: 1100, margin: '0 auto' }}>
               <p
                 className="text-[12px] mt-8 text-center"
-                style={{ color: 'var(--muted)' }}
+                style={{ color: 'var(--pt-muted)' }}
               >
                 Chargement…
               </p>
@@ -199,7 +199,7 @@ const LogeDetailView: React.FC = () => {
       <IonContent fullscreen className="ion-no-padding">
         <div
           style={{
-            background: 'var(--bg-app)',
+            background: 'var(--pt-bg-app)',
             minHeight: '100%',
             position: 'relative',
             paddingBottom: 168,
@@ -295,11 +295,11 @@ const LogeDetailView: React.FC = () => {
                     size={22}
                     aria-hidden="true"
                     className="mx-auto mb-2"
-                    style={{ color: 'var(--muted)' }}
+                    style={{ color: 'var(--pt-muted)' }}
                   />
                   <p
                     className="text-[12px]"
-                    style={{ color: 'var(--muted)' }}
+                    style={{ color: 'var(--pt-muted)' }}
                   >
                     Loge vide
                   </p>
@@ -352,11 +352,11 @@ const LogeDetailView: React.FC = () => {
                     size={22}
                     aria-hidden="true"
                     className="mx-auto mb-2"
-                    style={{ color: 'var(--muted)' }}
+                    style={{ color: 'var(--pt-muted)' }}
                   />
                   <p
                     className="text-[12px]"
-                    style={{ color: 'var(--muted)' }}
+                    style={{ color: 'var(--pt-muted)' }}
                   >
                     Aucun mouvement enregistré
                   </p>
@@ -383,7 +383,7 @@ const LogeDetailView: React.FC = () => {
                             />
                             <span
                               className="ft-code text-[12px]"
-                              style={{ color: 'var(--text-1)' }}
+                              style={{ color: 'var(--pt-ink)' }}
                             >
                               {m.subject_type} · {m.subject_id.slice(0, 8)}
                             </span>
@@ -391,7 +391,7 @@ const LogeDetailView: React.FC = () => {
                           {m.reason ? (
                             <p
                               className="mt-1 text-[11px]"
-                              style={{ color: 'var(--muted)' }}
+                              style={{ color: 'var(--pt-muted)' }}
                             >
                               {m.reason}
                             </p>
@@ -399,7 +399,7 @@ const LogeDetailView: React.FC = () => {
                         </div>
                         <span
                           className="text-[11px] tabular-nums shrink-0"
-                          style={{ color: 'var(--muted)' }}
+                          style={{ color: 'var(--pt-muted)' }}
                         >
                           {m.date_mvt}
                         </span>

@@ -4,8 +4,14 @@
 /* Importé par routage Phase 2 sur les pages V70 uniquement (pas dans index.ts). */
 
 /* ===== PAGE COMMON ===== */
+@keyframes pt-header-in {
+  from { opacity: 0; transform: translateY(8px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
 .page-header {
   margin-bottom: 16px;
+  animation: pt-header-in 280ms var(--pt-ease) both;
 }
 
 .page-eyebrow {
@@ -152,8 +158,13 @@
   text-transform: uppercase;
   border: none;
   cursor: pointer;
-  transition: all 0.15s;
+  min-height: 44px;
+  transition: background 150ms var(--pt-ease), color 150ms var(--pt-ease),
+    border-color 150ms var(--pt-ease), box-shadow 150ms var(--pt-ease),
+    transform 150ms var(--pt-ease);
 }
+
+.btn:active { transform: scale(0.97); }
 
 .btn-primary { background: var(--pt-primary); color: white; }
 .btn-primary:hover { background: var(--pt-primary-deep); }
@@ -278,7 +289,8 @@
   border-radius: 12px;
   margin-bottom: 6px;
   cursor: pointer;
-  transition: all 0.15s;
+  transition: border-color 150ms var(--pt-ease), transform 150ms var(--pt-ease),
+    box-shadow 150ms var(--pt-ease);
 }
 
 .list-item:hover {
@@ -354,7 +366,7 @@
   background: linear-gradient(to right, transparent, var(--pt-bg));
   border-radius: 0 999px 999px 0;
   opacity: 0;
-  transition: opacity 200ms ease;
+  transition: opacity 200ms var(--pt-ease);
 }
 .tabs-mini-wrap.is-scrollable::after {
   opacity: 1;
@@ -586,7 +598,8 @@
   box-shadow: 0 4px 12px rgba(184, 112, 61, 0.3);
   cursor: pointer;
   z-index: 40;
-  transition: background 150ms ease, transform 150ms ease, box-shadow 150ms ease;
+  transition: background 150ms var(--pt-ease), transform 150ms var(--pt-ease),
+    box-shadow 150ms var(--pt-ease);
 }
 
 .fab:hover {
@@ -596,7 +609,7 @@
 }
 
 .fab:active {
-  transform: translateY(1px);
+  transform: scale(0.97);
   box-shadow: 0 2px 8px rgba(184, 112, 61, 0.3);
 }
 
@@ -637,8 +650,10 @@
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
   gap: 4px;
   padding: 6px 2px;
+  min-height: 56px;
   font-size: 9px;
   font-weight: 600;
   text-transform: uppercase;
@@ -646,13 +661,14 @@
   color: var(--pt-muted);
   border-radius: 8px;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: background 160ms var(--pt-ease), color 160ms var(--pt-ease);
   background: transparent;
   border: none;
 }
 
 .bn-item:hover { background: var(--pt-bg-app); }
 .bn-item.active { color: var(--pt-primary); }
+.bn-item:active { transform: scale(0.97); }
 
 .bn-icon {
   width: 28px;
@@ -661,12 +677,22 @@
   align-items: center;
   justify-content: center;
   font-size: 14px;
+  transition: background 160ms var(--pt-ease), color 160ms var(--pt-ease);
 }
 
 .bn-item.active .bn-icon {
   background: var(--pt-primary);
   color: white;
   border-radius: 50%;
+}
+
+.bn-label {
+  transition: color 160ms var(--pt-ease);
+}
+
+.bn-item.active .bn-label {
+  font-weight: 700;
+  color: var(--pt-primary);
 }
 
 /* ===== EMPTY STATE EDU ===== */
@@ -710,6 +736,7 @@
   align-items: center;
   gap: 14px;
   padding: 14px 16px;
+  min-height: 44px;
   background: var(--pt-bg);
   border: 1px solid var(--pt-line);
   border-radius: 14px;
@@ -802,10 +829,16 @@
   width: 100%;
   text-align: left;
   font: inherit;
+  transition: background-color 160ms var(--pt-ease);
 }
 
 .priority-line:first-of-type {
   border-top: 1px solid var(--pt-line-strong);
+}
+
+.priority-line:active {
+  transform: scale(0.97);
+  transition: transform 160ms var(--pt-ease);
 }
 
 .priority-line__icon {
@@ -825,22 +858,28 @@
   height: 15px;
 }
 
-.priority-line.crit .priority-line__icon {
+.priority-line.critique .priority-line__icon {
   background: var(--pt-danger);
-  color: var(--pt-warm);
   border-color: var(--pt-danger);
+  color: #fff;
 }
 
-.priority-line.warm .priority-line__icon {
-  background: var(--pt-accent);
-  color: var(--pt-warm);
-  border-color: var(--pt-accent);
+.priority-line.haute .priority-line__icon {
+  background: var(--pt-warning);
+  border-color: var(--pt-warning);
+  color: #fff;
+}
+
+.priority-line.normale .priority-line__icon {
+  background: var(--pt-info);
+  border-color: var(--pt-info);
+  color: #fff;
 }
 
 .priority-line.info .priority-line__icon {
-  background: var(--pt-info);
-  color: var(--pt-warm);
-  border-color: var(--pt-info);
+  background: var(--pt-bg);
+  border: 1px solid var(--pt-line);
+  color: var(--pt-muted);
 }
 
 .priority-line__main {
@@ -1694,6 +1733,8 @@
 }
 
 /* sk : skeletons loading (4 patterns : list, card, profil, chart) */
+/* easing : ease-in-out conserve sciemment — pulsation en boucle symetrique,
+   l'easing DNA "Emil" (--pt-ease) cible les entrees ponctuelles, pas les loops. */
 .sk {
   background: var(--pt-line);
   border-radius: 6px;
@@ -2136,7 +2177,7 @@
 
 .pt-toast-host > .toast {
   pointer-events: auto;
-  animation: pt-toast-in 200ms ease forwards;
+  animation: pt-toast-in 200ms var(--pt-ease) forwards;
 }
 
 @keyframes pt-toast-in {
@@ -2352,7 +2393,7 @@
   text-transform: none;
   letter-spacing: normal;
   cursor: pointer;
-  transition: background 160ms ease, transform 80ms ease, opacity 160ms ease;
+  transition: background 160ms var(--pt-ease), transform 80ms var(--pt-ease), opacity 160ms var(--pt-ease);
 }
 
 .btn--primary:hover:not(:disabled) {
@@ -2382,7 +2423,7 @@
   text-transform: none;
   letter-spacing: normal;
   cursor: pointer;
-  transition: background 160ms ease, border-color 160ms ease, color 160ms ease, transform 80ms ease;
+  transition: background 160ms var(--pt-ease), border-color 160ms var(--pt-ease), color 160ms var(--pt-ease), transform 80ms var(--pt-ease);
 }
 
 .btn--secondary:hover:not(:disabled) {
@@ -2414,7 +2455,7 @@
   text-transform: none;
   letter-spacing: normal;
   cursor: pointer;
-  transition: background 160ms ease, color 160ms ease;
+  transition: background 160ms var(--pt-ease), color 160ms var(--pt-ease);
 }
 
 .btn--ghost:hover:not(:disabled) {
@@ -2446,7 +2487,7 @@
   text-transform: none;
   letter-spacing: normal;
   cursor: pointer;
-  transition: background 160ms ease, transform 80ms ease, opacity 160ms ease;
+  transition: background 160ms var(--pt-ease), transform 80ms var(--pt-ease), opacity 160ms var(--pt-ease);
 }
 
 .btn--accent:hover:not(:disabled) {
@@ -2478,7 +2519,7 @@
   text-transform: none;
   letter-spacing: normal;
   cursor: pointer;
-  transition: background 160ms ease, transform 80ms ease, opacity 160ms ease;
+  transition: background 160ms var(--pt-ease), transform 80ms var(--pt-ease), opacity 160ms var(--pt-ease);
 }
 
 .btn--danger:hover:not(:disabled) {
@@ -2514,7 +2555,7 @@
   text-underline-offset: 3px;
   text-decoration-thickness: 1px;
   cursor: pointer;
-  transition: color 160ms ease, text-decoration-thickness 160ms ease;
+  transition: color 160ms var(--pt-ease), text-decoration-thickness 160ms var(--pt-ease);
 }
 
 .btn--link:hover:not(:disabled) {
@@ -2592,6 +2633,7 @@
 /* Block — full-width, canonique V76 */
 .btn--block {
   width: 100%;
+  min-height: 44px;
 }
 
 /* Loading — spinner, click bloqué, texte transparent */
@@ -2635,8 +2677,8 @@
 
 /* Alias rétrocompat V77 → mapping vers nouveau système V76                  */
 /* Évite de casser les 18 call-sites avant fin des replace-all des agents    */
-.btn-primary--lg { display: inline-flex; align-items: center; justify-content: center; gap: 8px; background: var(--pt-primary); color: var(--pt-warm, white); border: 1px solid var(--pt-primary); border-radius: 12px; font-family: var(--pt-font-body); font-weight: 600; text-transform: none; letter-spacing: normal; padding: 13px 20px; font-size: 14.5px; min-height: 46px; height: 46px; cursor: pointer; transition: background 160ms ease, transform 80ms ease, opacity 160ms ease; }
-.btn-secondary--lg { display: inline-flex; align-items: center; justify-content: center; gap: 8px; background: var(--pt-bg, #FFFFFF); color: var(--pt-ink); border: 1px solid var(--pt-line-strong); border-radius: 12px; font-family: var(--pt-font-body); font-weight: 600; text-transform: none; letter-spacing: normal; padding: 13px 20px; font-size: 14.5px; min-height: 46px; height: 46px; cursor: pointer; transition: background 160ms ease, border-color 160ms ease, color 160ms ease, transform 80ms ease; }
+.btn-primary--lg { display: inline-flex; align-items: center; justify-content: center; gap: 8px; background: var(--pt-primary); color: var(--pt-warm, white); border: 1px solid var(--pt-primary); border-radius: 12px; font-family: var(--pt-font-body); font-weight: 600; text-transform: none; letter-spacing: normal; padding: 13px 20px; font-size: 14.5px; min-height: 46px; height: 46px; cursor: pointer; transition: background 160ms var(--pt-ease), transform 80ms var(--pt-ease), opacity 160ms var(--pt-ease); }
+.btn-secondary--lg { display: inline-flex; align-items: center; justify-content: center; gap: 8px; background: var(--pt-bg, #FFFFFF); color: var(--pt-ink); border: 1px solid var(--pt-line-strong); border-radius: 12px; font-family: var(--pt-font-body); font-weight: 600; text-transform: none; letter-spacing: normal; padding: 13px 20px; font-size: 14.5px; min-height: 46px; height: 46px; cursor: pointer; transition: background 160ms var(--pt-ease), border-color 160ms var(--pt-ease), color 160ms var(--pt-ease), transform 80ms var(--pt-ease); }
 
 /* primary-cta-block : alias pour bouton CTA full-width (compatibilité brief) */
 .primary-cta-block {
@@ -2657,7 +2699,7 @@
   text-transform: uppercase;
   letter-spacing: 0.04em;
   cursor: pointer;
-  transition: background 160ms ease, transform 80ms ease, opacity 160ms ease;
+  transition: background 160ms var(--pt-ease), transform 80ms var(--pt-ease), opacity 160ms var(--pt-ease);
 }
 
 .primary-cta-block:hover:not(:disabled) {
@@ -2801,7 +2843,7 @@
   align-items: center;
   justify-content: center;
   margin-top: 1px;
-  transition: background 120ms ease, border-color 120ms ease;
+  transition: background 120ms var(--pt-ease), border-color 120ms var(--pt-ease);
 }
 
 .checkbox-row__box.checked {
@@ -2866,7 +2908,7 @@
   height: 4px;
   border-radius: 2px;
   background: var(--pt-line);
-  transition: background 160ms ease;
+  transition: background 160ms var(--pt-ease);
 }
 
 .pwd-strength.s1 span:nth-child(-n+1),
@@ -2926,7 +2968,7 @@
   background: var(--pt-bg);
   position: relative;
   z-index: 2;
-  transition: transform 200ms cubic-bezier(0.2, 0.8, 0.3, 1);
+  transition: transform 200ms var(--pt-ease);
 }
 
 .swipe-row--left .swipe-row__content {
@@ -2940,7 +2982,7 @@
 .swipe-row--collapsing {
   height: 0;
   border-bottom: none;
-  transition: height 200ms ease;
+  transition: height 200ms var(--pt-ease);
 }
 
 .swipe-row__actions {
@@ -3112,9 +3154,24 @@
   font-weight: 600;
 }
 
+/* .iconbtn base — garantit une zone tap >=44x44 (porcher avec gants). */
+.iconbtn {
+  min-width: 44px;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  cursor: pointer;
+}
+
+/* Header primaire : la cible visuelle reste 36px mais on conserve une zone
+   tap >=44px via la hauteur min du header lui-meme. Override assume. */
 .ph--primary .iconbtn {
   width: 36px;
   height: 36px;
+  min-width: 36px;
+  min-height: 36px;
   border-radius: 10px;
   border: 1px solid rgba(245, 233, 216, 0.2);
   background: transparent;
@@ -3246,7 +3303,7 @@
   letter-spacing: 0.04em;
   text-transform: uppercase;
   cursor: pointer;
-  transition: background 120ms ease, border-color 120ms ease;
+  transition: background 120ms var(--pt-ease), border-color 120ms var(--pt-ease);
   min-height: 32px;
 }
 
@@ -3564,6 +3621,14 @@
   border-color: var(--pt-rose-ink);
   color: var(--pt-rose-ink);
 }
+.pt-screen .alert-card--warning {
+  background: var(--pt-warn-bg-soft);
+  border-color: var(--pt-warning);
+}
+.pt-screen .alert-card--critique {
+  background: var(--pt-danger-bg-soft);
+  border-color: var(--pt-danger);
+}
 .pt-screen .alert-card__icon { flex-shrink: 0; }
 .pt-screen .alert-card__title {
   font-family: var(--pt-font-display);
@@ -3738,6 +3803,7 @@
 .pt-screen .searchbar__input {
   width: 100%;
   height: 44px;
+  min-height: 44px;
   padding: 0 44px 0 44px;
   border: 1px solid var(--pt-line);
   border-radius: 12px;
@@ -3768,6 +3834,16 @@
   align-items: center;
   justify-content: center;
   cursor: pointer;
+}
+/* Zone tap >=44x44 sans agrandir le visuel (pastille 22px). */
+.pt-screen .searchbar__clear::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 44px;
+  height: 44px;
+  transform: translate(-50%, -50%);
 }
 .pt-screen mark {
   background: var(--pt-amber-bg);
@@ -3808,7 +3884,11 @@
 }
 
 /* ---- ARTICLE BODY ---- */
-.pt-screen .article-body { padding: 8px 24px 24px; }
+.pt-screen .article-body {
+  padding: 8px 24px 24px;
+  max-width: 65ch;
+  margin-inline: auto;
+}
 .pt-screen .article-body p {
   font-family: var(--pt-font-body);
   font-size: 17px;
@@ -3835,7 +3915,7 @@
   margin-bottom: 10px;
   font-family: var(--pt-font-body);
   font-size: 16px;
-  line-height: 1.55;
+  line-height: 1.6;
   color: var(--pt-ink-soft);
 }
 .pt-screen .article-body li::before {
@@ -4541,3 +4621,35 @@
 .pt-screen .amount--positive { color: var(--pt-emerald-ink); }
 .pt-screen .amount--negative { color: var(--pt-rose-ink); }
 /* === / V77 .pt-screen namespace === */
+
+/* ===== ACCESSIBILITE — prefers-reduced-motion (S2 / N6) ===================
+   Neutralise transitions, animations et transforms decoratifs pour les
+   utilisateurs ayant demande la reduction des animations. !important justifie :
+   on doit primer sur toutes les declarations specifiques ci-dessus. ======== */
+@media (prefers-reduced-motion: reduce) {
+  .bn-item,
+  .bn-icon,
+  .bn-label,
+  .fab,
+  .fab--marius,
+  .fab--mini,
+  .priority-line,
+  .btn,
+  .list-item,
+  .page-header,
+  .sk,
+  .sk-chart__bars span {
+    transition: none !important;
+    animation: none !important;
+  }
+
+  .bn-item:active,
+  .fab:active,
+  .fab:hover,
+  .priority-line:active,
+  .btn:active,
+  .list-item:hover,
+  .page-header {
+    transform: none !important;
+  }
+}

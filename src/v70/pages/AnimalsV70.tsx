@@ -14,7 +14,6 @@ import React, { useState, useEffect, lazy, Suspense, useMemo, useCallback } from
 import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import { Boxes, Home, Eye, Edit3, Scale, LogOut, Search } from 'lucide-react';
 import { Section } from '../components/ds/Section';
-import { Card } from '../components/ds/Card';
 import { TabsMini } from '../components/ds/TabsMini';
 import { Pill, type PillVariant } from '../components/ds/Pill';
 import { ListItem } from '../components/ds/ListItem';
@@ -57,6 +56,9 @@ interface AnimalStub {
   status: string;
   statusLabel: string;
   pillVariant: PillVariant;
+  // Échéance à mettre en avant (MB prévue) — affichée en mono semibold, pas
+  // noyée dans le sous-texte gris. Ce qui compte à 6h du matin.
+  dueInfo?: string;
 }
 
 const STUBS_TRUIES: AnimalStub[] = [
@@ -252,17 +254,21 @@ const AnimalsV70Inner: React.FC = () => {
             const isVide = /attente saillie|vide|sevrée|sevree/.test(s);
             const isAVendre = /réforme|reforme/.test(s);
             // Sub-text contextuel — évite de doublonner la pill (PLEINE/MATERNITÉ/...).
-            // Parité + info temporelle (MB prévue / lactation / disponible).
+            // Parité reste le sous-texte calme ; l'échéance (MB prévue) est
+            // extraite dans `dueInfo` pour dominer visuellement.
             const parite = typeof t.nbPortees === 'number' ? `Parité ${t.nbPortees}` : null;
-            const dateInfo = isPleine && t.dateMBPrevue
-              ? `MB prévue ${formatDateFr(t.dateMBPrevue)}`
-              : isMater
-                ? 'Lactation en cours'
-                : isVide
-                  ? 'Disponible saillie'
-                  : isAVendre
-                    ? 'À réformer'
-                    : null;
+            const dueInfo = isPleine && t.dateMBPrevue
+              ? `MB ${formatDateFr(t.dateMBPrevue)}`
+              : undefined;
+            const dateInfo = !dueInfo
+              ? (isMater
+                  ? 'Lactation en cours'
+                  : isVide
+                    ? 'Disponible saillie'
+                    : isAVendre
+                      ? 'À réformer'
+                      : null)
+              : null;
             const status = [parite, dateInfo].filter(Boolean).join(' · ') || (t.statut ?? 'Truie active');
             // v3.4.5 — boucle prioritaire dans displayName ; id reste displayId pour URL
             const subId = formatAnimalSubId(t);
@@ -271,6 +277,7 @@ const AnimalsV70Inner: React.FC = () => {
               displayName: formatAnimalIdentity(t),
               subId,
               status,
+              dueInfo,
               statusLabel: isPleine ? 'Pleine' : isMater ? 'Maternité' : isVide ? 'Vide' : isAVendre ? 'À vendre' : (t.statut ?? 'Active'),
               pillVariant: (isPleine ? 'success' : isMater ? 'warm' : isVide ? 'warning' : isAVendre ? 'ghost' : 'info') as PillVariant,
             };
@@ -295,8 +302,10 @@ const AnimalsV70Inner: React.FC = () => {
               truieMere: b.truie,
               dateMB: b.dateMB,
             }),
-            // V75-n F-22 : NV → "nés vivants" (libellé explicite)
-            status: `${b.truie ? `Mère ${b.truie} · ` : ''}${b.dateMB ? `MB ${formatDateFr(b.dateMB)}` : 'En cours'}${b.nv ? ` · ${b.nv} nés vivants` : ''}`,
+            // V75-n F-22 : NV → "nés vivants" (libellé explicite).
+            // La date de MB est extraite dans `dueInfo` — elle domine la ligne.
+            status: `${b.truie ? `Mère ${b.truie}` : 'Bande en cours'}${b.nv ? ` · ${b.nv} nés vivants` : ''}`,
+            dueInfo: b.dateMB ? `MB ${formatDateFr(b.dateMB)}` : undefined,
             statusLabel: b.statut ?? 'Active',
             pillVariant: 'success' as PillVariant,
           }))
@@ -406,31 +415,45 @@ const AnimalsV70Inner: React.FC = () => {
       />
 
       {tab !== 'loges' && (
-        <Card>
-          <div style={{ padding: '4px 4px 4px 10px', display: 'flex', alignItems: 'center', gap: 6 }}>
-            <Search size={16} aria-hidden="true" style={{ color: 'var(--pt-muted)', flexShrink: 0 }} />
-            <input
-              type="search"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder={`Rechercher ${baseList[0]?.displayName ?? baseList[0]?.id ?? '...'}`}
-              style={{
-                width: '100%',
-                border: 'none',
-                fontSize: 13,
-                background: 'transparent',
-                fontFamily: 'inherit',
-                padding: '8px 10px 8px 0',
-              }}
-              aria-label="Rechercher un animal"
-            />
-          </div>
-        </Card>
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 8,
+            padding: '6px 2px',
+            marginBottom: 4,
+            borderBottom: '1px solid var(--pt-line)',
+          }}
+        >
+          <Search size={16} aria-hidden="true" style={{ color: 'var(--pt-subtle)', flexShrink: 0 }} />
+          <input
+            type="search"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder={`Chercher une ${tab === 'truies' ? 'truie' : tab === 'verrats' ? 'verrat' : tab === 'porcelets' ? 'boucle' : 'bande'}…`}
+            style={{
+              width: '100%',
+              border: 'none',
+              fontSize: 14,
+              background: 'transparent',
+              fontFamily: 'var(--pt-font-body)',
+              color: 'var(--pt-ink)',
+              padding: '8px 0',
+              minHeight: 44,
+            }}
+            aria-label="Rechercher un animal"
+          />
+        </div>
       )}
 
       {/* Filtres pertinents pour Truies uniquement (pleines/maternité/vides) */}
       {tab === 'truies' && (
-        <div className="pills" role="group" aria-label="Filtrer les truies par statut" style={{ marginBottom: 14, marginTop: 14 }}>
+        <div
+          className="pills"
+          role="group"
+          aria-label="Filtrer les truies par statut"
+          style={{ padding: '4px 0', marginBottom: 12, marginTop: 12 }}
+        >
           <button
             type="button"
             className={`pill${filter === 'all' ? ' is-active' : ''}`}
@@ -478,10 +501,12 @@ const AnimalsV70Inner: React.FC = () => {
             aria-label="Trier les truies"
             style={{
               marginLeft: 'auto',
-              padding: '6px 12px',
+              minHeight: 44,
+              padding: '0 14px',
               borderRadius: 999,
               fontFamily: 'var(--pt-font-body)',
-              fontSize: 12,
+              fontSize: 13,
+              fontWeight: 500,
               border: '1px solid var(--pt-line)',
               background: 'var(--pt-bg)',
               color: 'var(--pt-ink)',
@@ -504,10 +529,12 @@ const AnimalsV70Inner: React.FC = () => {
             onChange={(e) => setBandesSort(e.target.value as BandesSort)}
             aria-label="Trier les bandes"
             style={{
-              padding: '6px 12px',
+              minHeight: 44,
+              padding: '0 14px',
               borderRadius: 999,
               fontFamily: 'var(--pt-font-body)',
-              fontSize: 12,
+              fontSize: 13,
+              fontWeight: 500,
               border: '1px solid var(--pt-line)',
               background: 'var(--pt-bg)',
               color: 'var(--pt-ink)',
@@ -778,6 +805,20 @@ interface TruieListRowProps {
   onLongPress: (() => void) | null;
 }
 
+// Couleur du liseré de statut — suit le mapping FR strict des pills.
+// success=Pleine · warm=Maternité · warning=Vide · danger=Urgent · info=Auto.
+const STATUS_RAIL: Record<PillVariant, string> = {
+  success: 'var(--pt-success)',
+  warm: 'var(--pt-accent)',
+  warning: 'var(--pt-warning)',
+  danger: 'var(--pt-danger)',
+  info: 'var(--pt-info)',
+  primary: 'var(--pt-primary)',
+  accent: 'var(--pt-accent)',
+  soft: 'var(--pt-line-strong)',
+  ghost: 'var(--pt-line-strong)',
+};
+
 const TruieListRow: React.FC<TruieListRowProps> = ({ it, tab, onNavigate, onLongPress }) => {
   // Trigger flag pour ne PAS naviguer juste après un long-press réussi
   // (sinon onClick re-fire à pointerUp et écrase le sheet).
@@ -797,17 +838,54 @@ const TruieListRow: React.FC<TruieListRowProps> = ({ it, tab, onNavigate, onLong
     onNavigate();
   };
 
+  // Liseré de statut collé à l'avatar : on lit le statut d'un coup d'œil
+  // avant même le texte. Donne du rythme à la liste sans grille uniforme.
+  const railColor = STATUS_RAIL[it.pillVariant] ?? 'var(--pt-line-strong)';
+  const avatarWithRail = (
+    <div style={{ display: 'flex', alignItems: 'stretch', gap: 10, alignSelf: 'stretch' }}>
+      <span
+        aria-hidden="true"
+        style={{
+          width: 3,
+          borderRadius: 999,
+          background: railColor,
+          flexShrink: 0,
+          alignSelf: 'stretch',
+          minHeight: 38,
+        }}
+      />
+      <EntityAvatar species={TAB_DATA[tab].species} size="md" shortCode={it.id.slice(0, 8)} />
+    </div>
+  );
+
+  // Sous-texte : l'échéance (MB prévue) domine — mono semibold ink.
+  // La parité / contexte reste calme en muted derrière.
+  const subtitle = it.dueInfo ? (
+    <span style={{ display: 'inline-flex', alignItems: 'baseline', gap: 6, flexWrap: 'wrap' }}>
+      <span
+        style={{
+          fontFamily: 'var(--pt-font-mono)',
+          fontWeight: 600,
+          color: 'var(--pt-ink)',
+          fontVariantNumeric: 'tabular-nums',
+        }}
+      >
+        {it.dueInfo}
+      </span>
+      {it.status && it.status !== it.statusLabel && (
+        <span style={{ color: 'var(--pt-subtle)' }}>· {it.status}</span>
+      )}
+    </span>
+  ) : (
+    it.status
+  );
+
   return (
     <ListItem
-      avatar={<EntityAvatar species={TAB_DATA[tab].species} size="md" shortCode={it.id.slice(0, 8)} />}
+      avatar={avatarWithRail}
       title={it.displayName ?? (it.id.length > 16 ? `Bande ${it.id.slice(0, 8)}…` : it.id)}
-      subtitle={it.status}
-      trailing={
-        <>
-          <Pill variant={it.pillVariant}>{it.statusLabel}</Pill>
-          <span className="list-arrow">›</span>
-        </>
-      }
+      subtitle={subtitle}
+      trailing={<Pill variant={it.pillVariant}>{it.statusLabel}</Pill>}
       onClick={handleClick}
       pointerHandlers={handlers}
     />

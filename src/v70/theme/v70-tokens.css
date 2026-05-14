@@ -1,5 +1,11 @@
 /* src/v70/theme/v70-tokens.css */
 /* V70 — DNA visuel pixel-perfect du mockup v70-mockup.html */
+/*
+ * SOURCE UNIQUE des couleurs --pt-* (réconciliation 2026-05-14, designer-systeme).
+ * Tout token couleur de marque/sémantique/entité vit ici. Les tokens NON-couleur
+ * (typo, échelle de texte, espacements, radius, ombres, transitions) vivent dans
+ * src/design-system/tokens/tokens.css. Pas de 3e fichier de tokens.
+ */
 
 :root {
   /* === PRIMAIRES === */

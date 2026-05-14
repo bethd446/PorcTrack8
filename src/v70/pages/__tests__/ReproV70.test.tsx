@@ -81,7 +81,8 @@ describe('ReproV70 — Phase 3 Hub Repro', () => {
 
   it('rend empty-state cycle quand aucune bande (V71.3 — CycleTimeline data-driven)', () => {
     render(<MemoryRouter><ReproV70 /></MemoryRouter>);
-    expect(screen.getByText(/aucune bande en cycle/i)).toBeTruthy();
+    // Copy V80 — empty state repro réécrit (ancien : "aucune bande en cycle").
+    expect(screen.getByText(/aucun cycle démarré/i)).toBeTruthy();
   });
 });
 
