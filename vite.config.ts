@@ -142,6 +142,15 @@ export default defineConfig(() => {
       // Do not modifyâfile watching is disabled to prevent flickering during agent edits.
       hmr: process.env.DISABLE_HMR !== 'true',
     },
+    // 2026-05-15 — strip console.log/debug/info des bundles prod via esbuild
+    // `pure` (marque ces appels comme effets-free → éliminés à la minification).
+    // Garde console.warn/error pour les vraies erreurs runtime. Cleanup zéro
+    // risque : le code dev reste inchangé, seul le bundle prod est nettoyé.
+    esbuild: {
+      pure: process.env.NODE_ENV === 'production'
+        ? ['console.log', 'console.debug', 'console.info']
+        : [],
+    },
     build: {
       rollupOptions: {
         output: {

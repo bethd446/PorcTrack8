@@ -41,23 +41,12 @@ interface ReproTrackerProps {
   className?: string;
 }
 
-export default function ReproTracker({ stages, progressPct, className = '' }: ReproTrackerProps) {
-  const clamped = Math.max(0, Math.min(100, progressPct));
-  const [isNarrow, setIsNarrow] = React.useState(
-    typeof window !== 'undefined' && window.innerWidth < 480,
-  );
-
-  React.useEffect(() => {
-    const handler = () => setIsNarrow(window.innerWidth < 480);
-    window.addEventListener('resize', handler);
-    return () => window.removeEventListener('resize', handler);
-  }, []);
-
-  // v3.6.0 — Jauge de progression (option A refonte) : affichage explicite
-  // "Gestation · J{n}/115 · {pct}%" avec barre visuelle. L'éleveur voit
-  // immédiatement où il en est dans le cycle plutôt que d'inférer depuis
-  // les markers ✓/○ des étapes.
-  const ProgressGauge = () => (
+// v3.6.0 — Jauge de progression (option A refonte) : affichage explicite
+// "Gestation · J{n}/115 · {pct}%" avec barre visuelle. L'éleveur voit
+// immédiatement où il en est dans le cycle plutôt que d'inférer depuis
+// les markers ✓/○ des étapes.
+function ProgressGauge({ clamped }: { clamped: number }) {
+  return (
     <div
       role="progressbar"
       aria-valuenow={clamped}
@@ -114,13 +103,26 @@ export default function ReproTracker({ stages, progressPct, className = '' }: Re
       </div>
     </div>
   );
+}
+
+export default function ReproTracker({ stages, progressPct, className = '' }: ReproTrackerProps) {
+  const clamped = Math.max(0, Math.min(100, progressPct));
+  const [isNarrow, setIsNarrow] = React.useState(
+    typeof window !== 'undefined' && window.innerWidth < 480,
+  );
+
+  React.useEffect(() => {
+    const handler = () => setIsNarrow(window.innerWidth < 480);
+    window.addEventListener('resize', handler);
+    return () => window.removeEventListener('resize', handler);
+  }, []);
 
   // Mobile small (< 480px) : empilement vertical pour éviter le chevauchement
   // des labels lorsque plusieurs stages sont concentrés dans 0-30% du cycle.
   if (isNarrow) {
     return (
       <div className={className} style={{ display: 'flex', flexDirection: 'column', gap: 10, padding: '4px 0' }}>
-        <ProgressGauge />
+        <ProgressGauge clamped={clamped} />
         {stages.map((stage, i) => (
           <div
             key={`${stage.label}-${i}`}
@@ -158,7 +160,7 @@ export default function ReproTracker({ stages, progressPct, className = '' }: Re
 
   return (
     <div className={className}>
-      <ProgressGauge />
+      <ProgressGauge clamped={clamped} />
       <div style={{ position: 'relative', padding: '8px 0 36px' }}>
       <div
         style={{

@@ -49,7 +49,7 @@ export const TabsMini: React.FC<TabsMiniProps> = ({ value, onChange, options }) 
   // Cible : conformité accessibilité + cohérence avec autres tabs natifs.
   const handleKeyDown = (e: React.KeyboardEvent<HTMLButtonElement>, idx: number): void => {
     const last = options.length - 1;
-    let nextIdx = idx;
+    let nextIdx: number;
     if (e.key === 'ArrowRight') nextIdx = idx === last ? 0 : idx + 1;
     else if (e.key === 'ArrowLeft') nextIdx = idx === 0 ? last : idx - 1;
     else if (e.key === 'Home') nextIdx = 0;
