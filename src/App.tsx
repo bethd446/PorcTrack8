@@ -51,7 +51,8 @@ const V70Routes = React.lazy(() =>
 void import('./v70/theme/v70-tokens.css');
 void import('./v70/theme/v70-global.css');
 
-import { QuickActionsProvider } from './components/AgritechNavV2';
+import { QuickActionsProvider } from './context/QuickActionsContext';
+import QuickActionsHost from './components/quick-actions/QuickActionsHost';
 import { ToastProvider } from './context/ToastContext';
 import { GlobalSearchProvider } from './context/GlobalSearchContext';
 import { loadChecklistDefinitions } from './services/checklistService';
@@ -143,6 +144,7 @@ const AppContent = () => {
     <IonApp>
       <React.Suspense fallback={<SuspenseFallback />}>
         <QuickActionsProvider>
+          <QuickActionsHost />
           <ToastProvider>
           {/* v3.5.0 : OnboardingGate + OnboardingV2Gate supprimés (forced redirect retiré).
               Le bandeau profil V80 A4 sur /today reste seul guide pour new user. */}
