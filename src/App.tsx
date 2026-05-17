@@ -48,7 +48,8 @@ const V70Routes = React.lazy(() =>
 );
 
 // CSS V70 — préchargés au boot.
-void import('./v70/theme/v70-tokens.css');
+// Design reset 2026-05-17 (Lot 3) : v70-tokens.css supprimé → fallback
+// neutre dans src/index.css. v70-global.css reste jusqu'au Lot 4.
 void import('./v70/theme/v70-global.css');
 
 import { QuickActionsProvider } from './context/QuickActionsContext';

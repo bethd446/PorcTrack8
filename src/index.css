@@ -1,25 +1,47 @@
 @charset "UTF-8";
 @import "tailwindcss";
 
-/* ═══════════════════════════════════════════════════════════════════════════
-   PorcTrack — Design System · Terrain Vivant v6 (light-first)
-   Refonte 2026-04-30 — light obligatoire, plus de couches dark-cockpit.
-   ═══════════════════════════════════════════════════════════════════════════
-   Ordre d'imports (chaînage explicite, le dernier gagne) :
-     1. theme-tokens.css         — tokens --bg-0/--text-0 (mode jour forcé)
-     2. agritech-tokens.css      — @theme Tailwind (utilities bg-bg-0 etc.)
-     3. agritech-utilities.css   — primitives (.kpi-value, .chip, etc.)
-     4. theme-v2-tokens.css      — radii/easings/accents par onglet (--accent-cockpit…)
-     5. terra-v2-tokens.css      — typographie + radii étendus
-     6. terrain-vivant-v6.css    — palette client v6 (FINAL)
-   ──────────────────────────────────────────────────────────────────── */
-@import "./styles/theme-tokens.css";
-@import "./styles/agritech-tokens.css";
-@import "./styles/agritech-utilities.css";
-@import "./styles/typography-utils.css";
-@import "./styles/theme-v2-tokens.css";
-@import "./styles/terra-v2-tokens.css";
-@import "./styles/terrain-vivant-v6.css";
+/* ═══════════════════════════════════════════════════════════════════
+ * 🚧 FALLBACK NEUTRE TEMPORAIRE — DESIGN RESET 2026-05-17
+ *
+ * Ces 16 tokens sont des valeurs neutres pour préserver la navigabilité
+ * de l'app pendant la démolition design (Lots 3-4-5).
+ *
+ * ⚠️ À SUPPRIMER AU LOT 5d — JAMAIS LIVRÉ AU DÉVELOPPEUR DESIGNER.
+ * Le designer redéfinira ces tokens (ou les remplacera) selon sa palette.
+ *
+ * Référence : 2357 occurrences var(--pt-*) dans le code au moment du
+ * reset, dont top 15 :
+ *   --pt-muted (284) · --pt-font-mono (255) · --pt-ink (225)
+ *   --pt-line (184) · --pt-primary (169) · --pt-bg (144)
+ *   --pt-font-display (143) · --pt-warm (109) · --pt-font-body (109)
+ *   --pt-danger (103) · --pt-subtle (96) · --pt-accent (71)
+ *   --pt-ease (59) · --pt-line-strong (55) · --pt-text-muted (44)
+ * ═══════════════════════════════════════════════════════════════════ */
+:root {
+  /* Couleurs sémantiques */
+  --pt-primary: #333;
+  --pt-ink: #000;
+  --pt-muted: #666;
+  --pt-text-muted: #666;
+  --pt-subtle: #999;
+  --pt-bg: #fff;
+  --pt-bg-app: #fafafa;
+  --pt-warm: #f5f5f5;
+  --pt-line: #ccc;
+  --pt-line-strong: #888;
+  --pt-danger: #c00;
+  --pt-success: #060;
+  --pt-accent: #999;
+  /* Familles de polices (system fonts — Big Shoulders/Instrument Sans
+     restent chargées via @font-face mais ne sont plus utilisées par les
+     tokens fallback ; le designer redéfinira sa typo). */
+  --pt-font-display: system-ui, -apple-system, sans-serif;
+  --pt-font-body: system-ui, -apple-system, sans-serif;
+  --pt-font-mono: 'JetBrains Mono', ui-monospace, monospace;
+  /* Easing CSS animations */
+  --pt-ease: cubic-bezier(0.4, 0, 0.2, 1);
+}
 
 /* ── Polices ──────────────────────────────────────────────────────────────── */
 /* V71 typo lock — 2 fonts only (audit senior-designer V70).
