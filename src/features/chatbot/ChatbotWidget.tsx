@@ -7,6 +7,7 @@ import { useAuth } from '../../context/AuthContext';
 import { buildFarmContextPrompt, type FarmSnapshot } from './buildFarmContext';
 import { buildMariusSuggestions } from './buildMariusSuggestions';
 import { kvGet } from '../../services/kvStore';
+import { callMariusAPI, isMariusConfigured as isMariusConfiguredApi } from './mariusApi';
 
 type Role = 'user' | 'assistant' | 'system';
 
@@ -15,85 +16,13 @@ interface Message {
   content: string;
 }
 
-// Mistral cloud API (bascule officielle 2026-05-07)
-// Le VPS llama-server custom ignorait le system prompt — Mistral cloud l'applique correctement.
-// SECURITY: VITE_MISTRAL_API_KEY est inlinée dans le bundle client (visible).
-// À migrer vers Supabase Edge Function pour la prod long terme.
-const MISTRAL_API_BASE = 'https://api.mistral.ai/v1';
-const MISTRAL_API_KEY = import.meta.env.VITE_MISTRAL_API_KEY as string | undefined;
-const MISTRAL_MODEL = 'mistral-small-latest';
-
-// VPS Hostinger en backup (legacy, system prompt non appliqué — fallback uniquement si Mistral KO)
-const VPS_API_BASE = import.meta.env.VITE_MARIUS_API_BASE as string | undefined;
-const VPS_API_KEY = import.meta.env.VITE_MARIUS_API_KEY as string | undefined;
-
-export const isMariusConfigured: boolean = Boolean(
-  MISTRAL_API_KEY || (VPS_API_BASE && VPS_API_KEY),
-);
+// 2026-05-17 — Migration sécurité critique : tout l'appel Marius passe
+// désormais par l'Edge Function `marius-chat` (clé Mistral côté serveur).
+// Plus aucune clé API n'est exposée dans le bundle client.
+// La logique est centralisée dans `./mariusApi.ts`.
+export const isMariusConfigured: boolean = isMariusConfiguredApi;
 
 const ORB_SRC = '/images/v73/marius/orb-emeraude.webp';
-
-function warnMixedContent(): void {
-  if (typeof window === 'undefined' || !VPS_API_BASE) return;
-  if (window.location.protocol === 'https:' && VPS_API_BASE.startsWith('http://')) {
-    console.warn(
-      '[Marius] Mixed Content: la page est servie en HTTPS mais VPS_API_BASE est en HTTP. ' +
-        'Configure HTTPS sur ton VPS (Cloudflare Tunnel ou Caddy + Let\'s Encrypt).',
-    );
-  }
-}
-
-async function callMariusAPI(
-  messages: Message[],
-  systemPrompt: string,
-  signal: AbortSignal,
-): Promise<Response> {
-  // Tentative 1 : Mistral cloud (system prompt appliqué)
-  if (MISTRAL_API_KEY) {
-    try {
-      const res = await fetch(`${MISTRAL_API_BASE}/chat/completions`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${MISTRAL_API_KEY}`,
-          'Accept': 'text/event-stream',
-        },
-        body: JSON.stringify({
-          model: MISTRAL_MODEL,
-          messages: [
-            { role: 'system', content: systemPrompt },
-            ...messages
-              .filter((m) => m.role !== 'system')
-              .map((m) => ({ role: m.role, content: m.content })),
-          ],
-          stream: true,
-          max_tokens: 800,
-          temperature: 0.7,
-        }),
-        signal,
-      });
-      if (res.ok && res.body) return res;
-      console.warn('[Marius] Mistral cloud failed, falling back to VPS', res.status);
-    } catch (err) {
-      console.warn('[Marius] Mistral cloud error, falling back to VPS', err);
-    }
-  }
-
-  // Fallback : VPS Hostinger (system prompt ignoré mais répond)
-  if (!VPS_API_BASE || !VPS_API_KEY) {
-    throw new Error('Aucune API Marius configurée');
-  }
-  const lastUser = [...messages].reverse().find((m) => m.role === 'user')?.content ?? '';
-  return await fetch(`${VPS_API_BASE}/chat`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'X-API-Key': VPS_API_KEY,
-    },
-    body: JSON.stringify({ message: lastUser }),
-    signal,
-  });
-}
 
 /**
  * Vérifie si le mode debug Marius est actif.
@@ -371,7 +300,6 @@ export const ChatbotWidget: React.FC = () => {
 
   useEffect(() => {
     if (open && isMariusConfigured) {
-      warnMixedContent();
       setTimeout(() => inputRef.current?.focus(), 50);
     }
   }, [open]);

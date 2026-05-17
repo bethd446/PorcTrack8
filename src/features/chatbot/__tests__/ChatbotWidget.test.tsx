@@ -59,16 +59,29 @@ vi.mock('../../../context/AuthContext', () => ({
   }),
 }));
 
-// Force l'API key Mistral AVANT tout import du widget. Les imports ESM sont
-// hoistés au top du module, donc un simple `vi.stubEnv(...)` placé avant
-// `import { ChatbotWidget }` s'exécute en réalité APRÈS l'import (et la
-// constante MISTRAL_API_KEY est alors résolue à `undefined` en CI où
-// .env.local n'existe pas, ce qui rend `isMariusConfigured = false` et le
-// widget retourne null → DOM vide). `vi.hoisted` garantit l'exécution avant
-// tous les imports.
+// 2026-05-17 — Migration sécurité critique : l'appel Mistral est désormais
+// routé via l'Edge Function `marius-chat`. Le frontend a besoin de
+// VITE_SUPABASE_URL/ANON_KEY pour calculer `isMariusConfigured` et d'une
+// session valide (JWT) pour l'Authorization header. `vi.hoisted` garantit
+// l'exécution avant les imports ESM hoistés.
 vi.hoisted(() => {
-  (import.meta.env as Record<string, string>).VITE_MISTRAL_API_KEY = 'test-key';
+  const env = import.meta.env as Record<string, string>;
+  env.VITE_SUPABASE_URL = 'https://test.supabase.co';
+  env.VITE_SUPABASE_ANON_KEY = 'test-anon-key';
+  env.VITE_SUPABASE_PUBLISHABLE_KEY = 'test-anon-key';
 });
+
+// Stub supabaseClient : auth.getSession() retourne un token de test pour
+// que callMariusAPI puisse construire son Authorization header.
+vi.mock('../../../services/supabaseClient', () => ({
+  supabase: {
+    auth: {
+      getSession: vi.fn(async () => ({
+        data: { session: { access_token: 'test-jwt-token' } },
+      })),
+    },
+  },
+}));
 
 import { ChatbotWidget } from '../ChatbotWidget';
 

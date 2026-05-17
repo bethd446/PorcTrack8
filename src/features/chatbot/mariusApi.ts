@@ -1,76 +1,60 @@
 /**
- * Marius API client — extrait de ChatbotWidget pour réutilisation par
- * MariusChatFullscreen (Sprint 7).
+ * Marius API client — appel exclusif à l'Edge Function `marius-chat`.
  *
- * Garde le double endpoint : Mistral cloud (system prompt appliqué) + VPS
- * Hostinger en backup. SSE format OpenAI-compat.
+ * 2026-05-17 — Migration sécurité critique :
+ * Avant cette refonte, le client appelait directement Mistral cloud avec
+ * `VITE_MISTRAL_API_KEY` inlinée dans le bundle (clé exfiltrable en 30s via
+ * DevTools). Désormais TOUT passe par l'Edge Function Supabase `marius-chat`
+ * qui détient le secret `MISTRAL_API_KEY` côté serveur. Le frontend ne
+ * connaît plus aucune clé Mistral.
+ *
+ * SSE : l'Edge Function relaie le stream Mistral sans modification (format
+ * OpenAI-compat, déjà parsé par parseSseChunk).
  */
+import { supabase } from '../../services/supabaseClient';
 
 export interface MariusMessage {
   role: 'user' | 'assistant' | 'system';
   content: string;
 }
 
-const MISTRAL_API_BASE = 'https://api.mistral.ai/v1';
-const MISTRAL_API_KEY = import.meta.env.VITE_MISTRAL_API_KEY as string | undefined;
-const MISTRAL_MODEL = 'mistral-small-latest';
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string | undefined;
+const SUPABASE_ANON_KEY = (import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY ??
+  import.meta.env.VITE_SUPABASE_ANON_KEY) as string | undefined;
 
-const VPS_API_BASE = import.meta.env.VITE_MARIUS_API_BASE as string | undefined;
-const VPS_API_KEY = import.meta.env.VITE_MARIUS_API_KEY as string | undefined;
+export const isMariusConfigured: boolean = Boolean(SUPABASE_URL && SUPABASE_ANON_KEY);
 
-export const isMariusConfigured: boolean = Boolean(
-  MISTRAL_API_KEY || (VPS_API_BASE && VPS_API_KEY),
-);
-
+/**
+ * Appelle l'Edge Function marius-chat. Le `systemPrompt` argument est conservé
+ * pour rétro-compat de l'API mais ignoré côté client — c'est le serveur qui
+ * applique son propre system prompt (anti prompt-injection).
+ */
 export async function callMariusAPI(
   messages: MariusMessage[],
-  systemPrompt: string,
+  _systemPromptIgnoredServerOwns: string,
   signal: AbortSignal,
 ): Promise<Response> {
-  // Tentative 1 : Mistral cloud (system prompt appliqué).
-  if (MISTRAL_API_KEY) {
-    try {
-      const res = await fetch(`${MISTRAL_API_BASE}/chat/completions`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${MISTRAL_API_KEY}`,
-          Accept: 'text/event-stream',
-        },
-        body: JSON.stringify({
-          model: MISTRAL_MODEL,
-          messages: [
-            { role: 'system', content: systemPrompt },
-            ...messages
-              .filter((m) => m.role !== 'system')
-              .map((m) => ({ role: m.role, content: m.content })),
-          ],
-          stream: true,
-          max_tokens: 800,
-          temperature: 0.7,
-        }),
-        signal,
-      });
-      if (res.ok && res.body) return res;
-       
-      console.warn('[Marius] Mistral cloud failed, falling back to VPS', res.status);
-    } catch (err) {
-       
-      console.warn('[Marius] Mistral cloud error, falling back to VPS', err);
-    }
+  if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+    throw new Error('Supabase non configuré (VITE_SUPABASE_URL / ANON_KEY manquants)');
   }
 
-  if (!VPS_API_BASE || !VPS_API_KEY) {
-    throw new Error('Aucune API Marius configurée');
+  const { data: { session } } = await supabase.auth.getSession();
+  const token = session?.access_token;
+  if (!token) {
+    throw new Error('Authentification requise pour utiliser Marius');
   }
-  const lastUser = [...messages].reverse().find((m) => m.role === 'user')?.content ?? '';
-  return await fetch(`${VPS_API_BASE}/chat`, {
+
+  return await fetch(`${SUPABASE_URL}/functions/v1/marius-chat`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'X-API-Key': VPS_API_KEY,
+      Authorization: `Bearer ${token}`,
+      apikey: SUPABASE_ANON_KEY,
+      Accept: 'text/event-stream',
     },
-    body: JSON.stringify({ message: lastUser }),
+    body: JSON.stringify({
+      messages: messages.filter((m) => m.role !== 'system'),
+    }),
     signal,
   });
 }

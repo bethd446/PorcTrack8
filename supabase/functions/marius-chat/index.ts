@@ -44,13 +44,29 @@ R1 Mise-Bas (J-3 à J+2) · R2 Sevrage (J+28) · R3 Retour Chaleur · R4 Mortali
 - Si tu ne sais pas, dis-le franchement : ne JAMAIS inventer de chiffre, de définition ou de protocole.
 - Devise : adapter au contexte ferme (EUR France/Belgique, FCFA Côte d'Ivoire/Sénégal). Si pays inconnu, demander.`;
 
-const CORS_HEADERS = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-api-key",
-};
+// 2026-05-17 — CORS borné à la prod + dev local pour limiter abus tiers.
+// Si nouveau domaine besoin : ajouter ici.
+const ALLOWED_ORIGINS = new Set([
+  "https://porctrack.tech",
+  "https://www.porctrack.tech",
+  "https://app.porctrack.tech",
+  "http://localhost:5173",
+  "http://localhost:4173",
+]);
+
+function corsHeaders(origin: string | null): Record<string, string> {
+  const allow = origin && ALLOWED_ORIGINS.has(origin) ? origin : "https://porctrack.tech";
+  return {
+    "Access-Control-Allow-Origin": allow,
+    "Access-Control-Allow-Methods": "POST, OPTIONS",
+    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+    "Vary": "Origin",
+  };
+}
 
 Deno.serve(async (req: Request) => {
+  const CORS_HEADERS = corsHeaders(req.headers.get("Origin"));
+
   // CORS preflight
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: CORS_HEADERS });
@@ -72,7 +88,15 @@ Deno.serve(async (req: Request) => {
     );
   }
 
-  let body: { message?: string; context?: string } | null = null;
+  type ChatRole = "user" | "assistant" | "system";
+  interface ChatMessage { role: ChatRole; content: string }
+  interface ChatBody {
+    message?: string;
+    context?: string;
+    messages?: ChatMessage[];
+  }
+
+  let body: ChatBody | null = null;
   try {
     body = await req.json();
   } catch {
@@ -82,18 +106,46 @@ Deno.serve(async (req: Request) => {
     );
   }
 
-  const message = body?.message?.trim();
-  if (!message) {
-    return new Response(
-      JSON.stringify({ error: "Body must contain { message: string }" }),
-      { status: 400, headers: { ...CORS_HEADERS, "Content-Type": "application/json" } }
-    );
-  }
+  // Construction des messages envoyés à Mistral. Le system prompt est
+  // toujours injecté côté serveur (anti prompt-injection client-side).
+  let forwardMessages: ChatMessage[];
 
-  // Optional context (futur RAG : data ferme injectée côté client)
-  const userContent = body?.context
-    ? `${body.context}\n\n${message}`
-    : message;
+  if (Array.isArray(body?.messages) && body.messages.length > 0) {
+    // 2026-05-17 — Nouveau format : historique conversationnel complet.
+    // On filtre les system du client (jamais respectés — c'est nous le serveur),
+    // on borne à 12 messages max + 2000 chars/msg (anti prompt-injection).
+    const sanitized = body.messages
+      .filter((m) => m && m.role !== "system" && typeof m.content === "string")
+      .slice(-12)
+      .map((m) => ({
+        role: m.role,
+        content: m.content.length > 2000 ? m.content.slice(0, 2000) : m.content,
+      }));
+    if (sanitized.length === 0) {
+      return new Response(
+        JSON.stringify({ error: "Body.messages must contain user/assistant turns" }),
+        { status: 400, headers: { ...CORS_HEADERS, "Content-Type": "application/json" } }
+      );
+    }
+    forwardMessages = [{ role: "system", content: SYSTEM_PROMPT }, ...sanitized];
+  } else {
+    // Ancien format (rétro-compat) : { message, context? } → 1 user message.
+    const message = body?.message?.trim();
+    if (!message) {
+      return new Response(
+        JSON.stringify({ error: "Body must contain { messages: [...] } OR { message: string }" }),
+        { status: 400, headers: { ...CORS_HEADERS, "Content-Type": "application/json" } }
+      );
+    }
+    const ctx = body?.context && body.context.length > 2000
+      ? body.context.slice(0, 2000)
+      : body?.context;
+    const userContent = ctx ? `${ctx}\n\n${message}` : message;
+    forwardMessages = [
+      { role: "system", content: SYSTEM_PROMPT },
+      { role: "user", content: userContent },
+    ];
+  }
 
   // Forward to Mistral API
   const upstream = await fetch("https://api.mistral.ai/v1/chat/completions", {
@@ -104,10 +156,7 @@ Deno.serve(async (req: Request) => {
     },
     body: JSON.stringify({
       model: MODEL,
-      messages: [
-        { role: "system", content: SYSTEM_PROMPT },
-        { role: "user", content: userContent },
-      ],
+      messages: forwardMessages,
       stream: true,
       temperature: 0.2,
       max_tokens: 800,
