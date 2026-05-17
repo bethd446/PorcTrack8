@@ -86,31 +86,33 @@ npx cap open android   # ou: npx cap run android
 │   └── notes/               # Notes terrain
 │
 ├── context/
-│   ├── TroupeauContext.tsx   # State troupeau (truies, verrats, bandes)
-│   ├── RessourcesContext.tsx # State ressources (aliments, stocks, veto)
-│   └── PilotageContext.tsx   # State pilotage (KPIs, finances, alertes)
+│   ├── FarmContext.tsx       # State ferme (truies, verrats, bandes, loges, stocks)
+│   ├── AuthContext.tsx       # Session Supabase + rôle (OWNER/ADMIN/PORCHER)
+│   └── ToastContext.tsx      # Toasts globaux (success/error/info)
 │
 ├── services/
 │   ├── alertEngine.ts       # 16 règles GTTT biologiques
-│   ├── googleSheets.ts      # Backend Google Sheets
-│   ├── offlineQueue.ts      # File d'attente offline
-│   ├── offlineCache.ts      # Cache local
-│   └── kvStore.ts           # Persistance clé-valeur (Preferences)
+│   ├── supabaseClient.ts    # Client Supabase + auth
+│   ├── supabaseWrites.ts    # Writes DB (~1700L — refacto en repos/*.repo.ts en cours)
+│   ├── repos/               # Repos par domaine (loges, sows, batches, lots, etc.)
+│   ├── offlineQueue.ts      # File d'attente offline (queue mutations PWA)
+│   ├── offlineCache.ts      # Cache local lectures
+│   ├── kvStore.ts           # Persistance clé-valeur (Capacitor Preferences)
+│   └── logger.ts            # Logger dev-only (strippé en prod via esbuild.pure)
 │
 ├── index.css                # Design system CSS + Tailwind v4
-├── App.tsx                  # Router (54 routes — V45 ; sera réorganisé en V70 : 5 onglets + sous-routes)
+├── App.tsx                  # Router : V70Routes (canonique) + landing/auth/legal hors V70
 └── main.tsx                 # Entry point
 ```
 
 ## Stack technique
 - **Framework** : Ionic 8 + React 18 + TypeScript
-- **Build** : Vite
-- **CSS** : Tailwind CSS v4 (@theme, @layer)
-- **Persistance** : kvStore (Capacitor Preferences) pour les clés critiques, Google Sheets pour le métier
-- **Déploiement** : Capacitor (Android/iOS)
-- **Backend** : Google Sheets API
-- **State** : React Context (Architecture granulaire Troupeau/Ressources/Pilotage)
-- **Icons** : Ionicons + Lucide React
+- **Build** : Vite 6 + Tailwind CSS v4 (@theme, @layer)
+- **Persistance** : kvStore (Capacitor Preferences) pour les clés critiques, Supabase pour le métier
+- **Déploiement** : GitHub Actions FTP-Deploy → Hostinger (auto sur push `main`) + Capacitor (Android)
+- **Backend** : **Supabase** (PostgreSQL + Auth + RLS + Edge Functions Marius)
+- **State** : React Context (FarmContext, AuthContext, ToastContext) + repos services
+- **Icons** : Lucide React (Ionicons en legacy progressive migration)
 - **Dates** : date-fns (locale fr)
 
 ## Design system — V70 (canonique)

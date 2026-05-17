@@ -127,3 +127,57 @@
 **Liens** : `supabase/functions/send-push/index.ts` · `src/services/pushSubscription.ts` · `public/push-handler.js`
 
 ---
+
+---
+
+## 2026-05-17 — Décisions Vagues A/B/C + Chantier 0 sécurité
+
+### Décision · Marius IA exclusif via Edge Function
+**Contexte** : Audit security-reviewer 2026-05-17 F-01 CRITICAL — clés Mistral + VPS Marius leakées dans le bundle prod.
+**Décision** : tout appel Marius doit passer par l'Edge Function `marius-chat` (Supabase). Frontend ne connaît plus aucune clé tierce.
+**Conséquences** :
+- `mariusApi.ts` simplifié, fetch unique sur `${SUPABASE_URL}/functions/v1/marius-chat`
+- `ChatbotWidget.tsx` ne duplique plus la logique (88 lignes supprimées)
+- VPS Hostinger Marius (llama-server) abandonné comme fallback (le system prompt n'y était pas appliqué)
+- Si Marius indisponible → erreur affichée à l'éleveur, pas de fallback dégradé
+**Liens** : commit f475872 · [[learnings#Vite VITE_*]]
+
+### Décision · SW renommé `service-worker.js` (one-shot)
+**Contexte** : CDN Hostinger avait gelé `/sw.js` (max-age 7j) sans méthode PURGE disponible.
+**Décision** : changer le nom du SW généré par vite-plugin-pwa (`filename: 'service-worker.js'`). Le `.htaccess` couvre le nouveau nom + l'ancien (legacy harmless).
+**Conséquences** : nouvelle URL = MISS CDN garanti, les users récupèrent le SW frais au prochain reload sans dépendre du TTL CDN ou d'une purge dashboard.
+**Liens** : commit b4e0c63 · [[learnings#CDN Hostinger]]
+
+### Décision · `dist/` retiré du tracking git
+**Contexte** : 182 fichiers dist/ tracked malgré le pipeline GH Actions FTP-Deploy qui régénère le bundle à chaque push.
+**Décision** : `dist/` gitignored, CI = source unique du déploiement.
+**Conséquences** : commits applicatifs plus lisibles (plus de bruit binaire), CI reste source de vérité, déploiement non affecté.
+**Liens** : commit 4cc30f7
+
+### Décision · Compte audit-senior@porctrack.test PORCHER (pas WORKER)
+**Contexte** : CLAUDE.md mentionne "WORKER = alias PORCHER" mais le CHECK CONSTRAINT `farm_members_role_check` ne reconnaît que `OWNER|ADMIN|PORCHER`.
+**Décision** : utiliser `PORCHER` comme nom canonique en DB. WORKER reste un alias UI à mapper si besoin.
+**Action future** : décider si on rename complètement PORCHER → WORKER (UI + DB CHECK constraint + types TS) ou si on garde la dualité.
+**Liens** : commit f475872 · trigger v82_prevent_profile_role_escalation
+
+### Décision · CORS borné pour Edge Functions
+**Contexte** : `Access-Control-Allow-Origin: *` sur marius-chat exposait au DoS / abus quota Mistral par sites tiers.
+**Décision** : whitelist explicite des origins prod + dev local. Header `Vary: Origin`.
+**Origines autorisées** : porctrack.tech (+ www, app) + localhost:5173/4173.
+**Liens** : `supabase/functions/marius-chat/index.ts`
+
+### Décision · Headers HTTP sécu OWASP minimum
+**Contexte** : Hostinger CDN par défaut ne renvoie aucun header de sécurité.
+**Décision** : ajouter 5 headers `always set` dans `public/.htaccess` (HSTS preload, X-Frame-Options DENY, X-Content-Type-Options nosniff, Referrer-Policy strict-origin-when-cross-origin, Permissions-Policy minimaliste avec camera/mic en self pour Capacitor).
+**Vérif post-deploy** : `curl -sI https://porctrack.tech/` confirme les 5 headers.
+**Liens** : `public/.htaccess` · commit f475872
+
+### Décision · 33 branches stales supprimées + uniquement main + v71 conservées
+**Contexte** : Vague A — repo encombré par 21 branches locales + 17 distantes datant de l'effort V43 abandonné (projet à V82 maintenant).
+**Décision** : élaguer toutes les `v43-*`, `migration/v44/v45/v70`, `worktree-agent-*`, `claude/*`. Garder uniquement `main` (prod) + `migration/v71-consolidation` (rollback potentiel).
+**Liens** : commits 86a7752 / 4cc30f7
+
+### Décision · Structure documentaire racine minimale (Vague C)
+**Contexte** : 16 fichiers .md à la racine (READ + 13 MIGRATION_V* + DESIGN + CLAUDE) → premier coup d'œil sur le repo trompe les agents.
+**Décision** : ne garder QUE `README.md`, `CLAUDE.md`, `DESIGN.md` à la racine. Tout autre doc archive → `.claude/_archive/migrations/` ou `.claude/_archive/old-audits/`.
+**Liens** : commit d500772

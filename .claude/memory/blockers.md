@@ -74,3 +74,35 @@ Statuts : `🔴 ACTIF` · `🟡 WORKAROUND` · `✅ RÉSOLU` · `⏸ REPORTÉ`
 **Liens** : [[journal#V36-V38]] · `.claude/AGENT_CONTRACT.md`
 
 ---
+
+---
+
+## ✅ 2026-05-17 · F-01 CRITICAL · Clé Mistral + token VPS Marius leakés en prod
+
+**Contexte** : Audit security-reviewer 2026-05-17 (Claude PC) découvre que `VITE_MISTRAL_API_KEY` (TQXuKoW07nHON72h1j0cCGyhJW4Rc7Rm) et `VITE_MARIUS_API_KEY` (marius-secret-key-2026) sont inlinées dans `dist/assets/index-D9ZZxbo1.js` du bundle servi sur porctrack.tech. Spot-check orchestrateur confirme : `grep TQXuKoW dist/assets/*.js` retourne 2 hits, et la même clé est servie en live via `curl https://porctrack.tech/assets/index-D9ZZxbo1.js`.
+**Impact** : exfiltration possible en 30s via DevTools → Network. Facturation Mistral + accès non-autorisé VPS Marius.
+**Résolution** (commit f475872) : rotation clé Mistral + injection server-side via Edge Function secrets + refactor mariusApi.ts/ChatbotWidget.tsx pour appeler uniquement l'Edge Function + retrait VITE_* du .env.local + rebuild + redeploy. Verify post-deploy : 0 occurrence des clés dans le bundle prod actuel.
+**Liens** : [[learnings#Vite VITE_*]] · [[decisions#Marius Edge Function]]
+
+---
+
+## ✅ 2026-05-17 · F-04 HIGH · profiles UPDATE policy sans WITH CHECK (auto-promotion role)
+
+**Contexte** : policy `profiles_update_own` avait `USING (auth.uid() = id)` mais aucun `WITH CHECK`, permettant à un user authentifié d'exécuter `UPDATE profiles SET role='OWNER', is_super_admin=true WHERE id=auth.uid()`.
+**Impact** : escalation de privilège silencieuse possible pour tout user inscrit.
+**Résolution** (migration v82_prevent_profile_role_escalation, commit f475872) : trigger BEFORE UPDATE qui RAISE EXCEPTION si `auth.role() != 'service_role'` et `NEW.role`/`is_super_admin`/`id` diffèrent de OLD. service_role bypass pour migrations admin.
+**Liens** : [[learnings#Trigger BEFORE UPDATE]]
+
+---
+
+## ✅ 2026-05-17 · F-05 MEDIUM · Headers HTTP sécu absents en prod
+
+**Contexte** : Hostinger CDN par défaut ne renvoie aucun header de sécurité (`curl -I https://porctrack.tech/` ne montrait ni HSTS, ni X-Frame-Options, ni Referrer-Policy).
+**Impact** : risque clickjacking, MIME-sniffing, fuite référent.
+**Résolution** (commit f475872) : 5 headers `always set` ajoutés dans `public/.htaccess` :
+- HSTS `max-age=31536000; includeSubDomains; preload`
+- X-Frame-Options DENY
+- X-Content-Type-Options nosniff
+- Referrer-Policy strict-origin-when-cross-origin
+- Permissions-Policy (camera/mic en self pour Capacitor, payment/usb/geo désactivés)
+**Liens** : `public/.htaccess` · OWASP A05 Security Misconfiguration

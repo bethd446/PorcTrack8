@@ -462,3 +462,88 @@
 **Liens** : [[decisions]] · vite.config.ts · src/v70/pages/TodayV70.tsx · src/v70/pages/AnimalsV70.tsx · src/features/troupeau/TroupeauLogesListView.tsx
 
 ---
+
+---
+
+## 2026-05-17 · Session "App parfaite" — Vagues A/B/C cleanup + Chantier 0 sécurité
+
+### Contexte
+Suite session V82 conformité visuelle (forms + tokens). User demande "test l'app et dis-moi ce qu'il nous manque pour une app parfaite" puis enchaîne sur le cleanup repo + structuration.
+
+### Commits poussés sur main
+- `86a7752` chore(repo): vague A — worktrees / screenshots / .DS_Store / .bak (.claude/ : 595M → 16M)
+- `4cc30f7` chore(repo): vague B — untrack dist/ + supprime sous-projet PorcTrack8/
+- `1082484` chore(p0): 0 erreur ESLint + strip console.log/debug/info en prod (esbuild.pure)
+- `d500772` chore(repo): vague C — racine propre + doc actualisée (README/CLAUDE/DESIGN seuls)
+- `f475872` fix(security): rotation Mistral + migration Edge Function + headers sécu
+
+### Vague A — Cleanup zéro risque (gain ~600M)
+- 9 worktrees git agents abandonnés supprimés (.claude/worktrees/)
+- 9 .DS_Store nettoyés + .tmp/ (20M screenshots audit du 11/05)
+- 3 fichiers .bak orphelins
+- .gitignore étendu : .tmp/, .tmp-audit/, _test_screenshots/, .test-screenshots/
+
+### Vague B — Restructuration git
+- 19 branches locales + 14 distantes supprimées (v43-*, migration/v44/v45/v70, worktree-agent-*, claude/*)
+- `dist/` retiré du tracking (182 fichiers) — CI = source unique du déploiement
+- `PorcTrack8/` sous-projet parasite supprimé (~30M JPG Gemini, orchestrator.cjs abandonné)
+- État final : 2 branches (main + migration/v71-consolidation)
+
+### Vague C — Doc lisible
+- 13 fichiers MIGRATION_V*.md / V*_AUDIT*.md → .claude/_archive/migrations/
+- _archive/2026-04-30/ (21M Sheets-Out) → .claude/_archive/2026-04-30-sheets-out/
+- .claude/audits/ élagué (15M → 9.8M, garde V70+ uniquement)
+- README.md récrit pour l'état V82 actuel (monorepo fictif supprimé)
+- DESIGN.md vérifié à jour
+- Racine : README.md, CLAUDE.md, DESIGN.md (point)
+
+### Mini-Chantier P0 — ESLint + console.log
+- 2 erreurs ESLint résolues (ReproTracker `ProgressGauge` sorti du render, TabsMini useless-assignment)
+- `esbuild.pure: ['console.log', 'console.debug', 'console.info']` en NODE_ENV=production → 80 logs source disparaissent du bundle prod (vérifié : 0 dans dist/assets hors vendors heic2any/image-compression)
+
+### Audit complet livré par Claude PC (.claude/AUDIT_2026-05-17.md)
+- Phase 1 (tests fonctionnels) : bloqué par mdp `AuditPorc2026!` rejeté
+- Phase 1 alt : 15 routes publiques 200, scan code, données DB Christophe
+- Phase 2 : qa-runner + code-reviewer + security-reviewer en // (avec spot-checks orchestrateur)
+- 3 chantiers proposés : A workflow loges/bandes · B sécurité critique · C dette technique
+
+### Chantier 0 sécurité — exécuté ici (~1h30)
+F-01 CRITICAL confirmé en prod par spot-check : clé Mistral + token VPS dans `dist/assets/index-D9ZZxbo1.js` du bundle live.
+
+**Actions** :
+1. Nouvelle clé Mistral fournie par user (révocation ancienne côté Mistral = action manuelle)
+2. Secret `MISTRAL_API_KEY` créé server-side via Supabase Management API (HTTP 201)
+3. Edge Function `marius-chat` étendue pour accepter `{ messages: [...] }` (préserve historique conversationnel), borne 12 msgs × 2000 chars, CORS bornée
+4. `mariusApi.ts` réécrit : 100% Edge Function, plus aucune réf direct Mistral/VPS
+5. `ChatbotWidget.tsx` : suppression 88 lignes de duplication, import depuis `./mariusApi`
+6. `.env.local` : retrait `VITE_MISTRAL_API_KEY` + `VITE_MARIUS_API_KEY` + `VITE_MARIUS_API_BASE`
+7. Test `ChatbotWidget.test.tsx` adapté : stub `VITE_SUPABASE_*` + mock `supabase.auth.getSession`
+8. Trigger `prevent_profile_role_escalation` (BEFORE UPDATE on profiles) — F-04 fermé
+9. `public/.htaccess` : 5 headers OWASP (HSTS preload, X-Frame-Options DENY, X-Content-Type-Options nosniff, Referrer-Policy, Permissions-Policy) — F-05 fermé
+10. Compte audit `audit-senior@porctrack.test / AuditSr2026.` PORCHER ferme Christophe créé pour Claude PC
+
+**Vérifications post-deploy** (bundle live `index-BboK1U06.js`) :
+- ✅ 0 occurrence `TQXuKoW...` (ancienne clé)
+- ✅ 0 occurrence `marius-secret-key-2026` (ancien token VPS)
+- ✅ 0 occurrence `8jVTqisc...` (nouvelle clé — server-side uniquement)
+- ✅ HSTS + X-Frame-Options + nosniff + Referrer + Permissions headers présents
+
+### Coordination Claude PC
+- Brief envoyé à PC pour Chantier A workflow loges/bandes (1B = 2L F+M)
+- Zones disjointes : PC sur `src/components/forms/` + `src/v70/pages/` + `src/types/`, moi sur `supabase/` + `.env` + secrets + migrations
+- PC attend signal commit `f475872` pour démarrer Phase 1 plongée parcours Christophe
+
+### Plan Vague D (préparé par sub-agent Plan)
+4 chantiers indépendants (~22-30h total) :
+- D1 workflow loges/bandes (1B=2L) — assigné à PC
+- D2 FAB Saisir branché sur 9 routes (1 listener seulement actuellement)
+- D3 collapse supabaseWrites.ts (1728L) vers repos par domaine
+- D4 Supabase advisors quick wins (RLS initplan + FK indexes + dedupe) — **EN COURS ici**
+
+### Métriques finales session
+- tsc : 0 erreur
+- vitest : 2145/2145 passing (178 fichiers)
+- eslint : 0 erreur 0 warning bloquant
+- build : OK, bundle prod 0 clé exposée
+- branches : 2 (main + v71)
+- .claude/ : 16M (vs 595M en début de session)

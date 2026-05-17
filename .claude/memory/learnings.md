@@ -472,3 +472,107 @@ $ADB shell pidof com.porc800.porctrack    # Vérifier pas de crash
 - **Rollup warning dynamic+static import** : si un module est statiquement importé ailleurs, le `await import()` est inutile. Unifier en static
 - **Vitest 4.x** + React 19 : pas besoin de jsdom pour tests purement logique, 172ms pour 29 tests
 - **Capacitor LocalNotifications** : préférer ID stable (hash du contenu) pour éviter doublons sur rescheduling
+
+---
+
+## Leçons Techniques — Session 2026-05-17 (Vagues A/B/C cleanup + Chantier 0 sécurité Mistral)
+
+### Vite `VITE_*` env vars sont inlinées dans le bundle = jamais utiliser pour secrets
+
+**Problème vu en prod** : `VITE_MISTRAL_API_KEY` et `VITE_MARIUS_API_KEY` étaient déclarées comme variables d'environnement Vite (`import.meta.env.VITE_MISTRAL_API_KEY`). Vite inline les valeurs au build dans le bundle JS (comportement documenté), donc la clé Mistral `TQXuKoW…` était exfiltrable en 30 secondes via DevTools → Network → `dist/assets/index-D9ZZxbo1.js`.
+
+**Règle absolue** :
+- Toute clé sensible (API third-party, tokens, secrets) DOIT être server-side : Supabase Edge Function avec `Deno.env.get('SECRET_NAME')`, ou backend via service_role.
+- Le préfixe `VITE_` ne doit servir qu'à des constantes publiques (URL Supabase, clé anon Supabase, URLs publiques).
+
+**Pattern de migration appliqué** :
+1. Créer une Edge Function Supabase qui lit la clé via `Deno.env.get('MISTRAL_API_KEY')` et fait le forward vers l'API tierce.
+2. Injecter le secret server-side via Management API : `POST /v1/projects/{ref}/secrets [{"name": "MISTRAL_API_KEY", "value": "..."}]`.
+3. Refactor frontend : appel `fetch('${SUPABASE_URL}/functions/v1/marius-chat')` avec `Authorization: Bearer ${session.access_token}` + `apikey: ${VITE_SUPABASE_ANON_KEY}`.
+4. Supprimer la variable `VITE_*` du `.env.local`.
+5. Rebuild + verify : `grep -r "VALEUR_SECRETE" dist/` doit retourner 0.
+
+### CDN Hostinger keye sur la query string — utilisable pour bypass entry stale
+
+**Problème** : Le CDN Hostinger (hCDN) avait gelé `/sw.js` avec `max-age=604800` (7 jours TTL) avant qu'on push le fix `.htaccess no-cache`. Pas de méthode `PURGE` exposée (405), pas d'API CDN dans le PAT.
+
+**Découverte** : `curl /sw.js?cb=X` → `x-hcdn-cache-status: MISS` (le CDN considère que `?query` change la cache key).
+
+**Fix appliqué** : renommer le SW de `sw.js` → `service-worker.js` (one-shot, dans `vite.config.ts` `VitePWA({ filename: 'service-worker.js' })`). Nouvelle URL → MISS CDN garanti, `.htaccess no-cache` empêche tout re-gel.
+
+**Règle générale** : pour bypass un cache CDN frozen sans purge, soit query string `?v=N`, soit rename de la ressource. Pas besoin de purge API si on contrôle l'URL.
+
+### Trigger BEFORE UPDATE > policy WITH CHECK pour bloquer column-level escalation
+
+**Contexte** : policy `profiles_update_own` avait `USING (auth.uid() = id)` mais aucun `WITH CHECK` → un user authentifié pouvait UPDATE son profile avec `role='OWNER'` ou `is_super_admin=true` (escalation).
+
+**Solution** : trigger `BEFORE UPDATE ON profiles` qui RAISE EXCEPTION si `auth.role() != 'service_role'` ET `NEW.role IS DISTINCT FROM OLD.role` (ou is_super_admin, ou id).
+
+**Pattern** :
+```sql
+CREATE OR REPLACE FUNCTION prevent_profile_role_escalation()
+RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER
+SET search_path = public, pg_temp AS $$
+BEGIN
+  IF auth.role() = 'service_role' THEN RETURN NEW; END IF;
+  IF NEW.role IS DISTINCT FROM OLD.role THEN
+    RAISE EXCEPTION 'Permission denied' USING ERRCODE = '42501';
+  END IF;
+  -- idem is_super_admin, id
+  RETURN NEW;
+END;
+$$;
+```
+
+**Pourquoi trigger > policy** : un WITH CHECK qui compare avec un sub-SELECT sur la même row est fragile (timing UPDATE). Le trigger BEFORE UPDATE compare `OLD vs NEW` de façon atomique et explicite. Bonus : un message d'erreur clair côté client.
+
+### CORS borné > CORS `*` pour Edge Functions
+
+Avant : `Access-Control-Allow-Origin: *` sur `marius-chat` → n'importe quel site tiers peut appeler Marius (DoS, abus quota Mistral).
+
+Après :
+```ts
+const ALLOWED_ORIGINS = new Set([
+  "https://porctrack.tech", "https://www.porctrack.tech", "https://app.porctrack.tech",
+  "http://localhost:5173", "http://localhost:4173",
+]);
+function corsHeaders(origin: string | null) {
+  const allow = origin && ALLOWED_ORIGINS.has(origin) ? origin : "https://porctrack.tech";
+  return { "Access-Control-Allow-Origin": allow, "Vary": "Origin", /* ... */ };
+}
+```
+
+Header `Vary: Origin` indispensable pour que les CDN/proxies cachent par origin distincte.
+
+### Anti prompt-injection : borner messages côté serveur
+
+Edge Function `marius-chat` accepte maintenant `{ messages: [...] }` au lieu de `{ message }` seul, mais :
+- Slice `.slice(-12)` max 12 messages d'historique
+- Truncate `content.slice(0, 2000)` chars max par message
+- Filter `role === 'system'` côté serveur (jamais accepter un system prompt du client)
+- Injection du SYSTEM_PROMPT serveur en tête (toujours premier)
+
+### Nettoyage Git : 33 branches stales supprimées (Vagues A/B)
+
+**Avant** : 21 branches locales + 17 distantes (v43-*, migration/v44/v45/v70, worktree-agent-*, claude/*).
+**Après** : 2 branches (`main`, `migration/v71-consolidation` pour rollback).
+
+**Commandes utilisées** :
+```sh
+git branch | sed 's|^[* +]*||' | grep -E '^(v43-|...)' | xargs -I{} git branch -D {}
+git branch -r | grep -E 'origin/(v43-|...)' | sed 's|^[ ]*origin/||' | tr '\n' ' ' | xargs git push origin --delete
+git remote prune origin
+```
+
+### dist/ tracked dans git = bruit massif sur chaque commit
+
+182 fichiers dist/ étaient tracked malgré le pipeline GitHub Actions FTP-Deploy qui régénère dist/ à chaque push. Chaque commit applicatif faisait diff +50 lignes binaires dans git. Fix : `git rm -r --cached dist/` + `dist/` dans gitignore. **Règle** : ne jamais tracker un build output qui est régénéré par CI.
+
+### Coordination multi-sessions Claude
+
+**Pattern qui marche** : zones de fichiers strictement disjointes annoncées par avance dans le brief envoyé à chaque session.
+- Session A : `src/components/forms/` + `src/v70/pages/` + `src/types/`
+- Session B : `supabase/`, `.env`, `.htaccess`, secrets, migrations
+- Communication par état Git (commits sur main + signaux explicites "le commit X est prêt, tu peux pull")
+
+**Anti-pattern** : laisser 2 sessions toucher au même fichier → conflicts merge garantis.
