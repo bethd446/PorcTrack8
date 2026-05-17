@@ -20,6 +20,43 @@ Statuts : `🔴 ACTIF` · `🟡 WORKAROUND` · `✅ RÉSOLU` · `⏸ REPORTÉ`
 
 ---
 
+## 🔴 2026-05-17 · F-01 CRITICAL — Clé Mistral + token VPS dans bundle prod
+
+**Contexte** : Audit sécu 2026-05-17 confirme via spot-check `grep` que `TQXuKoW07nHON72h1j0cCGyhJW4Rc7Rm` (clé Mistral) ET `marius-secret-key-2026` (token VPS Marius) sont présents en clair dans `dist/assets/MariusChatFullscreen-C_a2HyQa.js` ET `dist/assets/index-D9ZZxbo1.js` servis sur https://porctrack.tech. Sources : `.env.local:36-37` avec `VITE_MISTRAL_API_KEY=…` et `VITE_MARIUS_API_KEY=marius-secret-key-2026`. Vite inline les `VITE_*` côté client par design.
+**Impact** : Exfiltration en 30s via DevTools. Quota Mistral épuisable par un attaquant sous le compte PorcTrack (coûts non maîtrisés). Bloque tout déploiement prod additionnel tant que non corrigé.
+**Workaround** : aucun — rotation immédiate Mistral requise + migration `marius-chat` Edge Function (déjà en place côté server, `MISTRAL_API_KEY` server-side y vit). Retirer les 2 `VITE_*` du code + `.env.local` + rebuild + redeploy.
+**Liens** : `.claude/AUDIT_2026-05-17.md` (CHANTIER B) · `src/features/chatbot/ChatbotWidget.tsx:20` (commentaire SECURITY déjà présent) · `supabase/functions/marius-chat/index.ts`
+
+---
+
+## 🔴 2026-05-17 · Login Supabase rejette compte audit `contact@liegeoischristophe.com`
+
+**Contexte** : Audit 2026-05-17 Phase 1. Compte test fourni dans brief : `contact@liegeoischristophe.com` / `AuditPorc2026!`. Supabase auth retourne HTTP 400 `{"code":"invalid_credentials","message":"Invalid login credentials"}`. Vérification DB : user existe (id `bc96ddbd-c34d-46b1-b624-4a3dca181a2c`), `last_sign_in_at = 2026-05-17 12:05:53 UTC` (~3h avant audit), pas banni, email confirmé. Hypothèses : mdp changé entre brief et audit, rate-limit, ou typo de transmission.
+**Impact** : Phase 1 (tests E2E authentifiés des parcours Cheptel/Bandes/Loges/Pilotage/Ressources/Marius) non exécutable. Bascule en audit code source + Supabase MCP + routes publiques uniquement.
+**Workaround** : audit a continué en mode "sans login" — diagnostic du bug loges+bandes fait par lecture code. Tests UX authentifiés à rejouer dès mdp valide fourni par user.
+**Liens** : `/tmp/audit-2026-05-17/report.json` (auth response logged) · `.claude/AUDIT_2026-05-17.md` (section Phase 1.A)
+
+---
+
+## 🔴 2026-05-17 · Workflow loges+bandes (1B=2L M+F) inaccessible depuis FAB principal
+
+**Contexte** : Décision V72-P4 (`decisions.md#bande-2-loges`) acte qu'une bande peut occuper 2 loges (F + M) via `porcelets_individuels.loge_id`. Code métier existe et est propre : `repartitionPorceletsParLoge` (`PorceletsReorgWizard.tsx:179`), `listLogesEffectivesParBande` (`supabaseWrites.ts:1446`), colonne DB `loges.repartition`, FK `porcelets_individuels.loge_id`. MAIS le FAB "+" depuis `/troupeau` tabs `loges`/`bandes` (`AnimalsV70.tsx:720-722`) ouvre `QuickAddLogeForm` (sans champ `repartition`) ou `QuickAddBandeForm` (sans sélection de loges, `loge: ''` en dur). Le workflow propre est cloisonné dans `PorceletsReorgWizard` (dédié au reset Christophe) et `QuickAddBandeFromLogeForm` (accessible uniquement depuis tab Porcelets).
+**Impact** : éleveur ne peut PAS faire le scénario promis depuis le parcours principal. Frustration F2 + F6 + F10 (cf. PERSONA_ELEVEUR.md). Bug remonté texto par l'utilisateur dans le brief audit.
+**Workaround** : aucun pour l'utilisateur final. CHANTIER A de l'audit cible ce fix (étendre QuickAddLogeForm + QuickAddBandeForm + auto-call repartitionPorceletsParLoge).
+**Liens** : `.claude/AUDIT_2026-05-17.md` (CHANTIER A · P0-2) · `src/types/farm.ts:174-182` (bug type PorceletIndividuel sans logeId) · `src/v70/pages/AnimalsV70.tsx:720`
+
+---
+
+## 🟡 2026-05-17 · `nginx.conf` repo INUTILISÉ en prod (Hostinger CDN sert)
+
+**Contexte** : `nginx.conf:6` du repo est conçu pour un VPS hébergeant `app.porctrack.tech`. Mais le domaine prod actuel est `porctrack.tech` (sans `app.`) servi par Hostinger CDN (`server: hcdn` dans les headers). Les directives `add_header Strict-Transport-Security…` du nginx.conf NE SONT PAS appliquées. Conséquence : `curl -I https://porctrack.tech/` retourne uniquement `content-security-policy: upgrade-insecure-requests` + `cache-control: no-cache, no-store, must-revalidate`. Aucun HSTS, X-Frame-Options, X-Content-Type-Options, Referrer-Policy, Permissions-Policy.
+**Impact** : sécurité headers minimaux en prod. Defense-in-depth absente (clickjacking, MIME sniff, referrer leak possibles).
+**Workaround** : configurer un `.htaccess` dans `dist/` (Hostinger Apache-compatible) avec les directives `Header always set …`. Le `nginx.conf` du repo reste utile si migration future VPS (mais à renommer ou documenter).
+**Résolution** : CHANTIER B de l'audit 2026-05-17.
+**Liens** : `.claude/AUDIT_2026-05-17.md` (P0-3) · `nginx.conf:1-30` (commentaires architecture) · `public/.htaccess`
+
+---
+
 ## ✅ 2026-05-03 · Tailwind `rounded-full` non générée en bundle prod
 
 **Contexte** : Test E2E DSV2 révèle que les utilities Tailwind `.rounded-full` n'apparaissent pas dans le CSS bundle prod. Conséquence : tous les `<button class="rounded-full">` rendent carrés.
