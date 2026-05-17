@@ -42,6 +42,12 @@ shared/*.d.ts
 # Screenshots de session (artefacts de debug/audit — lourds, non versionnés)
 .claude/audits/*-screens/
 
+# Audit screenshots / rapports temporaires d'agents (régénérables)
+.tmp/
+.tmp-audit/
+_test_screenshots/
+.test-screenshots/
+
 # APK release artifacts — bloqués par défaut, sauf releases officielles
 releases/*.aab
 releases/*.apk
