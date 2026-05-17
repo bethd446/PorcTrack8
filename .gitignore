@@ -1,7 +1,7 @@
 node_modules/
 build/
-# dist/ app inclus volontairement pour déploiement VPS statique
-# dist/
+# dist/ : régénéré par CI (GH Actions), plus tracké depuis 2026-05-17
+dist/
 coverage/
 .DS_Store
 graphify-out/
