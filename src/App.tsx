@@ -47,10 +47,9 @@ const V70Routes = React.lazy(() =>
   })),
 );
 
-// CSS V70 — préchargés au boot.
-// Design reset 2026-05-17 (Lot 3) : v70-tokens.css supprimé → fallback
-// neutre dans src/index.css. v70-global.css reste jusqu'au Lot 4.
-void import('./v70/theme/v70-global.css');
+// CSS V70 — Design reset 2026-05-18 (Lot 4z) : v70-tokens.css +
+// v70-global.css supprimés. Fallback neutre dans src/index.css.
+// Le designer externe redéfinira les styles atomiques.
 
 import { QuickActionsProvider } from './context/QuickActionsContext';
 import QuickActionsHost from './components/quick-actions/QuickActionsHost';
