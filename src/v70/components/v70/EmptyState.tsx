@@ -56,27 +56,12 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
         <Icon
           size={38}
           strokeWidth={2}
-          color={iconColor ?? 'var(--pt-subtle)'}
           aria-hidden="true"
         />
       ))}
-      <div
-        style={{
-          fontFamily: 'var(--pt-font-display)',
-          fontWeight: 900,
-          textTransform: 'uppercase',
-          fontSize: 22,
-          letterSpacing: '-0.005em',
-          lineHeight: 1,
-          color: 'var(--pt-ink)',
-        }}
-      >
-        {title}
-      </div>
+      <div className="empty__title">{title}</div>
       {description && (
-        <div style={{ fontSize: 13, color: 'var(--pt-muted)', lineHeight: 1.5 }}>
-          {description}
-        </div>
+        <div className="empty__desc">{description}</div>
       )}
       {action ?? (cta && (
         <button

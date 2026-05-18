@@ -17,6 +17,30 @@
 
 ## Bugs
 
+### 2026-05-18 · Lot 4b · 11 fichiers v70/components/v70 avec inline styles cosmétiques résiduels
+- **Date** : 2026-05-18
+- **Lot** : Lot 4b (partiel)
+- **Fichiers concernés** :
+  - `src/v70/components/v70/LongPressSheet.tsx` (4 props cosmétiques)
+  - `src/v70/components/v70/Skeleton.tsx` (1)
+  - `src/v70/components/v70/ToggleAdvancedMode.tsx` (7)
+  - `src/v70/components/v70/ExportButton.tsx` (1)
+  - `src/v70/components/v70/EntityNotFoundGuard.tsx` (11)
+  - `src/v70/components/v70/PushNotifToggle.tsx` (10)
+  - `src/v70/components/v70/NotifCategoriesSwitches.tsx` (12)
+  - `src/v70/components/v70/DataTable.tsx` (9)
+  - `src/v70/components/v70/DevDatePanel.tsx` (13)
+  - `src/v70/components/v70/PhotoGallery.tsx` (16)
+  - `src/v70/components/v70/PhotoUpload.tsx` (16)
+- **Symptôme** : ~100 inline styles cosmétiques (color/background/fontFamily/fontSize/textTransform/boxShadow) restants dans 11 fichiers V70 applicatifs après Lot 4b partiel
+- **Sévérité** : 🟢 mineur — non bloquant, démolissable par le designer en 1h via grep+replace IDE
+- **Notes** :
+  - 5 fichiers Lot 4b traités proprement (Dialog, EmptyState, Tooltip, EduCard, EmptyEdu)
+  - Décision pragmatique économie contexte session : focus sur Lot 4z (v70-global.css 4655L = 95% du visuel) qui aura impact disproportionné vs travail fine inline
+  - Designer verra `var(--pt-muted)` etc. dans inline styles → fallback runtime dans `src/index.css` → s'affiche normalement → désigner les remplace par sa palette
+
+---
+
 ### 2026-05-17 · Lot 3 · smoke-fallback.mjs login Playwright fail
 - **Date** : 2026-05-17
 - **Lot** : Lot 3 (3a-bis)

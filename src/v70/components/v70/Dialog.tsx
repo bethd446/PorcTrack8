@@ -83,12 +83,8 @@ export const Dialog: React.FC<DialogProps> = ({
 
   const actionClassName =
     actionVariant === 'danger'
-      ? 'btn btn--primary btn--sm'
+      ? 'btn btn--primary btn--sm btn--danger'
       : 'btn btn--primary btn--sm';
-  const actionStyle: React.CSSProperties =
-    actionVariant === 'danger'
-      ? { background: 'var(--pt-danger)', color: 'var(--pt-warm)' }
-      : {};
 
   return (
     <div
@@ -127,7 +123,6 @@ export const Dialog: React.FC<DialogProps> = ({
           <button
             type="button"
             className={actionClassName}
-            style={actionStyle}
             onClick={onAction}
           >
             {actionLabel}

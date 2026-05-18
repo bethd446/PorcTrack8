@@ -24,7 +24,6 @@ const DEFAULT_ICON = (
     size={20}
     strokeWidth={2}
     aria-hidden="true"
-    style={{ color: 'var(--pt-muted)' }}
   />
 );
 
