@@ -17,6 +17,60 @@
 
 ## Bugs
 
+### 2026-05-18 · Lot 4c · design-system/components/index.tsx — 29 inline cosmétiques résiduels
+- **Fichier** : `src/design-system/components/index.tsx` (1161L, 26 composants exportés : Section, Card, InsightCard, Button, Tag, IconBox, KeyValueRow, StatsGrid, Stat, Tabs, RadioGroup, Checkbox, Segment, Chip, FormField, Input, Select, Textarea, Search, ListItem, ActionRow, AlertGroup, AlertRow, Fab, etc.)
+- **Symptôme** : 29 inline styles cosmétiques (color/fontFamily/textTransform/letterSpacing/boxShadow/borderRadius)
+- **Sévérité** : 🟢 mineur — démolissable par designer en 30-45 min (1 fichier centralisé, IDE grep+replace efficace)
+- **Note** : composants `Tag`, `Button`, `Chip`, `Fab`, etc. très utilisés (95+ imports `@/design-system`). Démolition fine pendant ce sprint = trop coûteux contexte session. Designer décide.
+
+---
+
+### 2026-05-18 · Lot 4d · design-system/hooks + utils — GARDÉS (logique métier)
+- **Fichiers** : `src/design-system/hooks/usePageFab.ts` + `src/design-system/utils/uuid-guard.ts`
+- **Décision** : GARDER intacts. `usePageFab` configure le routage FAB (logique métier). `uuid-guard` protège l'UI contre les fuites UUID (logique métier sécurité).
+- **Note** : Le nommage "design-system/hooks" est trompeur. Ces utils sont métier déguisés en design-system. À renommer/déplacer en future itération si besoin (hors scope design reset).
+
+---
+
+### 2026-05-18 · Lot 4e · 4 fichiers agritech survivants avec inline cosmétiques
+- **Fichiers** :
+  - `src/components/agritech/AnimalListItem.tsx` (9 inline cosmétiques)
+  - `src/components/agritech/BottomSheet.tsx` (1)
+  - `src/components/agritech/DataRow.tsx` (1)
+  - `src/components/agritech/IsoBarn.tsx` (1)
+- **Symptôme** : 12 inline cosmétiques total — démolissables par designer en 15 min
+- **Note** : `Chip.tsx`, `AppToast.tsx`, `SectionDivider.tsx` déjà clean (0 inline cosmétique trouvé).
+
+---
+
+### 2026-05-18 · Lot 4f · 11 fichiers src/components/ atomiques avec inline cosmétiques
+- **Fichiers à gros volume** :
+  - `src/components/SystemManagement.tsx` (29 inline cosmétiques)
+  - `src/components/FarmSwitcher.tsx` (24)
+  - `src/components/NotificationsPermissionPrompt.tsx` (24)
+  - `src/components/GlobalSearch.tsx` (21)
+- **Fichiers à volume modéré** :
+  - `src/components/PhotoStrip.tsx` (7)
+  - `src/components/RootErrorBoundary.tsx` (6)
+  - `src/components/ConfirmationModal.tsx` (4)
+  - `src/components/DeleteModal.tsx` (4)
+  - `src/components/EditableNumber.tsx` (3)
+  - `src/components/EditableText.tsx` (3)
+  - `src/components/SmartRoot.tsx` (2)
+  - `src/components/SyncStatusBadge.tsx` (1)
+- **Total** : 128 inline cosmétiques sur 12 fichiers
+- **Clean (0 inline cosmétique)** : NotificationsBridge, ProtectedRoute, PwaUpdatePrompt, SaisirFAB
+- **Sévérité** : 🟢 mineur — démolissables par designer en 1h30 via IDE grep+replace
+- **Note** : `SystemManagement.tsx` (748L) est la page admin — utilisée uniquement par OWNER. Démolition non urgente.
+
+---
+
+### 2026-05-18 · Lot 4g · QuickActionsHost.tsx — DÉJÀ CLEAN
+- **Fichier** : `src/components/quick-actions/QuickActionsHost.tsx`
+- **Décision** : créé propre au Lot 1.5 (séparation logique/rendering). 0 modification nécessaire.
+
+---
+
 ### 2026-05-18 · Lot 4b · 11 fichiers v70/components/v70 avec inline styles cosmétiques résiduels
 - **Date** : 2026-05-18
 - **Lot** : Lot 4b (partiel)
