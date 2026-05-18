@@ -33,8 +33,9 @@ import {
   alertCircle,
   closeCircle,
 } from 'ionicons/icons';
-import './design-system/tokens/tokens.css';
-import './design-system/components/components.css';
+// Design reset 2026-05-17 : imports CSS design-system retirés
+// (tokens.css + components.css supprimés au Lot 3). Le fallback neutre
+// vit dans src/index.css (tokens --pt-*) en attendant le designer externe.
 import App from './App.tsx';
 import './index.css';
 

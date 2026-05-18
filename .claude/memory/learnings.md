@@ -3,6 +3,52 @@
 
 ---
 
+## Leçons Audit — Session 2026-05-17 (audit complet 3 phases)
+
+### Sub-agents bloqués par sandbox Bash — toujours briefer le workaround
+
+**Problème** : 3 sub-agents dispatchés (qa-runner, code-reviewer, security-reviewer) ont tous demandé un accès Bash refusé par le sandbox. Le 1er code-reviewer a abandonné net ; le qa-runner avait sa cwd restreinte à `/Users/13mac/Desktop/PorcTrack8` (vide) ; le security-reviewer n'a pas pu écrire son rapport markdown.
+
+**Solution** : briefer EXPLICITEMENT le sub-agent dès le départ : *"Si Bash refusé, tu utilises Read+Grep+Glob et tu ne demandes RIEN à l'orchestrateur. C'est documenté dans blockers.md 🟡, justifié dans AGENT_CONTRACT.md (skip explicite OK, skip silencieux refusé)."* Sans cette phrase, l'agent abandonne et bloque l'audit.
+
+**Pattern** : pour tout sub-agent dont la mission inclut tsc/build/test/lint, exécuter ces commandes DEPUIS L'ORCHESTRATEUR ET passer les outputs à l'agent. Réserver le sub-agent à la lecture+analyse de code, où Read/Grep suffisent.
+
+### Spot-check OBLIGATOIRE des claims sub-agent
+
+**Problème** : code-reviewer a affirmé `listLogesEffectivesParBande` "NON TROUVÉ dans supabaseWrites.ts". Spot-check `grep -rn "listLogesEffectivesParBande" src` confirme qu'elle existe à `supabaseWrites.ts:1446` ET `repos/porcelets.repo.ts:241`. Faux négatif.
+
+**Solution** : AGENT_CONTRACT.md rappelle déjà "Spot-check 1 fichier minimum si l'agent a rapporté 'déjà implémenté'". À étendre symétriquement : **spot-check aussi les 'NON TROUVÉ' / 'manquant'**. Confirmer via `grep -rn` AVANT d'agir sur l'info.
+
+### VITE_* env vars sont inlinées côté client par design
+
+**Problème** : `.env.local` contient `VITE_MISTRAL_API_KEY=…` + `VITE_MARIUS_API_KEY=…`. Vite inline ces variables dans le bundle JS prod. `grep "TQXuKoW" dist/assets/*.js` retourne 2 hits. Clé Mistral exfiltrable en 30s via DevTools.
+
+**Règle** : **toute clé API externe sensible doit vivre côté serveur (Edge Function Supabase) — JAMAIS en `VITE_*`**. Pattern correct : Edge Function `marius-chat` stocke `MISTRAL_API_KEY` server-side ; le client appelle l'Edge Function avec JWT, jamais Mistral direct.
+
+**À grep régulièrement** : `grep -r "VITE_.*_KEY\|VITE_.*_SECRET\|VITE_.*_TOKEN" .env*` avant chaque déploiement prod.
+
+### Prod = Hostinger CDN, pas le nginx.conf du repo
+
+**Problème** : `nginx.conf` du repo configure HSTS, X-Frame-Options, etc. pour `app.porctrack.tech` (VPS). Mais la prod actuelle = `porctrack.tech` (sans `app.`) servi par Hostinger (`server: hcdn` dans les headers). Les directives nginx ne sont **jamais appliquées**. Auditer le nginx.conf donne une fausse impression de sécurité.
+
+**Règle** : pour les headers HTTP en prod, le seul levier sur Hostinger est `dist/.htaccess` (Apache-compatible). Auditer **ce qui est servi** (curl -I) plutôt que **ce qui est configuré dans le repo**.
+
+### Quand login Supabase fail malgré compte valide, basculer en audit "sans login"
+
+**Problème** : compte audit `contact@liegeoischristophe.com` rejeté par Supabase (`invalid_credentials`) alors que DB confirme last_sign_in_at il y a 3h. Phase 1 (parcours E2E) bloquée.
+
+**Solution** : ne pas bloquer l'audit. Basculer immédiatement sur les sources de vérité alternatives : (a) **Supabase MCP** pour vérifier les données métier réelles, (b) **code source** pour comprendre les workflows, (c) **routes publiques** via Playwright pour l'UX accessible sans auth, (d) **dispatch Phase 2 sub-agents** qui ne dépendent pas du login. Documenter le blocker pour résolution user en parallèle.
+
+### Le bug "loges + bandes" était un bug d'accessibilité de workflow, pas de logique
+
+**Constat** : utilisateur dit "impossible de créer proprement les loges et les bandes". Diagnostic naturel = "logique métier manquante". DIAGNOSTIC RÉEL = logique métier EXISTE et est propre (`repartitionPorceletsParLoge`, `listLogesEffectivesParBande`, colonne `loges.repartition`, FK `porcelets_individuels.loge_id`), MAIS elle n'est branchée QUE sur `PorceletsReorgWizard` (dédié reset) + `QuickAddBandeFromLogeForm` (depuis tab Porcelets). Le FAB principal `/troupeau` ouvre des forms simples (`QuickAddLogeForm`, `QuickAddBandeForm`) qui NE proposent PAS la règle.
+
+**Règle** : pour les bugs UX remontés par un éleveur, ne pas conclure "code manquant" sans d'abord chercher si le code existe **ailleurs** et n'est juste pas accessible depuis le point d'entrée naturel.
+
+**Liens** : `.claude/AUDIT_2026-05-17.md` (CHANTIER A) · `decisions.md#bande-2-loges`
+
+---
+
 ## Leçons Techniques — Session 2026-05-08 V71-P3 (audit mobile + wizards bloquants + trigger DB)
 
 ### Trigger Postgres SECURITY DEFINER comme garde-fou métier (vs frontend)

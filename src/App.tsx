@@ -6,17 +6,8 @@ import {
 } from 'react-router-dom';
 import { IonApp } from '@ionic/react';
 
-/* Core CSS required for Ionic components to work properly */
-import '@ionic/react/css/core.css';
-import '@ionic/react/css/normalize.css';
-import '@ionic/react/css/structure.css';
-import '@ionic/react/css/typography.css';
-import '@ionic/react/css/padding.css';
-import '@ionic/react/css/float-elements.css';
-import '@ionic/react/css/text-alignment.css';
-import '@ionic/react/css/text-transformation.css';
-import '@ionic/react/css/flex-utils.css';
-import '@ionic/react/css/display.css';
+// Ionic CSS importé dans src/main.tsx (point d'entrée).
+// Doublon retiré au design reset 2026-05-18 (Lot 8 audit final).
 
 import { FarmProvider } from './context/FarmContext';
 import { usePageFabConfig, Fab } from './design-system';
@@ -47,11 +38,12 @@ const V70Routes = React.lazy(() =>
   })),
 );
 
-// CSS V70 — préchargés au boot.
-void import('./v70/theme/v70-tokens.css');
-void import('./v70/theme/v70-global.css');
+// CSS V70 — Design reset 2026-05-18 (Lot 4z) : v70-tokens.css +
+// v70-global.css supprimés. Fallback neutre dans src/index.css.
+// Le designer externe redéfinira les styles atomiques.
 
-import { QuickActionsProvider } from './components/AgritechNavV2';
+import { QuickActionsProvider } from './context/QuickActionsContext';
+import QuickActionsHost from './components/quick-actions/QuickActionsHost';
 import { ToastProvider } from './context/ToastContext';
 import { GlobalSearchProvider } from './context/GlobalSearchContext';
 import { loadChecklistDefinitions } from './services/checklistService';
@@ -143,6 +135,7 @@ const AppContent = () => {
     <IonApp>
       <React.Suspense fallback={<SuspenseFallback />}>
         <QuickActionsProvider>
+          <QuickActionsHost />
           <ToastProvider>
           {/* v3.5.0 : OnboardingGate + OnboardingV2Gate supprimés (forced redirect retiré).
               Le bandeau profil V80 A4 sur /today reste seul guide pour new user. */}

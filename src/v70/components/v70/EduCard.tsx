@@ -20,7 +20,7 @@ const DEFAULT_ICON = (
     size={14}
     strokeWidth={2}
     aria-hidden="true"
-    style={{ color: 'var(--pt-muted)', flexShrink: 0 }}
+    style={{ flexShrink: 0 }}
   />
 );
 

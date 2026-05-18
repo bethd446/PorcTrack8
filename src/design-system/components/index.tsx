@@ -1,6 +1,8 @@
 import React, { useCallback, useState } from 'react';
 import { Search as SearchIcon, Sparkles, X } from 'lucide-react';
-import './components.css';
+// Design reset 2026-05-17 (Lot 3) : import './components.css' retiré
+// (fichier supprimé). Les classes sont remplacées par le designer
+// externe ; fallback runtime via tokens --pt-* dans src/index.css.
 
 // ============================================================
 // SECTION (alias SectionHeader)

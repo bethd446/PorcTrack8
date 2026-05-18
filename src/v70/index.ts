@@ -5,11 +5,9 @@
  * Dossier complet `src/v70/` parallèle à `src/` ancien (clean-room V70).
  */
 
-// Tokens CSS (importé une fois au mount V70)
-export { default as v70TokensCSS } from './theme/v70-tokens.css?url';
-
-// CSS global (importé séparément par routage Phase 2)
-export { default as v70GlobalCSS } from './theme/v70-global.css?url';
+// CSS V70 — fichiers supprimés au design reset 2026-05-18 (Lot 4z).
+// v70-tokens.css + v70-global.css ne sont plus dans le repo : le
+// fallback neutre src/index.css fournit les --pt-* runtime.
 
 // Composants atomiques DS V70 (Phase 1B)
 export { PageHeader } from './components/ds/PageHeader';

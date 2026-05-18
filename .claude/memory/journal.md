@@ -19,6 +19,45 @@
 
 ---
 
+## 2026-05-17 · [AUDIT] Audit complet 3 phases — pré-validation ferme K13
+
+**Contexte** : Audit orchestré par Claude Opus 4.7 (1M ctx) sur la branche `main` (HEAD `1082484`). Brief utilisateur : tester le compte Christophe via chrome-devtools, identifier les bugs UX (signalés "impossible de créer proprement les loges et les bandes" + "menus incompréhensibles"), auditer technique + sécu, livrer 3 chantiers exécutables. Pipeline pré-audit : tsc 0 · vitest 2145/2145 · build OK · ESLint 0 erreur.
+
+**Pipeline confirmé (orchestrateur lui-même, sub-agent qa-runner ayant subi sandbox CWD restrictif)** :
+- `npx tsc --noEmit` : 0 erreur ✅
+- `npx vitest run` : 178 fichiers, 2145 tests passing (durée 26.5s) ✅
+- `npx eslint src scripts` : 0 erreur, 149 warnings (top : 46 react-hooks/purity Date.now, 35 react-refresh, 35 porctrack/no-uuid-jsx) ✅
+- `npm run build` : OK 3.09s, PWA 112 entries / 5918 KiB ✅
+- 48 fichiers > 500 lignes (top : `supabaseWrites.ts` 1728L, `TruieDetailView.tsx` 1556L, `BandeDetailView.tsx` 1302L)
+
+**Méthode** : 3 sub-agents dispatchés en parallèle (qa-runner, code-reviewer, security-reviewer) + audit orchestrateur (Supabase MCP, Playwright public, Read code source). Tous 3 sub-agents ont subi des limitations sandbox Bash documentées dans `blockers.md` 🟡 ; chacun redispatché en mode Read/Grep ou exécuté localement par l'orchestrateur. AGENT_CONTRACT.md `=== VERIFICATION ===` respecté ; 1 faux négatif spot-checké (code-reviewer claimait `listLogesEffectivesParBande` non trouvé alors qu'elle existe à `supabaseWrites.ts:1446`).
+
+**Findings critiques (3 P0)** :
+1. **F-01 CRITICAL — Clé Mistral leakée en prod** : `TQXuKoW07nHON72h1j0cCGyhJW4Rc7Rm` + token `marius-secret-key-2026` présents dans `dist/assets/MariusChatFullscreen-C_a2HyQa.js` + `dist/assets/index-D9ZZxbo1.js`. Source `.env.local` avec `VITE_MISTRAL_API_KEY` + `VITE_MARIUS_API_KEY` inlinés par Vite. Spot-check `grep` confirme.
+2. **P0-2 Workflow loges+bandes inaccessible** : décision V72-P4 (`decisions.md#bande-2-loges`) acte 1 bande = 1 loge M + 1 loge F. Code métier propre existe (`repartitionPorceletsParLoge` + `listLogesEffectivesParBande` + colonne `loges.repartition` + FK `porcelets_individuels.loge_id`). MAIS le FAB "+" depuis `/troupeau` tabs `loges`/`bandes` (`AnimalsV70.tsx:720-722`) ouvre des forms simples qui ne supportent PAS la règle. Workflow propre cloisonné dans `PorceletsReorgWizard` (dédié reset Christophe).
+3. **P0-3 Headers HTTP sécu absents en prod** : `nginx.conf` du repo destiné à un VPS différent (`app.porctrack.tech`), inutilisé en prod (Hostinger CDN `hcdn`). `curl -I porctrack.tech` retourne uniquement `content-security-policy: upgrade-insecure-requests`. Pas de HSTS, X-Frame-Options, X-Content-Type-Options, Referrer-Policy, Permissions-Policy.
+
+**Findings additionnels** : F-02 prompt injection `marius-chat` context non borné, F-03 `send-push` sans scope farm, F-04 `profiles` UPDATE sans policy RLS visible (auto-promotion role possible), F-06 `signOut` ne vide pas kvStore, P1-1 `PorceletIndividuel` type sans `logeId`, 7 WARN Supabase advisor sécu, 91 lints performance Supabase, labels bottom-nav "Repro"/"Performance" peu clairs pour éleveur africain.
+
+**Blocker Phase 1 non résolu** : compte audit `contact@liegeoischristophe.com` rejeté par Supabase (`invalid_credentials`) malgré last_sign_in_at 3h avant audit. Phase 1 (parcours E2E authentifiés) bypassée → audit terminé en mode "sans login" via code source + Supabase MCP + routes publiques.
+
+**Livré** :
+- `.claude/AUDIT_2026-05-17.md` (rapport complet, 3 chantiers détaillés, 21 bugs catégorisés P0/P1/P2)
+- 4 nouvelles entrées dans `blockers.md` (F-01, login fail, workflow loges+bandes, nginx.conf inutilisé)
+- Screenshots Playwright `/tmp/audit-2026-05-17/PUB_*.png` (15 routes publiques)
+- 2 reports JSON `report.json` + `report-public.json`
+
+**Tests** : 2145 (baseline préservée, 0 régression, 0 modification de code).
+
+**Hors-scope (chantiers proposés en livrable)** :
+- A — Fix workflow loges+bandes (~1 jour)
+- B — Sécurité prod critique (~4h, BLOQUE déploiement)
+- C — Dette technique haute valeur (~3 jours)
+
+**Liens** : `.claude/AUDIT_2026-05-17.md` · [[blockers#F-01]] · [[blockers#workflow-loges-bandes]] · [[blockers#nginx-inutilise]]
+
+---
+
 ## 2026-05-09 · [V75-h] Listing porcelets dépliable · commit `c6a15b1`
 
 **Contexte** : friction P1-3 audit V74 — `AnimalsV70.tsx` tab Porcelets affichait "92 porcelets" eyebrow mais seulement 4 stubs hardcodés (P-MAR-01..P-JAN-01). Décision UX brainstorming : grouping par bande dépliable (vs vrac virtualisé, vs représentant seul).

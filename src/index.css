@@ -1,25 +1,23 @@
 @charset "UTF-8";
 @import "tailwindcss";
 
-/* ═══════════════════════════════════════════════════════════════════════════
-   PorcTrack — Design System · Terrain Vivant v6 (light-first)
-   Refonte 2026-04-30 — light obligatoire, plus de couches dark-cockpit.
-   ═══════════════════════════════════════════════════════════════════════════
-   Ordre d'imports (chaînage explicite, le dernier gagne) :
-     1. theme-tokens.css         — tokens --bg-0/--text-0 (mode jour forcé)
-     2. agritech-tokens.css      — @theme Tailwind (utilities bg-bg-0 etc.)
-     3. agritech-utilities.css   — primitives (.kpi-value, .chip, etc.)
-     4. theme-v2-tokens.css      — radii/easings/accents par onglet (--accent-cockpit…)
-     5. terra-v2-tokens.css      — typographie + radii étendus
-     6. terrain-vivant-v6.css    — palette client v6 (FINAL)
-   ──────────────────────────────────────────────────────────────────── */
-@import "./styles/theme-tokens.css";
-@import "./styles/agritech-tokens.css";
-@import "./styles/agritech-utilities.css";
-@import "./styles/typography-utils.css";
-@import "./styles/theme-v2-tokens.css";
-@import "./styles/terra-v2-tokens.css";
-@import "./styles/terrain-vivant-v6.css";
+/* ═══════════════════════════════════════════════════════════════════
+ * PorcTrack — Design Reset 2026-05-18
+ *
+ * Le design system a été démoli. Le développeur designer externe
+ * définira sa propre palette, typographie, espacements, etc.
+ *
+ * Ce qui reste dans ce fichier :
+ *   - @import "tailwindcss" (Tailwind v4 sans config custom)
+ *   - @font-face pour les polices héritées (peuvent être remplacées)
+ *   - Reset CSS minimal si nécessaire
+ *
+ * ~2300 occurrences var(--pt-*) dans le JSX/CSS app : ces tokens
+ * ne sont PAS définis ici. Le designer doit les définir (ou les
+ * remplacer par sa propre stratégie de tokens / Tailwind theme).
+ *
+ * Voir DESIGN_REFONTE.md à la racine pour le guide complet.
+ * ═══════════════════════════════════════════════════════════════════ */
 
 /* ── Polices ──────────────────────────────────────────────────────────────── */
 /* V71 typo lock — 2 fonts only (audit senior-designer V70).

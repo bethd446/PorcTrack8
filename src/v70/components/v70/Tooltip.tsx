@@ -72,22 +72,16 @@ export const Tooltip: React.FC<TooltipProps> = ({ term, children }) => {
         <span
           id={popoverId}
           role="tooltip"
+          className="term-tip-popover"
           style={{
             position: 'absolute',
             top: '100%',
             left: 0,
             marginTop: 8,
             padding: '12px 14px',
-            background: 'var(--pt-ink, #1a1a1a)',
-            color: 'white',
-            borderRadius: 10,
-            fontSize: 12,
-            lineHeight: 1.5,
             maxWidth: 280,
             zIndex: 1000,
-            boxShadow: '0 8px 24px rgba(0,0,0,0.2)',
             whiteSpace: 'normal',
-            textTransform: 'none',
           }}
         >
           {tooltip.definition}

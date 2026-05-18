@@ -40,22 +40,15 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
       {onBack && (
         <button
           type="button"
+          className="page-header-back"
           onClick={onBack}
           aria-label={backLabel}
           style={{
             display: 'inline-flex',
             alignItems: 'center',
             gap: 4,
-            background: 'none',
-            border: 'none',
             padding: '4px 0',
             marginBottom: 8,
-            color: 'var(--pt-muted)',
-            fontFamily: 'var(--pt-font-mono)',
-            fontSize: 11,
-            fontWeight: 500,
-            letterSpacing: '0.08em',
-            textTransform: 'uppercase',
             cursor: 'pointer',
             minHeight: 44,
           }}

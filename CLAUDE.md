@@ -115,44 +115,48 @@ npx cap open android   # ou: npx cap run android
 - **Icons** : Lucide React (Ionicons en legacy progressive migration)
 - **Dates** : date-fns (locale fr)
 
-## Design system — V70 (canonique)
+## Design system — État courant : DESIGN RESET en cours
 
-> L'app sert **exclusivement V70** : `src/App.tsx` rend `<V70Routes />` (feature flag `v70Enabled`, défaut `true` depuis 2026-05-07). Tout travail visuel cible `src/v70/`. Le système **legacy** (`src/index.css` → `--color-accent-*`, classes `.premium-*` / `.ft-*`, `src/components/`, `src/pages/`) est **déprécié et non routé** — ne pas l'utiliser pour du nouveau code.
+> **⚠️ Le design system V70 a été démoli volontairement** (branche
+> `refactor/design-reset-full-demolition`). Les fichiers
+> `src/v70/theme/v70-tokens.css` et `v70-global.css` **n'existent plus**. Le
+> repo attend un développeur designer externe. **Référence canonique unique** :
+> [`DESIGN_REFONTE.md`](../DESIGN_REFONTE.md) à la racine.
 
-### Source de vérité tokens
-- `src/v70/theme/v70-tokens.css` — tokens `--pt-*` (couleurs, sémantiques, entity avatars, rôles)
-- `src/design-system/tokens/tokens.css` — tokens `--pt-font-*`
-- `src/v70/theme/v70-global.css` — styles globaux V70
+### Ce que l'agent doit savoir avant tout travail visuel
+- L'app sert toujours `V70Routes` (`src/App.tsx`, feature flag `v70Enabled` à
+  `true` depuis 2026-05-07). La structure JSX et le router sont intacts.
+- **~2300 occurrences de `var(--pt-*)` dans le JSX sont intentionnellement
+  orphelines** — ce sont des points d'ancrage que le designer redéfinira.
+  Ne JAMAIS définir ces tokens en ad hoc sans coordination explicite avec
+  Christophe.
+- Les classes sémantiques (`.btn`, `.card`, `.pill`, `.field`, `.page-header`,
+  `.list-item`, etc.) sont préservées dans le JSX, sans CSS associé.
+- Le système **legacy** (`src/index.css` → `--color-accent-*`, classes
+  `.premium-*` / `.ft-*`) est déprécié et non routé.
 
-### Palette "Terrain Vivant" (tokens `--pt-*`)
-| Token | Hex | Usage |
-|-------|-----|-------|
-| `--pt-primary` | #2D4A1F | Vert forêt — primary, headers, CTA |
-| `--pt-primary-deep` | #1f3414 | Hover / active |
-| `--pt-primary-light` | #4a7a2f | Secondary |
-| `--pt-warm` | #F5E9D8 | Crème — tabs, surfaces chaudes |
-| `--pt-accent` | #B8703D | Terre — FAB, signatures |
-| `--pt-bg-app` | #FAFAFA | Background global |
-| `--pt-ink` / `--pt-muted` | #1a1a1a / #6b6357 | Texte |
-| `--pt-success` / `warning` / `danger` / `info` | #4a7a2f / #c08a3d / #a4453d / #4a6e8a | Sémantiques |
+### DNA visuel historique (référence non-contraignante — le designer peut diverger)
+- Palette "Terrain Vivant" : vert forêt `#2D4A1F` primary, crème `#F5E9D8` warm,
+  terre `#B8703D` accent, ivoire `#FAFAFA` bg.
+- Typo : Big Shoulders Display 700 (titres) + Instrument Sans (body).
+- Touch targets ≥ 44×44 px (porcher avec gants), contraste ≥ 4.5:1 (7:1 plein soleil).
 
-**Interdits** : tout hex hardcodé, et les valeurs legacy `#064e3b`, `#065f46`, `#2d5a1b`. Toujours `var(--pt-*)`.
+### Composants atomiques fournis (NUS — JSX seul, CSS à définir)
+- V70 atoms (`src/v70/components/ds/`) : `PageHeader` · `Section` · `Card` ·
+  `Button` · `Pill` · `ListItem` · `CycleTimeline` · `StatsGrid` · `TabsMini`
+- V70 applicatifs (`src/v70/components/v70/`) : `BottomNav`, `DataTable`,
+  `Dialog`, `EduCard`, `EmptyState`, `Skeleton`, `Toast`, `Tooltip`,
+  `PhotoUpload`/`PhotoGallery`, etc.
+- Design-system étendu (`src/design-system/components/index.tsx`) : 32 atomes
+  additionnels (`Tag`, `Segment`, `Chip`, `IconBox`, `KeyValueRow`, `Stat`,
+  `Tabs`, `RadioGroup`, `Checkbox`, `FormField`, `Input`, `Select`, etc.)
+- 5 fichiers shadcn-style survivants dans `src/components/ui/`
+  (`sonner`, `command`, `dialog`, `form`, `label`) — vraiment utilisés.
 
-### Typographie (2 polices réelles)
-| Variable | Police | Usage |
-|----------|--------|-------|
-| `--pt-font-display` | Big Shoulders Display 700 | Titres uppercase, KPIs, nombres |
-| `--pt-font-body` | Instrument Sans | Texte courant, boutons, labels |
-| `--pt-font-mono` | = Instrument Sans (`tabular-nums`) | IDs, codes, dates — **pas de vraie monospace** |
-
-### Composants V70
-- Atomiques (`src/v70/components/ds/`) : `PageHeader` · `Section` · `Card` · `Button` · `Pill` · `ListItem` · `CycleTimeline` · `StatsGrid` · `TabsMini`
-- Applicatifs (`src/v70/components/v70/`) : `BottomNav`, `DataTable`, `Dialog`, `EduCard`, `EmptyEdu`, `EmptyState`, `Skeleton`, `Toast`, `Tooltip`, `PhotoUpload`/`PhotoGallery`, etc.
-
-### Règles layout
+### Règles layout (toujours valides)
 - **Jamais de margin-top négative** pour positionner du contenu — utiliser flex/grid/slots.
 - `PageHeader` accepte des children pour intégrer tabs/filtres dans le header.
-- Touch targets ≥ 44×44 px (porcher avec gants). Contraste ≥ 4.5:1 (7:1 plein soleil).
+- Touch targets ≥ 44×44 px. Contraste WCAG AA mini.
 
 ## Logique métier GTTT
 

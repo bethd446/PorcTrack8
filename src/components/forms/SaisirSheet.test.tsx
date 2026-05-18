@@ -15,9 +15,9 @@ import React from 'react';
 import { render, screen, cleanup, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-// ── Mock useQuickActions (provider AgritechNavV2) ─────────────────────────
+// ── Mock useQuickActions (QuickActionsContext) ────────────────────────────
 const openActionMock = vi.fn();
-vi.mock('../AgritechNavV2', () => ({
+vi.mock('../../context/QuickActionsContext', () => ({
   useQuickActions: () => ({ openAction: openActionMock }),
 }));
 

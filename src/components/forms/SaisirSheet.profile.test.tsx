@@ -19,7 +19,7 @@ import SaisirSheet from './SaisirSheet';
 vi.mock('../../hooks/useFarmProfile');
 import { useFarmProfile } from '../../hooks/useFarmProfile';
 
-vi.mock('../AgritechNavV2', () => ({
+vi.mock('../../context/QuickActionsContext', () => ({
   useQuickActions: () => ({ openAction: vi.fn() }),
 }));
 
