@@ -2,46 +2,22 @@
 @import "tailwindcss";
 
 /* ═══════════════════════════════════════════════════════════════════
- * 🚧 FALLBACK NEUTRE TEMPORAIRE — DESIGN RESET 2026-05-17
+ * PorcTrack — Design Reset 2026-05-18
  *
- * Ces 16 tokens sont des valeurs neutres pour préserver la navigabilité
- * de l'app pendant la démolition design (Lots 3-4-5).
+ * Le design system a été démoli. Le développeur designer externe
+ * définira sa propre palette, typographie, espacements, etc.
  *
- * ⚠️ À SUPPRIMER AU LOT 5d — JAMAIS LIVRÉ AU DÉVELOPPEUR DESIGNER.
- * Le designer redéfinira ces tokens (ou les remplacera) selon sa palette.
+ * Ce qui reste dans ce fichier :
+ *   - @import "tailwindcss" (Tailwind v4 sans config custom)
+ *   - @font-face pour les polices héritées (peuvent être remplacées)
+ *   - Reset CSS minimal si nécessaire
  *
- * Référence : 2357 occurrences var(--pt-*) dans le code au moment du
- * reset, dont top 15 :
- *   --pt-muted (284) · --pt-font-mono (255) · --pt-ink (225)
- *   --pt-line (184) · --pt-primary (169) · --pt-bg (144)
- *   --pt-font-display (143) · --pt-warm (109) · --pt-font-body (109)
- *   --pt-danger (103) · --pt-subtle (96) · --pt-accent (71)
- *   --pt-ease (59) · --pt-line-strong (55) · --pt-text-muted (44)
+ * ~2300 occurrences var(--pt-*) dans le JSX/CSS app : ces tokens
+ * ne sont PAS définis ici. Le designer doit les définir (ou les
+ * remplacer par sa propre stratégie de tokens / Tailwind theme).
+ *
+ * Voir DESIGN_REFONTE.md à la racine pour le guide complet.
  * ═══════════════════════════════════════════════════════════════════ */
-:root {
-  /* Couleurs sémantiques */
-  --pt-primary: #333;
-  --pt-ink: #000;
-  --pt-muted: #666;
-  --pt-text-muted: #666;
-  --pt-subtle: #999;
-  --pt-bg: #fff;
-  --pt-bg-app: #fafafa;
-  --pt-warm: #f5f5f5;
-  --pt-line: #ccc;
-  --pt-line-strong: #888;
-  --pt-danger: #c00;
-  --pt-success: #060;
-  --pt-accent: #999;
-  /* Familles de polices (system fonts — Big Shoulders/Instrument Sans
-     restent chargées via @font-face mais ne sont plus utilisées par les
-     tokens fallback ; le designer redéfinira sa typo). */
-  --pt-font-display: system-ui, -apple-system, sans-serif;
-  --pt-font-body: system-ui, -apple-system, sans-serif;
-  --pt-font-mono: 'JetBrains Mono', ui-monospace, monospace;
-  /* Easing CSS animations */
-  --pt-ease: cubic-bezier(0.4, 0, 0.2, 1);
-}
 
 /* ── Polices ──────────────────────────────────────────────────────────────── */
 /* V71 typo lock — 2 fonts only (audit senior-designer V70).
