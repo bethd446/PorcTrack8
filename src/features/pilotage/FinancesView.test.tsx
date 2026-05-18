@@ -51,10 +51,6 @@ vi.mock('@ionic/react', () => ({
   IonRefresherContent: () => <div />,
 }));
 
-vi.mock('../../components/AgritechLayout', () => ({
-  default: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-}));
-
 vi.mock('../../components/design/TopBarSync', () => ({
   default: () => <div data-testid="topbar-sync" />,
 }));

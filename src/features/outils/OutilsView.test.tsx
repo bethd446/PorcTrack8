@@ -31,11 +31,6 @@ vi.mock('@ionic/react', () => ({
   IonContent: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
 }));
 
-vi.mock('../../components/AgritechLayout', () => ({
-  __esModule: true,
-  default: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-}));
-
 // Mock context Pilotage : on contrôle le compteur d'alertes
 const usePilotageMock = vi.fn();
 vi.mock('../../context/PilotageContext', () => ({

@@ -51,7 +51,7 @@ const V70Routes = React.lazy(() =>
 void import('./v70/theme/v70-tokens.css');
 void import('./v70/theme/v70-global.css');
 
-import { QuickActionsProvider } from './components/AgritechNavV2';
+import { QuickActionsProvider } from './components/legacy/QuickActionsProvider';
 import { ToastProvider } from './context/ToastContext';
 import { GlobalSearchProvider } from './context/GlobalSearchContext';
 import { loadChecklistDefinitions } from './services/checklistService';

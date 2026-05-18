@@ -19,7 +19,7 @@ import {
   X,
 } from 'lucide-react';
 
-import { useQuickActions, type QuickActionKind } from '../AgritechNavV2';
+import { useQuickActions, type QuickActionKind } from '../legacy/QuickActionsProvider';
 import { useFarmProfile } from '../../hooks/useFarmProfile';
 import { hasReproduction, hasEngraissement, type FarmProfile } from '../../lib/farmProfile';
 
