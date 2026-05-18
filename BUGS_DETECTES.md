@@ -17,6 +17,30 @@
 
 ## Bugs
 
+### 2026-05-18 · Lot 5a · 13 pages V70 — inline cosmétiques résiduels
+- **Volume total** : ~542 inline cosmétiques sur 13 pages
+- **Top** : OnboardingEduPage 97, MonEquipeV70 88, EngraissementV70 64, PerformanceV70 62, MaFermeV70 61, SynchronisationV70 53, AnimalsV70 49, TodayV70 20, NotFoundV70 19, DiagnosticView 16, ReproV70 10, ReglagesV70 3, EncyclopediaPage 0
+- **Sévérité** : 🟢 mineur — démolissables par designer en 3-4h via grep+replace IDE
+- **Note** : ces pages contiennent une partie rendering + composition de composants V70/DS (déjà démolis cosmétiquement au Lot 4 partial). Les inline cosmétiques résiduels sont du polish que le designer redéfinira.
+
+---
+
+### 2026-05-18 · Lot 5b · features/* modules — inline cosmétiques résiduels rendering
+- **Top fichiers (≥6 inline)** : AdminDashboard 67, FinancesView 87, PorceletsReorgWizard 79, AuditPrintTemplate 39, ChatbotWidget 40, MariusChatFullscreen 64, PendingValidationsView 30, DesignSystemView 30, MariusGreeting 16, HintCard 15, PerfKpiOverview 22, PerfKpiPerformance 25, PerfKpiEconomie 15, AideView 12, PhaseBanner 6
+- **Volume total estimé** : ~600+ inline cosmétiques
+- **Sévérité** : 🟢 mineur — démolissables par designer
+- **Note** : la **logique métier** dans ces modules est INTOUCHABLE (services, hooks, data fetching). Le rendering JSX reste, juste à restyler. Le designer ne doit jamais toucher au fetch/state/transformation.
+
+---
+
+### 2026-05-18 · Lot 5c · forms (44 forms) — inline cosmétiques résiduels
+- **Top fichiers (≥6 inline)** : QuickSplitBandeForm 44, QuickPeseeForm 24, EditTruieWizard 18, QuickSailliesBandeForm 16, MultiPorteeSevrageWizard 10, QuickNoteForm 11, QuickSaillieBandeForm 12, QuickRefillForm 12, QuickAddBandeForm 7, QuickRetourChaleurForm 6
+- **Volume total estimé** : ~200+ inline cosmétiques sur 44 forms
+- **Sévérité** : 🟢 mineur — démolissables par designer
+- **Note** : la **validation Zod**, les `onSubmit`, les états sont INTOUCHABLES. Le designer doit garder la structure JSX (label, field, error display).
+
+---
+
 ### 2026-05-18 · Lot 4c · design-system/components/index.tsx — 29 inline cosmétiques résiduels
 - **Fichier** : `src/design-system/components/index.tsx` (1161L, 26 composants exportés : Section, Card, InsightCard, Button, Tag, IconBox, KeyValueRow, StatsGrid, Stat, Tabs, RadioGroup, Checkbox, Segment, Chip, FormField, Input, Select, Textarea, Search, ListItem, ActionRow, AlertGroup, AlertRow, Fab, etc.)
 - **Symptôme** : 29 inline styles cosmétiques (color/fontFamily/textTransform/letterSpacing/boxShadow/borderRadius)
