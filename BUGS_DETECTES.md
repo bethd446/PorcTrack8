@@ -17,6 +17,19 @@
 
 ## Bugs
 
+### 2026-05-18 · Lot 8 audit final · components/ui/ shadcn-style — 11 fichiers semi-orphelins
+- **Dossier** : `src/components/ui/` (13 fichiers shadcn-style, 915L total, ~58 cosmétiques cumulés)
+- **Fichiers** : calendar, combobox, command, data-table, dialog, form, label, popover, skeleton, sonner, table, tabs, tooltip
+- **Statut imports** :
+  - **2 utilisés externe** : `sonner.tsx` (Toaster dans main.tsx) + `combobox.tsx` (type ComboboxOption dans utils/comboboxOptions.ts)
+  - **11 fichiers en auto-référence interne** (combobox→command, combobox→popover, command→dialog, data-table→table, form→label) sans consommateur externe
+- **Sévérité** : 🟢 mineur — design parallèle shadcn coexistant avec V70/agritech. Le designer peut soit :
+  1. Réutiliser shadcn comme base (les composants sont stylés Tailwind, conformes WCAG)
+  2. Supprimer le dossier en bloc et redéfinir via design system propre
+- **Note** : décision du designer, hors scope démolition Claude.
+
+---
+
 ### 2026-05-18 · Lot 6 · 3 DetailViews (entités cœur métier) — démolition fine déléguée designer
 - **Fichiers** :
   - `src/features/troupeau/TruieDetailView.tsx` (1556L)
