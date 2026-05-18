@@ -106,6 +106,11 @@ const MariusChatFullscreen = React.lazy(() =>
 const DiagnosticView = React.lazy(() =>
   import('../pages/DiagnosticView').then((m) => ({ default: m.DiagnosticView })),
 );
+// Placeholder /sante — résout liens orphelins (PendingValidationsView,
+// OutilsView legacy, AppSidebar legacy). Section dédiée à livrer.
+const SantePlaceholder = React.lazy(() =>
+  import('../pages/SantePlaceholder').then((m) => ({ default: m.SantePlaceholder })),
+);
 
 const OnboardingRoute: React.FC = () => {
   const navigate = useNavigate();
@@ -205,6 +210,10 @@ export const V70Routes: React.FC = () => (
           {/* V71-P3 — Wizard ré-organisation porcelets→bandes→loges (bloquant) */}
           <Route path="/porcelets-reorg" element={<PorceletsReorgWizard />} />
           {/* v3.5.0 : route /onboarding-v2 supprimée — bandeau /today V80 A4 remplace. */}
+
+          {/* Placeholder Journal santé — section dédiée à venir, résout orphelins
+              (PendingValidationsView, OutilsView legacy, AppSidebar legacy). */}
+          <Route path="/sante" element={<SantePlaceholder />} />
 
           {/* Routes legacy critiques rendues dans shell V70 (câblage Option B) */}
           <Route path="/controle" element={<ControleQuotidien />} />
