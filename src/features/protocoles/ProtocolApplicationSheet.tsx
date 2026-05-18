@@ -11,9 +11,9 @@
  *  - Posologie : recalculée avec `vivants` réels par bande
  *  - Empty state si aucune bande active disponible
  */
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { IonModal } from '@ionic/react';
-import { Calendar, ChevronDown, Camera, Save } from 'lucide-react';
+import { Calendar, ChevronDown, Camera, Check, Save } from 'lucide-react';
 import { useToast } from '../../context/ToastContext';
 import { useFarm } from '../../context/FarmContext';
 import { useAuth } from '../../context/AuthContext';
@@ -85,6 +85,17 @@ export const ProtocolApplicationSheet: React.FC<ProtocolApplicationSheetProps> =
   const { profile } = useAuth();
   const [lotIdx, setLotIdx] = useState(0);
   const [date, setDate] = useState<string>(todayISO());
+  const [photoName, setPhotoName] = useState<string>('');
+  const photoInputRef = useRef<HTMLInputElement | null>(null);
+
+  // Reset photo à la fermeture du sheet pour éviter qu'un fichier sélectionné
+  // reste affiché lors d'une réouverture sur un autre protocole.
+  useEffect(() => {
+    if (!isOpen) {
+      setPhotoName('');
+      if (photoInputRef.current) photoInputRef.current.value = '';
+    }
+  }, [isOpen]);
 
   const chips = useMemo(() => toBandeChips(bandes), [bandes]);
   const operatorName = profile?.full_name?.trim() || 'Opérateur';
@@ -214,11 +225,31 @@ export const ProtocolApplicationSheet: React.FC<ProtocolApplicationSheetProps> =
               <button
                 type="button"
                 className="camera-placeholder"
-                aria-label="Ajouter une photo"
+                aria-label={photoName ? 'Changer la photo' : 'Ajouter une photo'}
+                onClick={() => photoInputRef.current?.click()}
               >
-                <Camera size={26} strokeWidth={2} aria-hidden />
+                {photoName ? (
+                  <Check size={26} strokeWidth={2} aria-hidden />
+                ) : (
+                  <Camera size={26} strokeWidth={2} aria-hidden />
+                )}
               </button>
-              <div className="camera-label">Ajouter une photo</div>
+              <input
+                ref={photoInputRef}
+                type="file"
+                accept="image/*"
+                capture="environment"
+                className="sr-only"
+                aria-hidden="true"
+                tabIndex={-1}
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) setPhotoName(file.name);
+                }}
+              />
+              <div className="camera-label">
+                {photoName || 'Ajouter une photo'}
+              </div>
             </div>
 
             <button

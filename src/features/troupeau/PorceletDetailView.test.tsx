@@ -105,6 +105,12 @@ vi.mock('@ionic/react', () => ({
   IonContent: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
   IonSpinner: () => <span data-testid="ion-spinner" />,
   IonToast: () => null,
+  // V83 mécanique : PorceletDetailView monte une IonActionSheet + 2 IonAlert
+  // pour les actions Peser/Soigner/Vendu/Mortalité (boutons précédemment inertes).
+  IonActionSheet: () => null,
+  IonAlert: () => null,
+  IonModal: ({ children }: { children?: React.ReactNode }) => <div>{children}</div>,
+  useIonAlert: () => [vi.fn()],
 }));
 
 import PorceletDetailView from './PorceletDetailView';

@@ -15,13 +15,34 @@
  *  - blockquote `> text` → encart "Fact"
  *  - paragraphes (blocs séparés par double saut de ligne)
  */
-import React, { useState, useEffect } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { ChevronLeft, Check, Lightbulb, AlertTriangle } from 'lucide-react';
+
+import { kvGet, kvSet } from '../../../services/kvStore';
+
+const READ_KEY = 'encyclopedia_read_articles';
+
+function readReadSet(): Set<string> {
+  try {
+    const raw = kvGet(READ_KEY);
+    if (!raw) return new Set();
+    const arr = JSON.parse(raw);
+    if (!Array.isArray(arr)) return new Set();
+    return new Set(arr.filter((x): x is string => typeof x === 'string'));
+  } catch {
+    return new Set();
+  }
+}
 
 export interface EncyclopediaArticleProps {
   slug: string;
   /** Optionnel : callback retour (rend le header --minimal si fourni). */
   onBack?: () => void;
+  /**
+   * Callback appelé après marquage comme lu (persisté dans kvStore).
+   * Reçoit la liste complète des slugs lus.
+   */
+  onMarkAsRead?: (slug: string, allRead: string[]) => void;
 }
 
 interface ArticleMeta {
@@ -118,9 +139,25 @@ function parseBody(md: string): ParsedBlock[] {
 export const EncyclopediaArticle: React.FC<EncyclopediaArticleProps> = ({
   slug,
   onBack,
+  onMarkAsRead,
 }) => {
   const [content, setContent] = useState<{ meta: ArticleMeta; body: string } | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [isRead, setIsRead] = useState<boolean>(() => readReadSet().has(slug));
+
+  useEffect(() => {
+    setIsRead(readReadSet().has(slug));
+  }, [slug]);
+
+  const handleMarkAsRead = useCallback(() => {
+    const set = readReadSet();
+    if (set.has(slug)) return;
+    set.add(slug);
+    const arr = Array.from(set);
+    void kvSet(READ_KEY, JSON.stringify(arr));
+    setIsRead(true);
+    onMarkAsRead?.(slug, arr);
+  }, [slug, onMarkAsRead]);
 
   useEffect(() => {
     setError(null);
@@ -261,9 +298,15 @@ export const EncyclopediaArticle: React.FC<EncyclopediaArticleProps> = ({
       </article>
 
       <div className="cta-sticky">
-        <button type="button" className="btn btn--primary btn--block">
+        <button
+          type="button"
+          className="btn btn--primary btn--block"
+          onClick={handleMarkAsRead}
+          disabled={isRead}
+          aria-pressed={isRead}
+        >
           <Check size={18} strokeWidth={2} aria-hidden="true" />
-          Marquer comme lu
+          {isRead ? 'Lu' : 'Marquer comme lu'}
         </button>
       </div>
     </>
