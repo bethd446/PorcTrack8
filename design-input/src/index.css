@@ -1,0 +1,319 @@
+@charset "UTF-8";
+@import "tailwindcss";
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   PorcTrack — Design System · Terrain Vivant v6 (light-first)
+   Refonte 2026-04-30 — light obligatoire, plus de couches dark-cockpit.
+   ═══════════════════════════════════════════════════════════════════════════
+   Ordre d'imports (chaînage explicite, le dernier gagne) :
+     1. theme-tokens.css         — tokens --bg-0/--text-0 (mode jour forcé)
+     2. agritech-tokens.css      — @theme Tailwind (utilities bg-bg-0 etc.)
+     3. agritech-utilities.css   — primitives (.kpi-value, .chip, etc.)
+     4. theme-v2-tokens.css      — radii/easings/accents par onglet (--accent-cockpit…)
+     5. terra-v2-tokens.css      — typographie + radii étendus
+     6. terrain-vivant-v6.css    — palette client v6 (FINAL)
+   ──────────────────────────────────────────────────────────────────── */
+@import "./styles/theme-tokens.css";
+@import "./styles/agritech-tokens.css";
+@import "./styles/agritech-utilities.css";
+@import "./styles/typography-utils.css";
+@import "./styles/theme-v2-tokens.css";
+@import "./styles/terra-v2-tokens.css";
+@import "./styles/terrain-vivant-v6.css";
+
+/* ── Polices ──────────────────────────────────────────────────────────────── */
+/* V71 typo lock — 2 fonts only (audit senior-designer V70).
+   BigShoulders : titres, KPIs, chiffres signature.
+   InstrumentSans : body, labels, IDs/codes (avec tabular-nums via .ft-code). */
+@font-face { font-family: 'BigShoulders'; src: url('/fonts/BigShoulders-Bold.woff2') format('woff2'); font-weight: 700; font-display: swap; }
+@font-face { font-family: 'BigShoulders'; src: url('/fonts/BigShoulders-Regular.woff2') format('woff2'); font-weight: 400; font-display: swap; }
+@font-face { font-family: 'InstrumentSans'; src: url('/fonts/InstrumentSans-Bold.woff2') format('woff2'); font-weight: 700; font-display: swap; }
+@font-face { font-family: 'InstrumentSans'; src: url('/fonts/InstrumentSans-Regular.woff2') format('woff2'); font-weight: 400; font-display: swap; }
+
+@theme {
+  /* === Polices PorcTrack 8 — 2 fonts strict (V71 lock) === */
+  --font-heading: "BigShoulders", Impact, sans-serif;
+  --font-body:    "InstrumentSans", -apple-system, system-ui, sans-serif;
+  /* --font-mono : intentionnellement = InstrumentSans. Les chiffres/IDs/codes
+     restent alignés via font-feature-settings: "tnum" 1, "lnum" 1. */
+  --font-mono:    "InstrumentSans", -apple-system, system-ui, sans-serif;
+  --font-num:     "BigShoulders", Impact, sans-serif;
+
+  /* === Aliases backward-compat === */
+  --font-sans:    var(--font-body);
+  --font-display: var(--font-heading);
+  --font-values:  var(--font-heading);
+
+  /* === Foreground sur fond accent (FAB, badges pleins) === */
+  --on-accent: #fff;
+
+  /* ── Palette Tailwind v4 — accent vert v6 + neutres ──────────────────── */
+  --color-accent-700: #1a3d10;
+  --color-accent-600: #235016;
+  --color-accent-500: #2d5a1b;
+  --color-accent-400: #4b8529;
+  --color-accent-100: #e3edd9;
+  --color-accent-50:  #eef5e0;
+
+  --color-gray-900: #111827;
+  --color-gray-800: #1F2937;
+  --color-gray-700: #374151;
+  --color-gray-600: #4B5563;
+  --color-gray-500: #6B7280;
+  --color-gray-400: #9CA3AF;
+  --color-gray-300: #D1D5DB;
+  --color-gray-200: #E5E7EB;
+  --color-gray-100: #F3F4F6;
+  --color-gray-50:  #F9FAFB;
+
+  --color-red-500:    #EF4444;
+  --color-red-100:    #FEE2E2;
+  --color-red-50:     #FEF2F2;
+  --color-amber-500:  #F4A261;
+  --color-amber-100:  #fef6c2;
+  --color-amber-50:   #fff8e1;
+  --color-blue-500:   #3B82F6;
+  --color-blue-100:   #DBEAFE;
+  --color-blue-50:    #EFF6FF;
+  --color-purple-500: #8B5CF6;
+  --color-purple-50:  #F5F3FF;
+
+  /* Ombres — quasi invisibles */
+  --shadow-card:        0 1px 2px rgba(0,0,0,0.04);
+  --shadow-card-hover:  0 2px 8px rgba(0,0,0,0.08);
+  --shadow-premium:     0 1px 3px rgba(0,0,0,0.06);
+  --shadow-header:      0 1px 0 rgba(0,0,0,0.04);
+  --shadow-nav:         0 -1px 0 rgba(0,0,0,0.04);
+}
+
+/* ── Base ─────────────────────────────────────────────────────────────── */
+@layer base {
+  body {
+    background-color: var(--bg-app);
+    color: var(--ink);
+    font-family: var(--font-body);
+    -webkit-tap-highlight-color: transparent;
+    -webkit-font-smoothing: antialiased;
+    font-size: 15px;
+    line-height: 1.5;
+    touch-action: manipulation;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Force la cascade Ionic — sinon ion-content/ion-button rendent en Roboto.
+     Préserve les classes custom font-heading/font-mono via :not(). */
+  body *:not(svg):not(svg *) {
+    font-family: inherit;
+  }
+  ion-app, ion-page, ion-content, ion-header, ion-footer,
+  ion-toolbar, ion-title, ion-button, ion-item, ion-label,
+  ion-input, ion-textarea, ion-select, ion-list, ion-modal,
+  ion-tabs, ion-tab-button, ion-segment, ion-segment-button,
+  ion-card, ion-card-content, ion-card-header, ion-card-subtitle,
+  ion-card-title, ion-refresher, ion-refresher-content,
+  ion-alert, ion-toast, ion-popover {
+    --ion-font-family: var(--font-body);
+    font-family: var(--font-body);
+  }
+
+  :root {
+    --ion-font-family: var(--font-body);
+    --ion-color-primary: var(--color-accent-500);
+    --ion-color-primary-rgb: 45, 90, 27;
+    --ion-color-primary-contrast: #ffffff;
+    --ion-color-primary-shade: var(--color-accent-600);
+    --ion-color-primary-tint: var(--color-accent-400);
+    --ion-safe-area-top: env(safe-area-inset-top);
+    --ion-safe-area-bottom: env(safe-area-inset-bottom);
+  }
+}
+
+/* ── Hiérarchie typographique — Terrain Vivant v6 + V71 typo-lock ─────
+   Stack 2 fonts strict :
+   1. BigShoulders (--font-heading / --font-num) → Titres + chiffres signature
+   2. InstrumentSans (--font-body / --font-mono) → Body, IDs, codes
+      → alignement vertical des chiffres via tabular-nums + lining-nums.
+   ──────────────────────────────────────────────────────────────────── */
+.ft-heading,
+[class*="ft-heading"] {
+  font-family: var(--font-heading) !important;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+.ft-values,
+[class*="ft-values"] {
+  font-family: var(--font-body) !important;
+  font-weight: 600;
+  font-feature-settings: "tnum" 1, "lnum" 1;
+  font-variant-numeric: tabular-nums lining-nums;
+}
+.ft-code,
+[class*="ft-code"] {
+  font-family: var(--font-body) !important;
+  letter-spacing: 0.02em;
+  font-feature-settings: "tnum" 1, "lnum" 1, "ss01" 1;
+  font-variant-numeric: tabular-nums lining-nums;
+}
+
+/* ── Boutons design system : --font-body explicite (Bug audit /login) ──── */
+.pt-btn,
+.pt-btn--primary,
+.pt-btn--secondary,
+.pt-btn--lg,
+.pt-btn--md,
+.pt-btn--sm {
+  font-family: var(--font-body);
+  font-weight: 600;
+}
+
+.text-xxs    { font-size: 0.7rem; line-height: 1rem; }
+.tracking-ultra   { letter-spacing: 0.12em; }
+.tracking-premium { letter-spacing: 0.04em; }
+.tracking-wide    { letter-spacing: 0.05em; }
+
+/* V38-A FIX — Tailwind v4 (4.2.2) génère .rounded-full avec
+   `border-radius: calc(infinity * 1px)` qui se sérialise en `3.40282e38px`
+   (Number.MAX_VALUE float32). Au-delà de la limite navigateur (~17M px),
+   la valeur est ignorée et tous les `<button class="rounded-full">` rendent
+   carrés. On override avec une valeur saine (9999px = pill effective). */
+.rounded-full { border-radius: 9999px !important; }
+
+/* ── Safe areas ────────────────────────────────────────────────────────── */
+.safe-area-top { padding-top: calc(var(--ion-safe-area-top, 20px) + 12px); }
+.pb-safe { padding-bottom: env(safe-area-inset-bottom); }
+.scroll-hide::-webkit-scrollbar { display: none; }
+.scroll-hide { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* ── Navigation bar ────────────────────────────────────────────────────── */
+ion-tab-bar {
+  --border: 0;
+  --background: var(--bg-surface);
+  border-top: 1px solid var(--color-gray-100);
+  height: 68px;
+  padding-bottom: env(safe-area-inset-bottom);
+  z-index: 1000;
+}
+ion-tab-button { --color: var(--color-gray-400); --color-selected: var(--color-accent-500); }
+ion-tab-button ion-label {
+  font-family: "InstrumentSans", sans-serif !important;
+  font-size: 11px !important; font-weight: 600 !important;
+}
+ion-tab-button ion-icon { font-size: 22px; }
+ion-tab-button.tab-selected { position: relative; }
+ion-tab-button.tab-selected::after {
+  content: ""; position: absolute;
+  top: 0; left: 50%; transform: translateX(-50%);
+  width: 24px; height: 2px; background: var(--color-accent-500); border-radius: 0 0 2px 2px;
+}
+
+ion-toolbar { --background: transparent; --border-width: 0; }
+ion-content { --background: var(--bg-surface); }
+ion-refresher { z-index: 10; }
+ion-modal { --border-radius: 20px; --backdrop-opacity: 0.4; }
+
+/* ── Animations (Emil Kowalski principles) ─────────────────────────────
+   - Never animate from scale(0) — start at scale(0.95) + opacity:0
+   - Use custom ease-out, not generic ease
+   - Stagger: 50ms between items (30-80ms range)
+   - UI animations under 300ms
+   ──────────────────────────────────────────────────────────────────── */
+
+@keyframes fade-in-up {
+  0%   { opacity: 0; transform: translateY(8px) scale(0.98); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+.animate-fade-in-up {
+  animation: fade-in-up 250ms var(--ease-out) both;
+}
+
+.stagger-1 { animation-delay: 50ms; }
+.stagger-2 { animation-delay: 100ms; }
+.stagger-3 { animation-delay: 150ms; }
+.stagger-4 { animation-delay: 200ms; }
+.stagger-5 { animation-delay: 250ms; }
+
+@keyframes scale-in {
+  0%   { opacity: 0; transform: scale(0.95); }
+  100% { opacity: 1; transform: scale(1); }
+}
+.animate-scale-in {
+  animation: scale-in 200ms var(--ease-out) both;
+}
+
+@keyframes pulse-soft {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.4; }
+}
+.animate-pulse-soft { animation: pulse-soft 2s var(--ease-in-out) infinite; }
+
+@keyframes shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+.animate-shimmer {
+  background: linear-gradient(90deg, var(--color-gray-100) 25%, var(--color-gray-200) 50%, var(--color-gray-100) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s linear infinite;
+}
+
+/* ── Pressable — any interactive element ─────────────────────────────── */
+.pressable {
+  transition: transform 160ms var(--ease-out);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  min-height: 44px;
+  min-width: 44px;
+}
+.pressable:active {
+  transform: scale(0.97);
+}
+
+/* ── Touch targets terrain — boutons/icônes accessibles avec gants ──── */
+.touch-target {
+  min-height: 48px;
+  min-width: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ── Focus visible — accessibilité clavier ──────────────────────────── */
+:focus-visible {
+  outline: 2px solid var(--color-accent-600);
+  outline-offset: 2px;
+  border-radius: 8px;
+}
+
+/* ── Accessibility: respect reduced motion preference ──────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  .animate-fade-in-up,
+  .animate-scale-in {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+}
+
+
+/* ── Radix Tabs — état actif / hover (cohérent v6 tokens) ──────────── */
+[role="tab"][data-state="active"] {
+  background: var(--bg-surface);
+  color: var(--color-accent-500);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+}
+[role="tab"][data-state="inactive"] {
+  background: transparent;
+  color: var(--ink-soft);
+}
+[role="tab"]:hover {
+  color: var(--ink);
+}

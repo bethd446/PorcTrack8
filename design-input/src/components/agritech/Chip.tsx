@@ -1,0 +1,54 @@
+import React from 'react';
+import { cn } from '../../lib/utils';
+
+export type ChipTone =
+  | 'default'
+  | 'accent'
+  | 'amber'
+  | 'red'
+  | 'blue'
+  | 'gold'
+  | 'coral'
+  | 'teal'
+  | 'sage'
+  | 'ochre';
+export type ChipSize = 'xs' | 'sm';
+
+export interface ChipProps {
+  label: string;
+  tone?: ChipTone;
+  size?: ChipSize;
+  className?: string;
+}
+
+const toneClass: Record<ChipTone, string> = {
+  default: 'chip',
+  accent: 'chip chip--accent',
+  amber: 'chip chip--amber',
+  red: 'chip chip--red',
+  blue: 'chip chip--blue',
+  gold: 'chip chip--gold',
+  coral: 'chip chip--coral',
+  teal: 'chip chip--teal',
+  sage: 'chip chip--teal',
+  ochre: 'chip chip--amber',
+};
+
+const sizeClass: Record<ChipSize, string> = {
+  xs: 'text-[12px] px-2 py-[2px]',
+  sm: 'text-[12px] px-[10px] py-[5px]',
+};
+
+/**
+ * Small pill badge for statuses / categories.
+ * Uses `.chip` utility (declared in agritech-utilities.css) + tone modifiers.
+ */
+const Chip: React.FC<ChipProps> = ({ label, tone = 'default', size = 'sm', className }) => {
+  return (
+    <span className={cn(toneClass[tone], sizeClass[size], className)}>
+      {label}
+    </span>
+  );
+};
+
+export default Chip;
