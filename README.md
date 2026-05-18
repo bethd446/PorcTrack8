@@ -29,14 +29,30 @@ npx vitest run                    # 2145 tests unitaires
 npm run lint                      # tsc + eslint
 ```
 
+## ⚠️ État courant — Design Reset en cours
+
+Le repo est sur la branche `refactor/design-reset-full-demolition`, en attente
+d'un développeur designer externe. Le design system V70 a été démoli
+volontairement (les fichiers `src/v70/theme/v70-tokens.css` et `v70-global.css`
+n'existent plus). Les ~2300 occurrences de `var(--pt-*)` dans le JSX sont
+**intentionnellement orphelines** — ce sont des points d'ancrage que le
+designer redéfinira.
+
+→ **Designer**, ton point d'entrée unique : [`DESIGN_REFONTE.md`](./DESIGN_REFONTE.md)
+(guide complet : zones libres vs interdites, composants atomiques fournis,
+top 15 tokens à définir, vocabulaire métier, baseline tests).
+
+→ **Dette cosmétique restante** triée par lot : [`BUGS_DETECTES.md`](./BUGS_DETECTES.md).
+
 ## Où trouver quoi (entry points)
 
 | Tu cherches | Va voir |
 |---|---|
-| **Design system canonique** (tokens, palette, typo) | `DESIGN.md` + `src/v70/theme/v70-tokens.css` |
-| **Composants UI atomiques V70** | `src/v70/components/ds/` (PageHeader, Card, Pill, Button…) |
+| **Onboarding designer externe** | `DESIGN_REFONTE.md` |
+| **Dette cosmétique post-démolition** | `BUGS_DETECTES.md` |
+| **Composants UI atomiques V70 (nus)** | `src/v70/components/ds/` (PageHeader, Card, Pill, Button…) |
 | **Composants applicatifs V70** | `src/v70/components/v70/` (BottomNav, DataTable, Dialog…) |
-| **Pages / écrans** | `src/v70/pages/` (TodayV70, TroupeauV70, PerformanceV70…) |
+| **Pages / écrans** | `src/v70/pages/` (TodayV70, AnimalsV70, PerformanceV70…) |
 | **Router principal** | `src/v70/router/V70Routes.tsx` (utilisé par `src/App.tsx`) |
 | **Logique métier GTTT** | `src/services/alertEngine.ts` (16 règles biologiques) |
 | **Écritures Supabase** | `src/services/supabaseWrites.ts` + `src/services/repos/*.repo.ts` |
@@ -50,9 +66,8 @@ npm run lint                      # tsc + eslint
 
 ```
 src/
-├── v70/                    # 🟢 CANONIQUE — design system + UI V70+
-│   ├── theme/              #   tokens --pt-*, palette "Terrain Vivant"
-│   ├── components/ds/      #   primitives (Button, Card, Pill…)
+├── v70/                    # 🟢 CANONIQUE — UI V70 (theme/ démoli, à reconstruire par designer)
+│   ├── components/ds/      #   primitives nues (Button, Card, Pill…) — sans CSS associé
 │   ├── components/v70/     #   composants applicatifs
 │   ├── pages/              #   écrans principaux (5 onglets + sous-routes)
 │   └── router/V70Routes.tsx
