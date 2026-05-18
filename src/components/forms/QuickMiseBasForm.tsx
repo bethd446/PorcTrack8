@@ -230,7 +230,7 @@ const QuickMiseBasForm: React.FC<QuickMiseBasFormProps> = ({
         nb_mort_nes: result.normalized.mortsNes,
         poids_initial_kg: 1.4,
         statut: 'Sous mère',
-        phase: 'maternite',
+        phase: 'MATERNITE',
         notes: finalNotes,
       } as Parameters<typeof insertBatch>[0]);
       await updateSowByCode(truieId, { statut: 'Maternité' });

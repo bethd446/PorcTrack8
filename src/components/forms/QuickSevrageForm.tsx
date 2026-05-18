@@ -152,7 +152,7 @@ const QuickSevrageForm: React.FC<QuickSevrageFormProps> = ({
       await updateBatchByCode(bandeId, {
         date_sevrage: dateIso,
         statut: 'Sevré',
-        phase: 'post-sevrage',
+        phase: 'POST_SEVRAGE',
         porcelets_sevrene_total: nb,
         poids_initial_kg: poids,
         poids_moyen_kg: poids,

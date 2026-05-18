@@ -203,7 +203,7 @@ describe('MultiPorteeSevrageWizard', () => {
     expect(srcCode).toBe('26-T7-01');
     expect(srcPatch).toMatchObject({
       statut: 'Sevré',
-      phase: 'post-sevrage',
+      phase: 'POST_SEVRAGE',
       porcelets_sevrene_total: 12,
     });
 
@@ -218,7 +218,7 @@ describe('MultiPorteeSevrageWizard', () => {
       porcelets_sevrene_total: 12,
       poids_moyen_sevrage_kg: 6.5,
       statut: 'Sevré',
-      phase: 'post-sevrage',
+      phase: 'POST_SEVRAGE',
     });
     expect(insertPayload.code_id).toMatch(/^B-/);
   });

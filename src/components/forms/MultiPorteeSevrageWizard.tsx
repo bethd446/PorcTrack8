@@ -261,7 +261,7 @@ const MultiPorteeSevrageWizard: React.FC<MultiPorteeSevrageWizardProps> = ({
         await updateBatchByCode(code, {
           date_sevrage: dateIso,
           statut: 'Sevré',
-          phase: 'post-sevrage',
+          phase: 'POST_SEVRAGE',
           porcelets_sevrene_total: src.vivants ?? 0,
         });
       } catch (e) {
@@ -315,7 +315,7 @@ const MultiPorteeSevrageWizard: React.FC<MultiPorteeSevrageWizardProps> = ({
           poids_initial_kg: poids,
           poids_moyen_kg: poids,
           statut: 'Sevré',
-          phase: 'post-sevrage',
+          phase: 'POST_SEVRAGE',
           loge: dst.loge.trim() || null,
           notes: `Issu sevrage groupé (${selectedSources.length} portées)`,
         });

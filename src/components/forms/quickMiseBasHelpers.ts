@@ -291,7 +291,7 @@ export interface MiseBasBatchValues {
   nb_femelles_naissance: number | null;
   date_sevrage_prevue: string;
   statut: 'Sous mère';
-  phase: 'maternite';
+  phase: 'MATERNITE';
   notes: string;
 }
 
@@ -330,7 +330,7 @@ export function buildMiseBasRow(params: {
     nb_femelles_naissance: params.nbFemelles ?? null,
     date_sevrage_prevue: sheetsDateToIso(params.dateSevragePrevue),
     statut: 'Sous mère',
-    phase: 'maternite',
+    phase: 'MATERNITE',
     notes,
   };
 }

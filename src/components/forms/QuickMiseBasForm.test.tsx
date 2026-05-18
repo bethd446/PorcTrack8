@@ -290,7 +290,7 @@ describe('[5] submitMiseBas — insertBatch + updateSowByCode (helpers Supabase)
     expect(row.porcelets_nes_vivants).toBe(12);
     expect(row.date_sevrage_prevue).toBe('2026-05-17');
     expect(row.statut).toBe('Sous mère');
-    expect(row.phase).toBe('maternite');
+    expect(row.phase).toBe('MATERNITE');
     expect(row.notes).toMatch(/Poids moyen 1\.40 kg/);
     expect(row.notes).toMatch(/MB 04:30/);
 
@@ -322,7 +322,7 @@ describe('[5] submitMiseBas — insertBatch + updateSowByCode (helpers Supabase)
       nb_femelles_naissance: null,
       date_sevrage_prevue: '2026-05-17',
       statut: 'Sous mère',
-      phase: 'maternite',
+      phase: 'MATERNITE',
       notes: 'sans note poids',
     });
   });
