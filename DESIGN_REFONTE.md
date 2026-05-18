@@ -6,6 +6,64 @@
 
 ---
 
+## ⚠️ À LIRE EN PREMIER — Points d'ancrage `var(--pt-*)` à définir
+
+Le code JSX contient **1502 occurrences** de `var(--pt-*)` (CSS custom
+properties) dans des inline styles ou classes. **Ces tokens ne sont
+DÉFINIS NULLE PART.** C'est INTENTIONNEL : ils servent de POINTS
+D'ANCRAGE pour que tu définisses ta propre palette en un seul endroit.
+
+### Top 15 tokens orphelins par fréquence d'usage
+
+| Token | Occurrences | Usage typique |
+|-------|------------:|---------------|
+| `--pt-muted` | 225 | Texte secondaire, placeholders |
+| `--pt-font-mono` | 192 | Famille mono pour IDs/codes/dates |
+| `--pt-ink` | 145 | Texte principal |
+| `--pt-line` | 119 | Bordures (inputs, cards) |
+| `--pt-bg` | 104 | Background principal |
+| `--pt-font-display` | 99 | Famille titres |
+| `--pt-primary` | 90 | Couleur primaire (CTAs, FAB) |
+| `--pt-danger` | 75 | Couleur erreur |
+| `--pt-subtle` | 71 | Texte très secondaire |
+| `--pt-warm` | 62 | Background secondaire (cream) |
+| autres | ~320 | divers (`--pt-accent`, `--pt-ease`, `--pt-font-body`, `--pt-line-strong`, `--pt-text-muted`, `--pt-bg-app`, `--pt-success`, etc.) |
+
+### Comment les définir
+
+**Option A** — Tu ajoutes un bloc `:root` dans `src/index.css` :
+
+```css
+:root {
+  --pt-ink: /* ta couleur de texte principal */;
+  --pt-muted: /* texte secondaire */;
+  --pt-line: /* bordures */;
+  --pt-bg: /* background */;
+  --pt-primary: /* CTAs */;
+  --pt-danger: /* erreurs */;
+  --pt-font-display: /* ta famille titres */;
+  --pt-font-body: /* ta famille body */;
+  --pt-font-mono: /* ta famille mono */;
+  /* etc. */
+}
+```
+
+**Option B** — Tu fais un **recherche-remplacer** dans le code pour
+substituer ces tokens par tes propres classes Tailwind / CSS variables :
+
+```bash
+# Exemple : remplacer var(--pt-primary) par var(--my-primary)
+grep -rl "var(--pt-primary)" src/ | xargs sed -i '' 's/var(--pt-primary)/var(--my-primary)/g'
+```
+
+**Option C** — Tu rebattes complètement les cartes : remplacer les
+inline styles par tes classes Tailwind / shadcn / CSS modules. Plus de
+travail mais résultat plus pur.
+
+→ **À toi de choisir. Le code est ton ardoise.**
+
+---
+
 ## 🎯 Contexte projet
 
 **PorcTrack 8** est une application mobile-first (PWA + Android/iOS via Capacitor) de **Gestion Technique de Troupeau Porcin (GTTT)**. Destinée à des éleveurs francophones (cible : Belgique, France, Côte d'Ivoire, Afrique de l'Ouest), elle gère :
@@ -155,7 +213,26 @@ src/
 
 `AnimalListItem`, `AppToast`, `BottomSheet`, `Chip`, `DataRow`, `IsoBarn`, `SectionDivider`
 
-⚠️ **Double dossier DS** : il existe historiquement DEUX dossiers de composants atomiques (`/design-system/` et `/v70/components/ds/`). À toi de décider si tu consolides ou maintiens la séparation (les 95+ imports de `@/design-system` sont coûteux à migrer).
+### `src/components/ui/` — 5 fichiers shadcn-style conservés (les autres ont été supprimés au design reset)
+
+8 fichiers shadcn orphelins (calendar, combobox, data-table, popover, skeleton, table, tabs, tooltip) ont été supprimés au design reset (0 import externe). Les **5 fichiers restants sont VRAIMENT utilisés** :
+
+- `sonner.tsx` (21L) — Toaster global monté dans `src/main.tsx` (utilisé par `<Toaster richColors position="top-right" />`). **Neutre** (juste config sonner avec tokens CSS).
+- `command.tsx` (124L) — `CommandPalette` Cmd+K desktop (`src/components/design/CommandPalette.tsx`). Stylé shadcn (Tailwind classes).
+- `dialog.tsx` (71L) — Utilisé par `command.tsx`. Stylé shadcn.
+- `form.tsx` (150L) — Wrapper `react-hook-form` (`FormField`, `FormItem`, etc.) utilisé par `QuickPeseeForm.tsx`. Stylé shadcn.
+- `label.tsx` (23L) — Utilisé par `form.tsx`. Stylé shadcn.
+
+⚠️ **Ces 5 fichiers shadcn-style** sont actifs en runtime. **À toi de décider** :
+1. **Conserver shadcn comme base** (ces 5 fichiers + tu peux ajouter d'autres composants shadcn). Cohérent si tu travailles déjà avec shadcn.
+2. **Démolir cosmétique** comme on a fait pour V70 + migrer vers ton design system propre. Plus de travail mais résultat plus pur.
+
+⚠️ **Triple dossier DS** : il existe historiquement TROIS dossiers de composants atomiques :
+- `/v70/components/ds/` (9 atoms — pixel-perfect d'un mockup historique)
+- `/design-system/components/` (32 composants — atomic + composé)
+- `/components/ui/` (5 fichiers shadcn-style survivants)
+
+À toi de décider de la consolidation (les 95+ imports `@/design-system` + les imports `../ui/` sont coûteux à migrer).
 
 ---
 
