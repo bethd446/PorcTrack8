@@ -353,10 +353,18 @@ FAB "Saisir" central (au-dessus du BottomNav) qui ouvre un menu de 13 actions ra
 ## 🏗 Workflow recommandé
 
 1. **`git clone` + `npm install`**
-2. **`npm run dev`** → vérifier que l'app démarre (sera très moche, c'est normal)
-3. **`npx vitest run`** → confirmer baseline tests verte (**2141 tests passing**)
-4. **`npx playwright test`** → 14 specs E2E (vérifier baseline)
-5. **Établir le design system EN PREMIER** :
+2. **Configurer les secrets** :
+   ```bash
+   cp .env.example .env.local
+   # Remplir avec tes clés Supabase :
+   #   VITE_SUPABASE_URL=https://...
+   #   VITE_SUPABASE_ANON_KEY=ey...
+   ```
+   ⚠️ Sans `.env.local` correctement rempli, l'app affichera "Configuration manquante" au démarrage. Tu peux utiliser un projet Supabase de test (gratuit) ou demander les clés du projet existant.
+3. **`npm run dev`** → vérifier que l'app démarre (sera très moche, c'est normal)
+4. **`npx vitest run`** → confirmer baseline tests verte (**2141 tests passing**)
+5. **`npx playwright test`** → 14 specs E2E (vérifier baseline — nécessite `.env.local` configuré)
+6. **Établir le design system EN PREMIER** :
    - Palette (couleurs sémantiques pour 16 tokens `--pt-*` qui restent dans le code)
    - Typographie (familles, échelles, poids)
    - Spacing scale
