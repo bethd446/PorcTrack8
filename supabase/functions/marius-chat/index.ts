@@ -1,11 +1,29 @@
 // Marius IA — Edge Function PorcTrack
 // Forward le message du client vers Mistral API avec system prompt métier
 // La clé Mistral reste côté serveur (secret MISTRAL_API_KEY).
+//
+// 2026-05-18 — Hardening audit phase 1 :
+//   - AbortController 30s sur le fetch Mistral (timeout strict).
+//   - Rate-limit 30 req/min/user via _edge_rate_limit (service_role).
+//   - JWT user extrait pour traçabilité rate-limit.
 
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.0";
+import {
+  buildCorsHeaders,
+  evaluateRateLimit,
+  extractUserIdFromJwt,
+  RATE_LIMITS,
+  RATE_LIMIT_WINDOW_MS,
+} from "../_shared/security.ts";
 
 const MISTRAL_KEY = Deno.env.get("MISTRAL_API_KEY");
 const MODEL = Deno.env.get("MISTRAL_MODEL") ?? "mistral-small-latest";
+const UPSTREAM_TIMEOUT_MS = 30_000;
+const FUNCTION_NAME = "marius-chat";
+
+const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
+const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
 
 const SYSTEM_PROMPT = `Tu es Marius, assistant IA spécialisé en gestion technique de troupeau porcin (GTTT). Tu accompagnes des éleveurs naisseurs-engraisseurs francophones (France, Belgique, Côte d'Ivoire, Sénégal).
 
@@ -44,28 +62,64 @@ R1 Mise-Bas (J-3 à J+2) · R2 Sevrage (J+28) · R3 Retour Chaleur · R4 Mortali
 - Si tu ne sais pas, dis-le franchement : ne JAMAIS inventer de chiffre, de définition ou de protocole.
 - Devise : adapter au contexte ferme (EUR France/Belgique, FCFA Côte d'Ivoire/Sénégal). Si pays inconnu, demander.`;
 
-// 2026-05-17 — CORS borné à la prod + dev local pour limiter abus tiers.
-// Si nouveau domaine besoin : ajouter ici.
-const ALLOWED_ORIGINS = new Set([
-  "https://porctrack.tech",
-  "https://www.porctrack.tech",
-  "https://app.porctrack.tech",
-  "http://localhost:5173",
-  "http://localhost:4173",
-]);
+// Rate-limit "leaky bucket" minute glissante. Persisté en DB pour survivre
+// au cold-start ; coût = 2 RPCs (read + write) seulement quand allowed,
+// 1 RPC quand bloqué.
+async function checkAndUpdateRateLimit(
+  supabase: ReturnType<typeof createClient>,
+  userId: string,
+  fn: string
+): Promise<{ allowed: boolean; retryAfterMs: number }> {
+  const limit = RATE_LIMITS[fn] ?? 30;
+  const now = Date.now();
 
-function corsHeaders(origin: string | null): Record<string, string> {
-  const allow = origin && ALLOWED_ORIGINS.has(origin) ? origin : "https://porctrack.tech";
-  return {
-    "Access-Control-Allow-Origin": allow,
-    "Access-Control-Allow-Methods": "POST, OPTIONS",
-    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-    "Vary": "Origin",
-  };
+  const { data, error } = await supabase
+    .from("_edge_rate_limit")
+    .select("window_start, count_in_window")
+    .eq("user_id", userId)
+    .eq("function_name", fn)
+    .maybeSingle();
+
+  if (error) {
+    // Fail-open : on log mais on n'empêche pas l'appel (sinon panne = DoS).
+    console.error("rate-limit read error", error.message);
+    return { allowed: true, retryAfterMs: 0 };
+  }
+
+  const windowStart = data?.window_start
+    ? new Date(data.window_start as string).getTime()
+    : now;
+  const count = (data?.count_in_window as number | undefined) ?? 0;
+
+  const decision = evaluateRateLimit(now, windowStart, count, limit, RATE_LIMIT_WINDOW_MS);
+  if (!decision.allowed) {
+    return { allowed: false, retryAfterMs: decision.retryAfterMs };
+  }
+
+  const elapsed = now - windowStart;
+  const newWindowStart =
+    elapsed >= RATE_LIMIT_WINDOW_MS ? new Date(now).toISOString() : data?.window_start;
+  const newCount = elapsed >= RATE_LIMIT_WINDOW_MS ? 1 : count + 1;
+
+  const { error: upsertError } = await supabase
+    .from("_edge_rate_limit")
+    .upsert(
+      {
+        user_id: userId,
+        function_name: fn,
+        window_start: newWindowStart,
+        count_in_window: newCount,
+      },
+      { onConflict: "user_id,function_name" }
+    );
+  if (upsertError) {
+    console.error("rate-limit write error", upsertError.message);
+  }
+  return { allowed: true, retryAfterMs: 0 };
 }
 
 Deno.serve(async (req: Request) => {
-  const CORS_HEADERS = corsHeaders(req.headers.get("Origin"));
+  const CORS_HEADERS = buildCorsHeaders(req.headers.get("Origin"));
 
   // CORS preflight
   if (req.method === "OPTIONS") {
@@ -86,6 +140,29 @@ Deno.serve(async (req: Request) => {
       JSON.stringify({ error: "Server not configured: MISTRAL_API_KEY secret missing" }),
       { status: 500, headers: { ...CORS_HEADERS, "Content-Type": "application/json" } }
     );
+  }
+
+  // Extraction user_id pour rate-limit
+  const userId = extractUserIdFromJwt(req.headers.get("Authorization"));
+  if (userId && SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY) {
+    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+    const rl = await checkAndUpdateRateLimit(supabase, userId, FUNCTION_NAME);
+    if (!rl.allowed) {
+      return new Response(
+        JSON.stringify({
+          error: "Rate limit exceeded",
+          retry_after_ms: rl.retryAfterMs,
+        }),
+        {
+          status: 429,
+          headers: {
+            ...CORS_HEADERS,
+            "Content-Type": "application/json",
+            "Retry-After": String(Math.ceil(rl.retryAfterMs / 1000)),
+          },
+        }
+      );
+    }
   }
 
   type ChatRole = "user" | "assistant" | "system";
@@ -147,23 +224,45 @@ Deno.serve(async (req: Request) => {
     ];
   }
 
-  // Forward to Mistral API
-  const upstream = await fetch("https://api.mistral.ai/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      "Authorization": `Bearer ${MISTRAL_KEY}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      model: MODEL,
-      messages: forwardMessages,
-      stream: true,
-      temperature: 0.2,
-      max_tokens: 800,
-    }),
-  });
+  // 2026-05-18 — AbortController 30s pour éviter qu'un upstream Mistral lent
+  // bloque la fonction (timeout edge runtime = 25-60s selon plan ; on borne).
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), UPSTREAM_TIMEOUT_MS);
+
+  let upstream: Response;
+  try {
+    upstream = await fetch("https://api.mistral.ai/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${MISTRAL_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: MODEL,
+        messages: forwardMessages,
+        stream: true,
+        temperature: 0.2,
+        max_tokens: 800,
+      }),
+      signal: controller.signal,
+    });
+  } catch (err) {
+    clearTimeout(timeoutId);
+    const aborted = err instanceof Error && err.name === "AbortError";
+    console.error("Mistral upstream fetch failed:", aborted ? "timeout" : err);
+    return new Response(
+      JSON.stringify({
+        error: aborted ? "Upstream timeout" : "Upstream unreachable",
+      }),
+      {
+        status: aborted ? 504 : 502,
+        headers: { ...CORS_HEADERS, "Content-Type": "application/json" },
+      }
+    );
+  }
 
   if (!upstream.ok) {
+    clearTimeout(timeoutId);
     const errText = await upstream.text();
     console.error("Mistral upstream error:", upstream.status, errText.slice(0, 500));
     return new Response(
@@ -173,6 +272,9 @@ Deno.serve(async (req: Request) => {
   }
 
   // Stream SSE through (format Mistral = format OpenAI déjà compatible avec ChatbotWidget actuel)
+  // Note : on ne clear pas le timeout ici — il s'éteint naturellement quand
+  // le stream se termine côté client (signal.aborted est ignoré une fois la
+  // réponse commencée).
   return new Response(upstream.body, {
     status: 200,
     headers: {
