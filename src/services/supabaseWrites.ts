@@ -1303,12 +1303,17 @@ export async function moveSubject(args: {
   if (mvtErr) throw new Error(`[loge_movements] insert failed: ${mvtErr.message}`);
 
   // 3. PATCH loge_id sur le sujet
+  // V82c audit 2026-05-18 : on THROW au lieu de console.warn pour ne pas créer
+  // de loge_movements orphelin avec un sujet dont loge_id n'a pas suivi.
+  // L'appelant doit gérer la compensation (rollback du movement déjà inséré).
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { error: updErr } = await (supabase.from(table) as any)
     .update({ loge_id: args.toLogeId })
     .eq('id', args.subjectId);
   if (updErr) {
-    console.warn(`[${table}] update loge_id failed: ${updErr.message}`);
+    throw new Error(
+      `[${table}] update loge_id failed: ${updErr.message}. Loge movement ${mvt?.id ?? '<unknown>'} inséré mais sujet non patché — compensation requise.`,
+    );
   }
 
   return mapLogeMovement(mvt as LogeMovementRow);

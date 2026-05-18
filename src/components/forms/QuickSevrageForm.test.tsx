@@ -161,7 +161,7 @@ describe('QuickSevrageForm', () => {
     expect(bandeCode).toBe('26-T7-01');
     expect(batchPatch).toMatchObject({
       statut: 'Sevré',
-      phase: 'post-sevrage',
+      phase: 'POST_SEVRAGE',
       porcelets_sevrene_total: 11,
       poids_initial_kg: 6,
       poids_moyen_kg: 6,

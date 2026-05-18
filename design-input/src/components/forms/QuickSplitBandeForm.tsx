@@ -1,0 +1,612 @@
+/**
+ * QuickSplitBandeForm — V36-E P3 — Splitter une bande en plusieurs.
+ * ════════════════════════════════════════════════════════════════════════
+ * Wizard 3 étapes :
+ *   1. Sélection des porcelets à déplacer (checkboxes)
+ *   2. Loge destination (avec contrôle capacité)
+ *   3. Récap → INSERT nouvelle bande + UPDATE porcelets.batch_id
+ *
+ * Cas d'usage : bande "ADDM" (117 porcelets dont 22 mâles) sans loge → on
+ * répartit dans plusieurs loges sans tout re-saisir.
+ *
+ * Migration FORM_CONTRACT Phase 3a — référence WIZARD :
+ *   - shell `<QuickActionSheet>` (form + handle + header + a11y escape) avec
+ *     `footer` custom : la navigation 3 étapes (Retour / Suivant / Splitter)
+ *     remplace le footer canonique Annuler+submit. Premier wizard migré ; les
+ *     ~6 autres wizards (Phase 3b) copient ce pattern.
+ *   - `step` géré en state local, validation par étape avant `Suivant`.
+ *   - toast canonique `useToast()` ; garde double-clic `closeTimerRef` +
+ *     cleanup `useEffect` ; reset-on-open render-phase (`lastKey`).
+ *   - `bodyClassName` pour le layout dense de la liste de porcelets.
+ *
+ * Le bouton « Splitter » de la dernière étape est `type="submit"` : il
+ * déclenche `handleSubmit` via `onSubmit` du `<form>` (contrat). Les boutons
+ * Retour / Suivant sont `type="button"`.
+ */
+
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+
+import { Button, Select } from '@/design-system';
+import { useToast } from '../../context/ToastContext';
+import {
+  getLogeContents,
+  listLoges,
+  listPorceletsByBatch,
+  splitBatch,
+} from '../../services/supabaseWrites';
+import { todayIso } from './quickAddBandeFromLogeLogic';
+import {
+  autoDetectSplitPhase,
+  buildSplitBatchDraft,
+  computePoidsMoyen,
+  validateSplitStep1,
+  validateSplitStep2,
+} from './quickSplitBandeLogic';
+import QuickActionSheet from './QuickActionSheet';
+import type { Loge, PorceletIndividuel } from '../../types/farm';
+
+export interface QuickSplitBandeFormProps {
+  isOpen: boolean;
+  onClose: () => void;
+  /** UUID de la bande source. */
+  bandeId: string;
+  /** Code_id source (pour les notes générées). Optionnel. */
+  bandeCodeId?: string;
+  onSuccess: () => void;
+}
+
+// ─── Styles (tokens --pt-*) ──────────────────────────────────────────────────
+
+const labelStyle: React.CSSProperties = {
+  display: 'block',
+  fontFamily: 'var(--pt-font-mono)',
+  fontSize: 'var(--pt-text-label)',
+  letterSpacing: 'var(--pt-tracking-label)',
+  color: 'var(--pt-text-muted)',
+  textTransform: 'uppercase',
+  marginBottom: 6,
+};
+
+const hintStyle: React.CSSProperties = {
+  fontFamily: 'var(--pt-font-mono)',
+  fontSize: 10,
+  color: 'var(--pt-text-subtle)',
+  marginTop: 4,
+};
+
+const errStyle: React.CSSProperties = {
+  fontFamily: 'var(--pt-font-mono)',
+  fontSize: 11,
+  color: 'var(--pt-danger)',
+  marginTop: 4,
+};
+
+const STEP_LABELS = ['Sélection', 'Loge destination', 'Récap & confirmation'] as const;
+
+// ─────────────────────────────────────────────────────────────────────────────
+
+const QuickSplitBandeForm: React.FC<QuickSplitBandeFormProps> = ({
+  isOpen,
+  onClose,
+  bandeId,
+  bandeCodeId,
+  onSuccess,
+}) => {
+  const [step, setStep] = useState<0 | 1 | 2>(0);
+  const [porcelets, setPorcelets] = useState<PorceletIndividuel[]>([]);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [loges, setLoges] = useState<Loge[]>([]);
+  const [destLogeId, setDestLogeId] = useState<string>('');
+  const [destOccupation, setDestOccupation] = useState<number>(0);
+  const [step1Error, setStep1Error] = useState<string>('');
+  const [step2Error, setStep2Error] = useState<string>('');
+  const [saving, setSaving] = useState(false);
+  const { showToast } = useToast();
+
+  const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (closeTimerRef.current) { clearTimeout(closeTimerRef.current); closeTimerRef.current = null; }
+    };
+  }, []);
+
+  // Reset à l'ouverture / changement bande (render-phase, FORM_CONTRACT)
+  const [lastKey, setLastKey] = useState<{ open: boolean; bid: string }>({
+    open: isOpen,
+    bid: bandeId,
+  });
+  if (lastKey.open !== isOpen || lastKey.bid !== bandeId) {
+    setLastKey({ open: isOpen, bid: bandeId });
+    if (isOpen) {
+      setStep(0);
+      setSelectedIds(new Set());
+      setDestLogeId('');
+      setDestOccupation(0);
+      setStep1Error('');
+      setStep2Error('');
+      setSaving(false);
+    }
+  }
+
+  // Chargement porcelets + loges à l'ouverture
+  useEffect(() => {
+    if (!isOpen || !bandeId) return;
+    let cancelled = false;
+    Promise.all([listPorceletsByBatch(bandeId), listLoges()])
+      .then(([ps, ls]) => {
+        if (cancelled) return;
+        setPorcelets(ps);
+        setLoges(ls.filter(l => l.active));
+      })
+      .catch(err => {
+        if (cancelled) return;
+        console.warn('[split-bande] load failed', err);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [isOpen, bandeId]);
+
+  // Recharge l'occupation de la loge destination
+  useEffect(() => {
+    if (!destLogeId) {
+      setDestOccupation(0);
+      return;
+    }
+    let cancelled = false;
+    getLogeContents(destLogeId)
+      .then(c => {
+        if (!cancelled) setDestOccupation(c.totalAnimaux);
+      })
+      .catch(err => {
+        if (!cancelled) console.warn('[split-bande] occupation failed', err);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [destLogeId]);
+
+  const togglePorcelet = useCallback((id: string) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }, []);
+
+  const selectAll = useCallback(() => {
+    setSelectedIds(new Set(porcelets.map(p => p.id)));
+  }, [porcelets]);
+
+  const clearAll = useCallback(() => {
+    setSelectedIds(new Set());
+  }, []);
+
+  const selectedPorcelets = useMemo<PorceletIndividuel[]>(
+    () => porcelets.filter(p => selectedIds.has(p.id)),
+    [porcelets, selectedIds],
+  );
+
+  const destLoge = useMemo<Loge | null>(
+    () => loges.find(l => l.id === destLogeId) ?? null,
+    [loges, destLogeId],
+  );
+
+  const phaseAuto = useMemo(
+    () => autoDetectSplitPhase(selectedPorcelets),
+    [selectedPorcelets],
+  );
+
+  const poidsMoyen = useMemo(
+    () => computePoidsMoyen(selectedPorcelets),
+    [selectedPorcelets],
+  );
+
+  // ── Validations par étape ────────────────────────────────────────────────
+
+  const validateStep1 = useCallback((): boolean => {
+    const r = validateSplitStep1(
+      Array.from(selectedIds),
+      porcelets.length,
+    );
+    setStep1Error(r.ok ? '' : r.error ?? 'Sélection invalide');
+    return r.ok;
+  }, [selectedIds, porcelets.length]);
+
+  const validateStep2 = useCallback((): boolean => {
+    const r = validateSplitStep2(destLoge, destOccupation, selectedIds.size);
+    setStep2Error(r.ok ? '' : r.error ?? 'Loge invalide');
+    return r.ok;
+  }, [destLoge, destOccupation, selectedIds.size]);
+
+  // ── Navigation wizard ────────────────────────────────────────────────────
+
+  const handleNext = useCallback(() => {
+    if (saving) return;
+    if (step === 0) {
+      if (!validateStep1()) return;
+      setStep(1);
+    } else if (step === 1) {
+      if (!validateStep2()) return;
+      setStep(2);
+    }
+  }, [saving, step, validateStep1, validateStep2]);
+
+  const handlePrev = useCallback(() => {
+    if (saving) return;
+    setStep(s => (s > 0 ? ((s - 1) as 0 | 1) : s));
+  }, [saving]);
+
+  // ── Submit (dernière étape) ──────────────────────────────────────────────
+
+  const handleSubmit = useCallback(async (e: React.FormEvent): Promise<void> => {
+    e.preventDefault();
+    if (step !== 2) return;
+    if (!destLoge) return;
+    if (selectedIds.size === 0) return;
+    setSaving(true);
+    try {
+      const draft = buildSplitBatchDraft({
+        todayIso: todayIso(),
+        loge: destLoge,
+        selectedPorcelets,
+        sourceCodeId: bandeCodeId ?? bandeId,
+      });
+      const res = await splitBatch({
+        sourceBatchId: bandeId,
+        porceletsIds: Array.from(selectedIds),
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        newBatchPayload: draft as any,
+      });
+      showToast(
+        `Split OK · ${res.movedCount} porcelets › ${res.newCodeId}` +
+          (res.sourceArchivedAsRecap ? ' · source archivée' : ''),
+        'success',
+        2400,
+      );
+      onSuccess();
+      // Garder saving=true jusqu'au onClose pour empêcher le double-clic dans
+      // la fenêtre 1.5s entre toast success et fermeture (FORM_CONTRACT).
+      closeTimerRef.current = setTimeout(() => {
+        closeTimerRef.current = null;
+        setSaving(false);
+        onClose();
+      }, 1500);
+    } catch (err) {
+      showToast(
+        err instanceof Error ? `Erreur : ${err.message}` : 'Erreur split',
+        'error',
+        2400,
+      );
+      setSaving(false);
+    }
+  }, [
+    step,
+    destLoge,
+    selectedIds,
+    selectedPorcelets,
+    bandeId,
+    bandeCodeId,
+    onClose,
+    onSuccess,
+    showToast,
+  ]);
+
+  const handleClose = useCallback(() => {
+    if (saving) return;
+    if (closeTimerRef.current) { clearTimeout(closeTimerRef.current); closeTimerRef.current = null; }
+    onClose();
+  }, [onClose, saving]);
+
+  // ── Rendu des étapes ─────────────────────────────────────────────────────
+
+  const renderStep1 = (): React.ReactNode => (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          padding: '8px 12px',
+          borderRadius: 'var(--pt-radius-md)',
+          background: 'var(--pt-surface-alt)',
+          fontFamily: 'var(--pt-font-mono)',
+          fontSize: 12,
+          color: 'var(--pt-text)',
+        }}
+        data-testid="split-counter"
+      >
+        <span>
+          {selectedIds.size}/{porcelets.length} sélectionnés
+        </span>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <Button
+            variant="secondary"
+            size="small"
+            onClick={selectAll}
+            disabled={porcelets.length === 0}
+          >
+            Tout
+          </Button>
+          <Button
+            variant="secondary"
+            size="small"
+            onClick={clearAll}
+            disabled={selectedIds.size === 0}
+          >
+            Aucun
+          </Button>
+        </div>
+      </div>
+
+      {porcelets.length === 0 ? (
+        <p style={{ ...hintStyle, fontSize: 12, padding: 12 }}>
+          Aucun porcelet dans cette bande.
+        </p>
+      ) : (
+        <ul
+          data-testid="split-porcelets"
+          style={{
+            listStyle: 'none',
+            padding: 0,
+            margin: 0,
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 4,
+            maxHeight: 360,
+            overflowY: 'auto',
+          }}
+        >
+          {porcelets.map(p => {
+            const checked = selectedIds.has(p.id);
+            return (
+              <li key={p.id}>
+                <label
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 12,
+                    padding: '10px 12px',
+                    minHeight: 44,
+                    borderRadius: 'var(--pt-radius-md)',
+                    background: checked
+                      ? 'var(--pt-surface-alt)'
+                      : 'var(--pt-surface)',
+                    border: `1px solid ${
+                      checked ? 'var(--pt-primary)' : 'var(--pt-divider)'
+                    }`,
+                    cursor: 'pointer',
+                  }}
+                >
+                  <input
+                    type="checkbox"
+                    checked={checked}
+                    onChange={() => togglePorcelet(p.id)}
+                    aria-label={`Sélectionner ${p.boucle}`}
+                    style={{ width: 18, height: 18, cursor: 'pointer' }}
+                  />
+                  <span
+                    style={{
+                      flex: 1,
+                      fontFamily: 'var(--pt-font-mono)',
+                      fontSize: 13,
+                      color: 'var(--pt-text)',
+                      textTransform: 'uppercase',
+                    }}
+                  >
+                    {p.boucle}
+                  </span>
+                  <span
+                    style={{
+                      fontFamily: 'var(--pt-font-mono)',
+                      fontSize: 11,
+                      color: 'var(--pt-text-muted)',
+                    }}
+                  >
+                    {p.sexe === 'M' ? '♂' : p.sexe === 'F' ? '♀' : '?'}
+                    {p.poidsCourantKg != null
+                      ? ` · ${p.poidsCourantKg} kg`
+                      : ''}
+                  </span>
+                </label>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+
+      {step1Error ? (
+        <p role="alert" style={errStyle} data-testid="split-step1-error">
+          {step1Error}
+        </p>
+      ) : null}
+    </div>
+  );
+
+  const renderStep2 = (): React.ReactNode => (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+      <div>
+        <label htmlFor="split-loge" style={labelStyle}>
+          Loge destination · requise
+        </label>
+        <Select
+          id="split-loge"
+          data-testid="split-loge-select"
+          value={destLogeId}
+          onChange={e => setDestLogeId(e.target.value)}
+          disabled={saving}
+        >
+          <option value="">— Choisir —</option>
+          {loges.map(l => (
+            <option key={l.id} value={l.id}>
+              {l.numero} · {l.type.toLowerCase().replace('_', '-')}
+              {l.batiment ? ` · ${l.batiment}` : ''}
+              {l.capaciteMax != null ? ` (max ${l.capaciteMax})` : ''}
+            </option>
+          ))}
+        </Select>
+        <p style={hintStyle}>
+          {destLoge
+            ? destLoge.capaciteMax != null
+              ? `Occupation : ${destOccupation} / ${destLoge.capaciteMax} · après split : ${destOccupation + selectedIds.size}`
+              : `Occupation : ${destOccupation} · pas de limite`
+            : 'Sélectionne une loge active.'}
+        </p>
+        {step2Error ? (
+          <p role="alert" style={errStyle} data-testid="split-step2-error">
+            {step2Error}
+          </p>
+        ) : null}
+      </div>
+    </div>
+  );
+
+  const renderStep3 = (): React.ReactNode => {
+    const recapCodeId = destLoge
+      ? buildSplitBatchDraft({
+          todayIso: todayIso(),
+          loge: destLoge,
+          selectedPorcelets,
+          sourceCodeId: bandeCodeId ?? bandeId,
+        }).code_id
+      : '—';
+    const willEmptySource = selectedIds.size === porcelets.length;
+    return (
+      <div
+        style={{ display: 'flex', flexDirection: 'column', gap: 14 }}
+        data-testid="split-recap"
+      >
+        <div
+          style={{
+            padding: '12px 14px',
+            borderRadius: 'var(--pt-radius-md)',
+            background: 'var(--pt-surface-alt)',
+            fontFamily: 'var(--pt-font-body)',
+            fontSize: 14,
+            color: 'var(--pt-text)',
+          }}
+        >
+          <strong style={{ fontFamily: 'var(--pt-font-display)' }}>
+            Déplacer {selectedIds.size} porcelet
+            {selectedIds.size > 1 ? 's' : ''}
+          </strong>{' '}
+          vers{' '}
+          <span
+            style={{
+              fontFamily: 'var(--pt-font-mono)',
+              textTransform: 'uppercase',
+            }}
+          >
+            {destLoge?.numero ?? '—'}
+          </span>
+        </div>
+
+        <dl
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'auto 1fr',
+            gap: '8px 14px',
+            fontFamily: 'var(--pt-font-mono)',
+            fontSize: 12,
+            color: 'var(--pt-text-muted)',
+            margin: 0,
+          }}
+        >
+          <dt>Nouveau code</dt>
+          <dd
+            style={{
+              margin: 0,
+              color: 'var(--pt-text)',
+              textTransform: 'uppercase',
+            }}
+            data-testid="split-recap-codeid"
+          >
+            {recapCodeId}
+          </dd>
+          <dt>Phase auto</dt>
+          <dd
+            style={{ margin: 0, color: 'var(--pt-text)' }}
+            data-testid="split-recap-phase"
+          >
+            {phaseAuto.label}
+          </dd>
+          <dt>Poids moyen</dt>
+          <dd style={{ margin: 0, color: 'var(--pt-text)' }}>
+            {poidsMoyen != null ? `${poidsMoyen.toFixed(1)} kg` : '—'}
+          </dd>
+          <dt>Bande source</dt>
+          <dd style={{ margin: 0, color: 'var(--pt-text)' }}>
+            {willEmptySource
+              ? 'Sera archivée (RECAP)'
+              : `Reste ${porcelets.length - selectedIds.size} porcelets`}
+          </dd>
+        </dl>
+      </div>
+    );
+  };
+
+  // ── Footer custom wizard (remplace le footer canonique) ──────────────────
+
+  const isLast = step === 2;
+  const splitDisabled = saving || !destLoge || selectedIds.size === 0;
+
+  const footer = (
+    <>
+      <button
+        type="button"
+        className="btn btn--ghost"
+        onClick={step === 0 ? handleClose : handlePrev}
+        disabled={saving}
+        aria-label={step === 0 ? 'Annuler et fermer' : "Revenir à l'étape précédente"}
+      >
+        {step === 0 ? 'Annuler' : 'Retour'}
+      </button>
+      {isLast ? (
+        <button
+          type="submit"
+          className="btn btn--primary btn--lg btn--block"
+          disabled={splitDisabled}
+          aria-busy={saving}
+          aria-label="Splitter la bande"
+        >
+          {saving ? 'Enregistrement…' : 'Splitter'}
+        </button>
+      ) : (
+        <button
+          type="button"
+          className="btn btn--primary btn--lg btn--block"
+          onClick={handleNext}
+          disabled={saving}
+          aria-label="Passer à l'étape suivante"
+        >
+          Suivant
+        </button>
+      )}
+    </>
+  );
+
+  return (
+    <QuickActionSheet
+      isOpen={isOpen}
+      onClose={handleClose}
+      eyebrow={`Splitter · ${bandeCodeId ?? bandeId}`}
+      title={`${STEP_LABELS[step]} · étape ${step + 1} / 3`}
+      ariaLabel={`Splitter la bande ${bandeCodeId ?? bandeId}`}
+      saving={saving}
+      isValid={!splitDisabled}
+      onSubmit={handleSubmit}
+      submitLabel="Splitter"
+      footer={footer}
+      bodyClassName="sheet__body--wizard"
+    >
+      <div className="step-pill" aria-live="polite">
+        Étape {step + 1} / 3 · {STEP_LABELS[step]}
+      </div>
+      {step === 0 ? renderStep1() : step === 1 ? renderStep2() : renderStep3()}
+    </QuickActionSheet>
+  );
+};
+
+export default QuickSplitBandeForm;

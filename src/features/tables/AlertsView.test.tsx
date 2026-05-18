@@ -53,11 +53,6 @@ vi.mock('../../services/confirmationQueue', () => ({
   getPendingConfirmations: () => Promise.resolve([]),
 }));
 
-vi.mock('../../components/AgritechLayout', () => ({
-  __esModule: true,
-  default: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-}));
-
 vi.mock('@ionic/react', () => {
   const Pass: React.FC<{ children?: React.ReactNode }> = ({ children }) => <div>{children}</div>;
   return {

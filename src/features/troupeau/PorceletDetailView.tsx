@@ -15,19 +15,23 @@
 
 import React, { useEffect, useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { IonContent, IonPage } from '@ionic/react';
+import { IonActionSheet, IonAlert, IonContent, IonPage } from '@ionic/react';
 import { ChevronRight, MoreHorizontal, Scale, Syringe } from 'lucide-react';
 
 import { Button, Section, Tabs } from '@/design-system';
 import { Pill } from '../../v70/components/ds/Pill';
 import { EntityAvatar } from '../../components/ds/EntityAvatar';
 import { useFarm } from '../../context/FarmContext';
+import { useToast } from '../../context/ToastContext';
 import { useEntityWithRetry } from '../../hooks/useEntityWithRetry';
 import {
   SpinnerCenter,
   EntityNotFoundCard,
 } from '../../v70/components/v70/EntityNotFoundGuard';
 import { supabase } from '../../services/supabaseClient';
+import { setPorceletStatut, updatePorcelet } from '../../services/supabaseWrites';
+import PorceletPeseeForm from '../../components/forms/PorceletPeseeForm';
+import QuickHealthLogPorceletForm from '../../components/forms/QuickHealthLogPorceletForm';
 import { derivePorceletPhase, formatDateFr, formatPoids, type PorceletPhase } from '../../v70/lib';
 import type { BandePorcelets, PorceletIndividuel, TraitementSante } from '../../types/farm';
 
@@ -92,10 +96,17 @@ const PorceletDetailView: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const decodedId = id ? decodeURIComponent(id) : '';
 
-  const { bandes, getHealthForSubject } = useFarm();
+  const { bandes, getHealthForSubject, refreshData } = useFarm();
+  const { showToast } = useToast();
   const [tab, setTab] = useState<PorceletTabId>('apercu');
   const [pesees, setPesees] = useState<PeseeRow[]>([]);
   const [peseesLoading, setPeseesLoading] = useState(false);
+  const [peseesReloadTick, setPeseesReloadTick] = useState(0);
+  const [peseeOpen, setPeseeOpen] = useState(false);
+  const [soinOpen, setSoinOpen] = useState(false);
+  const [actionSheetOpen, setActionSheetOpen] = useState(false);
+  const [vendreAlert, setVendreAlert] = useState(false);
+  const [mortAlert, setMortAlert] = useState(false);
 
   // ── Hooks (TOUS avant early returns — rules-of-hooks) ─────────────────────
 
@@ -170,7 +181,7 @@ const PorceletDetailView: React.FC = () => {
     return () => {
       cancelled = true;
     };
-  }, [porcelet]);
+  }, [porcelet, peseesReloadTick]);
 
   // ── Early returns (après hooks) ───────────────────────────────────────────
 
@@ -237,6 +248,7 @@ const PorceletDetailView: React.FC = () => {
                 type="button"
                 className="iconbtn"
                 aria-label="Ouvrir les actions"
+                onClick={() => setActionSheetOpen(true)}
               >
                 <MoreHorizontal aria-hidden />
               </button>
@@ -407,10 +419,34 @@ const PorceletDetailView: React.FC = () => {
                   <div
                     style={{ display: 'flex', flexDirection: 'column', gap: 8 }}
                   >
-                    <Button variant="primary">Peser</Button>
-                    <Button variant="secondary">Soigner</Button>
-                    <Button variant="ghost">Marquer vendu</Button>
-                    <Button variant="ghost">Marquer mortalité</Button>
+                    <Button
+                      variant="primary"
+                      onClick={() => setPeseeOpen(true)}
+                      disabled={porcelet.statut !== 'VIVANT' && porcelet.statut !== 'MALADE' && porcelet.statut !== 'QUARANTAINE'}
+                    >
+                      Peser
+                    </Button>
+                    <Button
+                      variant="secondary"
+                      onClick={() => setSoinOpen(true)}
+                      disabled={porcelet.statut === 'MORT' || porcelet.statut === 'VENDU'}
+                    >
+                      Soigner
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      onClick={() => setVendreAlert(true)}
+                      disabled={porcelet.statut === 'MORT' || porcelet.statut === 'VENDU'}
+                    >
+                      Marquer vendu
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      onClick={() => setMortAlert(true)}
+                      disabled={porcelet.statut === 'MORT' || porcelet.statut === 'VENDU'}
+                    >
+                      Marquer mortalité
+                    </Button>
                   </div>
                 </section>
               </>
@@ -553,6 +589,140 @@ const PorceletDetailView: React.FC = () => {
             )}
           </div>
         </div>
+
+        <PorceletPeseeForm
+          isOpen={peseeOpen}
+          porceletId={porcelet.id}
+          porceletBoucle={porcelet.boucle}
+          onClose={() => setPeseeOpen(false)}
+          onSuccess={() => {
+            setPeseesReloadTick((n) => n + 1);
+            void refreshData();
+          }}
+        />
+
+        <QuickHealthLogPorceletForm
+          isOpen={soinOpen}
+          onClose={() => setSoinOpen(false)}
+          bandeId={bande.id}
+          porceletId={porcelet.id}
+          onSuccess={() => {
+            void refreshData();
+          }}
+        />
+
+        <IonActionSheet
+          isOpen={actionSheetOpen}
+          onDidDismiss={() => setActionSheetOpen(false)}
+          header={`Porcelet ${porcelet.boucle}`}
+          buttons={[
+            {
+              text: 'Peser',
+              handler: () => {
+                setActionSheetOpen(false);
+                setPeseeOpen(true);
+              },
+            },
+            {
+              text: 'Soigner',
+              handler: () => {
+                setActionSheetOpen(false);
+                setSoinOpen(true);
+              },
+            },
+            {
+              text: 'Marquer vendu',
+              handler: () => {
+                setActionSheetOpen(false);
+                setVendreAlert(true);
+              },
+            },
+            {
+              text: 'Marquer mortalité',
+              role: 'destructive',
+              handler: () => {
+                setActionSheetOpen(false);
+                setMortAlert(true);
+              },
+            },
+            {
+              text: 'Annuler',
+              role: 'cancel',
+            },
+          ]}
+        />
+
+        <IonAlert
+          isOpen={vendreAlert}
+          onDidDismiss={() => setVendreAlert(false)}
+          header="Marquer vendu"
+          message={`Confirmer la vente du porcelet ${porcelet.boucle} ?`}
+          buttons={[
+            { text: 'Annuler', role: 'cancel' },
+            {
+              text: 'Confirmer',
+              role: 'confirm',
+              handler: () => {
+                void (async () => {
+                  try {
+                    await setPorceletStatut(porcelet.id, 'VENDU');
+                    showToast('Porcelet marqué vendu', 'success', 1800);
+                    void refreshData();
+                  } catch (err) {
+                    showToast(
+                      err instanceof Error ? `Erreur : ${err.message}` : 'Erreur',
+                      'error',
+                      2200,
+                    );
+                  }
+                })();
+              },
+            },
+          ]}
+        />
+
+        <IonAlert
+          isOpen={mortAlert}
+          onDidDismiss={() => setMortAlert(false)}
+          header="Marquer mortalité"
+          message={`Confirmer la mortalité du porcelet ${porcelet.boucle} ?`}
+          inputs={[
+            {
+              name: 'cause',
+              type: 'text',
+              placeholder: 'Cause (optionnel)',
+              attributes: { maxlength: 200 },
+            },
+          ]}
+          buttons={[
+            { text: 'Annuler', role: 'cancel' },
+            {
+              text: 'Confirmer',
+              role: 'confirm',
+              handler: (data: { cause?: string } | undefined) => {
+                const cause = (data?.cause ?? '').trim();
+                void (async () => {
+                  try {
+                    await updatePorcelet(porcelet.id, {
+                      statut: 'MORT',
+                      notes: cause
+                        ? `[Mortalité] ${cause}${porcelet.notes ? `\n${porcelet.notes}` : ''}`
+                        : porcelet.notes,
+                    });
+                    showToast('Porcelet marqué mort', 'success', 1800);
+                    void refreshData();
+                  } catch (err) {
+                    showToast(
+                      err instanceof Error ? `Erreur : ${err.message}` : 'Erreur',
+                      'error',
+                      2200,
+                    );
+                  }
+                })();
+              },
+            },
+          ]}
+        />
       </IonContent>
     </IonPage>
   );

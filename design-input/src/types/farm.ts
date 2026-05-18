@@ -1,0 +1,485 @@
+import type { Database } from './database.types';
+
+export type DataSource = 'NETWORK' | 'CACHE' | 'FALLBACK';
+export type SyncStatus = 'synced' | 'pending' | 'offline';
+
+export interface TableIndexEntry {
+  key: string;
+  sheetName: string;
+  headerRow: number;
+  idHeader: string;
+  module: string;
+}
+
+// ─── V71-P2 — Multi-user (farms + farm_members) ─────────────────────────────
+
+/** V71-P2 — Rôle d'un membre dans une ferme. */
+export type FarmRole = 'OWNER' | 'ADMIN' | 'PORCHER';
+
+/** V71-P2 — Row complète de la table `farms` (Supabase). */
+export type Farm = Database['public']['Tables']['farms']['Row'];
+
+/**
+ * V71-P2 — Membership : (farm_id, user_id, role).
+ * Représente l'appartenance d'un user à une ferme avec son rôle.
+ */
+export interface FarmMembership {
+  farm_id: string;
+  user_id: string;
+  role: FarmRole;
+}
+
+/**
+ * Statuts autorisés côté UI. Fallback `string` pour tolérer les valeurs
+ * Sheets non encore normalisées (legacy, stades intermédiaires).
+ */
+export type TruieStatut =
+  | 'En attente saillie'
+  | 'En maternité'
+  | 'Pleine'
+  | 'À surveiller'
+  | string;
+
+export type VerratStatut = 'Actif' | string;
+
+export type BandeStatut = 'Sous mère' | 'Sevrés' | 'En croissance' | 'En finition' | 'RECAP' | string;
+
+export type StockStatut = 'OK' | 'BAS' | 'RUPTURE' | string;
+
+export interface Truie {
+  id: string;
+  displayId: string;
+  boucle: string;
+  nom?: string;
+  statut: TruieStatut;
+  stade?: string;
+  ration: number;
+  nbPortees?: number;
+  derniereNV?: number;
+  dateMBPrevue?: string;
+  notes?: string;
+  /** Poids vif en kg (colonne Sheets `POIDS` ou `POIDS KG`). Optionnel. */
+  poids?: number;
+  /** Race / lignée génétique (ex. Large White, Landrace, Duroc). Optionnel. */
+  race?: string;
+  /** URL publique de la photo (Supabase Storage bucket `farm-photos`). */
+  photoUrl?: string;
+  /** Date de naissance ISO yyyy-MM-dd (colonne `date_naissance`). */
+  dateNaissance?: string;
+  /** Origine / élevage de provenance (colonne `origine`). */
+  origine?: string;
+  /** Emplacement loge / bâtiment (colonne `localisation`, legacy texte). */
+  loge?: string;
+  /** V24 — FK vers `loges.id` (référentiel structuré). NULL si non assigné. */
+  logeId?: string;
+  /** V24 — Numéro de loge résolu via JOIN (ex: "M-01"). */
+  logeNumero?: string;
+  /** V75-l — Date effective de sortie du cheptel (DATE ISO yyyy-MM-dd). NULL si encore présente. */
+  dateSortie?: string;
+  /** V75-l — Type de sortie : VENTE / ABATTOIR / MORTALITE. NULL si pas encore sortie. */
+  typeSortie?: 'VENTE' | 'ABATTOIR' | 'MORTALITE';
+  /** V75-l — Prix vente FCFA (uniquement si typeSortie = VENTE). NULL sinon. */
+  prixSortieFcfa?: number;
+  synced: boolean;
+  raw?: (string | number | boolean)[];
+}
+
+export interface Verrat {
+  id: string;
+  displayId: string;
+  boucle: string;
+  nom?: string;
+  statut: VerratStatut;
+  origine?: string;
+  alimentation?: string;
+  ration: number;
+  notes?: string;
+  /** URL publique de la photo (Supabase Storage bucket `farm-photos`). */
+  photoUrl?: string;
+  /** Date de naissance ISO yyyy-MM-dd. */
+  dateNaissance?: string;
+  /** Emplacement loge / bâtiment (legacy texte). */
+  loge?: string;
+  /** V24 — FK vers `loges.id`. NULL si non assigné. */
+  logeId?: string;
+  /** V24 — Numéro de loge résolu via JOIN. */
+  logeNumero?: string;
+  /** Race / lignée génétique (colonne `breed`). */
+  race?: string;
+  /** Lignée parentale libre (ex: "Père Titan / Mère Rose"). */
+  lignee?: string;
+  synced: boolean;
+  raw?: (string | number | boolean)[];
+}
+
+export interface BandePorcelets {
+  id: string;
+  idPortee: string;
+  truie?: string;
+  boucleMere?: string;
+  dateMB?: string;
+  nv?: number;
+  morts?: number;
+  vivants?: number;
+  statut: BandeStatut;
+  dateSevragePrevue?: string;
+  dateSevrageReelle?: string;
+  /** Nombre de mâles après séparation par sexe (J+70 post-sevrage). Undefined avant séparation. */
+  nbMales?: number;
+  /** Nombre de femelles après séparation. */
+  nbFemelles?: number;
+  /** Loge d'engraissement : 'M' (mâles) ou 'F' (femelles). Une bande séparée en 2 crée 2 lignes logiquement. */
+  logeEngraissement?: 'M' | 'F';
+  /** Date de séparation par sexe (dd/MM/yyyy ou ISO). */
+  dateSeparation?: string;
+  /** URL publique de la photo de groupe (Supabase Storage). */
+  photoUrl?: string;
+  /** Emplacement loge — alias `loge` côté DB (déjà présent). */
+  loge?: string;
+  /** Poids moyen courant (kg) — colonne `poids_moyen_kg`. */
+  poidsMoyenKg?: number;
+  /** Poids moyen kg au sevrage (démarrage bande). Obligatoire — saisi via QuickSevrageForm/wizard. */
+  poidsInitialKg: number;
+  /** ID/code du verrat père (résolu via saillie ou saisi directement). */
+  verratPere?: string;
+  notes?: string;
+  /** V24 — Liste des truies sources (multi-mères). Résolu via JOIN batch_sows. */
+  sources?: BatchSource[];
+  /** V24 — FK vers `loges.id` (loge portée par la bande entière). */
+  logeId?: string;
+  /** V24 — Numéro de loge résolu via JOIN loges. */
+  logeNumero?: string;
+  /** V25 — Porcelets individuels rattachés (JOIN porcelets_individuels). */
+  porcelets?: PorceletIndividuel[];
+  synced: boolean;
+  raw?: (string | number | boolean)[];
+}
+
+/** V25 — Statut d'un porcelet individuel. */
+export type PorceletStatut =
+  | 'VIVANT'
+  | 'MORT'
+  | 'VENDU'
+  | 'MALADE'
+  | 'QUARANTAINE';
+
+/** V25 — Sexe d'un porcelet individuel. */
+export type PorceletSexe = 'M' | 'F' | 'INCONNU';
+
+/**
+ * V25 — Porcelet individuel boucle-traçable (table `porcelets_individuels`).
+ * Permet le suivi sanitaire détaillé (health_logs.porcelet_id FK).
+ * Boucle UNIQUE par farm_id (CHECK constraint côté DB).
+ */
+export interface PorceletIndividuel {
+  id: string;
+  batchId: string;
+  boucle: string;
+  sexe: PorceletSexe;
+  poidsCourantKg?: number;
+  statut: PorceletStatut;
+  notes?: string;
+}
+
+/**
+ * V24 — Une truie source d'une bande (table `batch_sows`).
+ * Une bande peut avoir N sources (regroupement, adoptions, péréquations).
+ */
+export interface BatchSource {
+  id: string;
+  sowId: string;
+  /** Code displayId de la truie (ex: T05). */
+  sowCode: string;
+  /** Boucle officielle de la truie (ex: BCL-0001). */
+  sowBoucle?: string;
+  /** Nom usuel de la truie. */
+  sowName?: string;
+  /** Nb de porcelets apportés par cette truie. CHECK 1..30. */
+  nbPorceletsApportes: number;
+  /** Date d'ajout au format ISO yyyy-MM-dd. */
+  dateAjout: string;
+  notes?: string;
+}
+
+/** V24 — 9 types de loges supportés. */
+export type LogeType =
+  | 'MATERNITE'
+  | 'POST_SEVRAGE'
+  | 'CROISSANCE'
+  | 'ENGRAISSEMENT'
+  | 'FINITION'
+  | 'GESTANTE'
+  | 'VERRAT'
+  | 'INFIRMERIE'
+  | 'AUTRE';
+
+/** V24 — Référentiel de loge structuré (table `loges`). */
+export interface Loge {
+  id: string;
+  /** Numéro libre user (ex: "M-01", "Salle 1A"). Unique par farm. */
+  numero: string;
+  type: LogeType;
+  batiment?: string;
+  /** Capacité max (animaux). NULL = pas de limite. CHECK 0..500. */
+  capaciteMax?: number;
+  notes?: string;
+  /** Soft-delete : false = archivée, masquée des sélecteurs. */
+  active: boolean;
+}
+
+/** V24 — Mouvement inter-loges historisé (table `loge_movements`). */
+export interface LogeMovement {
+  id: string;
+  subjectType: 'TRUIE' | 'VERRAT' | 'BANDE';
+  subjectId: string;
+  fromLogeId?: string;
+  toLogeId?: string;
+  /** Date du mouvement ISO yyyy-MM-dd. */
+  dateMvt: string;
+  reason?: string;
+}
+
+export interface TraitementSante {
+  id: string;
+  date: string;
+  cibleType: 'TRUIE' | 'VERRAT' | 'BANDE' | 'GENERAL';
+  cibleId: string;
+  typeSoin: string;
+  traitement: string;
+  observation: string;
+  auteur?: string;
+  synced: boolean;
+}
+
+export interface StockAliment {
+  id: string;
+  libelle: string;
+  stockActuel: number;
+  unite: string;
+  seuilAlerte: number;
+  statutStock: StockStatut;
+  notes?: string;
+  /** UUID du fournisseur préféré (V21-D1). */
+  fournisseurId?: string;
+  /** V36 — short_code lisible humain (ex: MAIS-CONCASSE), stable per farm. */
+  shortCode?: string;
+}
+
+export interface StockVeto {
+  id: string;
+  produit: string;
+  type?: string;
+  usage?: string;
+  stockActuel: number;
+  unite: string;
+  stockMin?: number;
+  seuilAlerte: number;
+  statutStock?: StockStatut;
+  notes?: string;
+  /** UUID du fournisseur préféré (V21-D1). */
+  fournisseurId?: string;
+  /** V36 — short_code lisible humain (ex: IVRM), stable per farm. */
+  shortCode?: string;
+}
+
+/**
+ * Alerte lue depuis la feuille Sheets `ALERTES_ACTIVES`.
+ * Distincte de l'`Alert`/`FarmAlert` calculée localement par `alertEngine`.
+ * Les deux coexistent — `alertesServeur` reflète le backend, `alerts` reflète
+ * le moteur local (GTTT).
+ */
+export interface AlerteServeur {
+  priorite: 'CRITIQUE' | 'HAUTE' | 'NORMALE' | 'INFO';
+  categorie: 'BANDES' | 'REPRO' | 'STOCK' | string;
+  sujet: string;
+  description: string;
+  actionRequise: string;
+  date: string;
+}
+
+/**
+ * Une saillie enregistrée dans la feuille `SUIVI_REPRODUCTION_ACTUEL`.
+ * Couple truie × verrat + date prévue de MB. Permet de relier un verrat
+ * aux portées qu'il a engendrées (via match date MB).
+ */
+export interface Saillie {
+  /**
+   * UUID Supabase de la saillie (`saillies.id`). Optionnel : non rempli par
+   * les fixtures legacy / tests qui construisent des Saillies à la main.
+   * Requis pour `enqueueUpdate('saillies', id, …)` dans les flux de
+   * confirmation / retour chaleur.
+   */
+  id?: string;
+  /** ID de la truie (ex: T01). Mappe la colonne `ID Truie`. */
+  truieId: string;
+  /** Boucle snapshot de la truie au moment de la saillie (optionnel). */
+  truieBoucle?: string;
+  /** Nom snapshot de la truie (optionnel). */
+  truieNom?: string;
+  /** Date de saillie au format dd/MM/yyyy. */
+  dateSaillie: string;
+  /** ID du verrat (ex: V01). */
+  verratId: string;
+  /** Date de mise-bas prévue au format dd/MM/yyyy (si connue). */
+  dateMBPrevue?: string;
+  /** Statut de la saillie (ex: CONFIRMEE, EN_ATTENTE, ECHEC). */
+  statut?: string;
+  notes?: string;
+  raw?: unknown[];
+}
+
+/** Enregistrement d'une transition de phase confirmée par l'utilisateur. */
+export interface TransitionBande {
+  bandeId: string;
+  anciennePhase: string;   // ex: 'SOUS_MERE'
+  nouvellePhase: string;   // ex: 'POST_SEVRAGE' ou 'SORTIE'
+  date: string;            // 'DD/MM/YYYY'
+  utilisateur: string;     // rôle ou nom (ex: 'PORCHER')
+  poidsKg?: number;
+  ageJours?: number;
+  notes?: string;
+}
+
+/** Niveau de performance synthétique — code couleur dans l'UI. */
+export type PerformanceTier = 'ELITE' | 'BON' | 'MOYEN' | 'FAIBLE' | 'INSUFFISANT';
+
+/**
+ * Performance calculée d'une truie à partir de ses portées + saillies.
+ * Tous les nombres sont arrondis à 1 décimale côté UI ; brut ici.
+ */
+export interface TruiePerformance {
+  nbPortees: number;
+  /** Portées dont la MB est enregistrée (avec NV). */
+  nbPorteesAvecMB: number;
+  /** Moyenne NV sur toutes les portées. 0 si aucune. */
+  moyNV: number;
+  moyMortsParPortee: number;
+  /** (Vivants / NV) × 100. 0 si NV = 0. */
+  tauxSurvieNaissance: number;
+  /** (Vivants sevrés / NV) × 100. 0 si NV = 0. */
+  tauxSevrage: number;
+  nbSaillies: number;
+  /** Saillies ayant abouti à une portée enregistrée. */
+  nbSailliesReussies: number;
+  /** (Saillies réussies / saillies totales) × 100. 0 si aucune saillie. */
+  tauxFertilite: number;
+  dernierSailliesDate?: string;
+  dernierMBDate?: string;
+  /** Score composite 0-100. 0 si données insuffisantes (tier INSUFFISANT). */
+  scoreCompetence: number;
+  tier: PerformanceTier;
+}
+
+/**
+ * Performance calculée d'un verrat à partir des saillies qu'il a effectuées
+ * et des portées résultantes (matchées via saillie.truieId ↔ bande.truie).
+ */
+export interface VerratPerformance {
+  nbSaillies: number;
+  /** Portées engendrées (matchées via saillie → bande). */
+  nbPorteesEngendrees: number;
+  /** Moyenne NV des portées engendrées. 0 si aucune. */
+  moyNVEngendrees: number;
+  /** (Saillies → portée / saillies totales) × 100. */
+  tauxSuccesSaillie: number;
+  derniereSailliesDate?: string;
+  /** Score composite 0-100. 0 si données insuffisantes. */
+  scoreFertilite: number;
+  tier: PerformanceTier;
+}
+
+export interface FarmState {
+  truies: Truie[];
+  verrats: Verrat[];
+  bandes: BandePorcelets[];
+  sante: TraitementSante[];
+  stockAliment: StockAliment[];
+  stockVeto: StockVeto[];
+  /** Headers Sheet par table (ordre réel des colonnes) — mis à jour à chaque fetch. */
+  truiesHeader: string[];
+  verratsHeader: string[];
+  bandesHeader: string[];
+  santeHeader: string[];
+  stockAlimentHeader: string[];
+  stockVetoHeader: string[];
+  lastUpdate: number;
+  syncStatus: SyncStatus;
+}
+
+// ─── FINANCES ────────────────────────────────────────────────────────────────
+
+/** Type d'entrée financière : DEPENSE (charges) ou REVENU (ventes, subventions). */
+export type FinanceType = 'DEPENSE' | 'REVENU';
+
+/**
+ * Entrée comptable brute lue depuis la feuille Sheets `FINANCES`.
+ * Schéma présumé (tolérant aux variantes) :
+ *   Date/Période · Catégorie · Libellé · Montant · Type · Notes
+ *
+ * `montant` est toujours positif (valeur absolue) ; le signe est porté par
+ * `type`. Ça évite l'ambiguïté côté UI et permet des agrégats simples.
+ */
+export interface FinanceEntry {
+  /** Date au format dd/MM/yyyy (FR) — ou chaîne vide si non renseignée. */
+  date: string;
+  /** Catégorie libre : ALIMENT, SANTE, GENETIQUE, ENERGIE, REVENU_VENTE… */
+  categorie: string;
+  /** Libellé libre (description saisie par l'utilisateur). */
+  libelle: string;
+  /** Montant en valeur absolue. Devise inférée côté analyzer. */
+  montant: number;
+  /** Sens de l'opération. */
+  type: FinanceType;
+  notes?: string;
+  raw?: unknown[];
+}
+
+// ─── ALIMENT FORMULES (feuille ALIMENT_FORMULES) ─────────────────────────────
+
+/**
+ * Ligne brute (long format) lue depuis la feuille Sheets `ALIMENT_FORMULES`.
+ * 1 ligne = 1 composant (ingrédient ou additif) pour 1 phase donnée.
+ *
+ * Clé logique unique : `codePhase + typeComposant + nom`.
+ * L'agrégation en objets `FormuleAliment` est faite côté client via
+ * `aggregateFormulesFromRows` (cf. src/config/aliments.ts).
+ *
+ * Unités :
+ *  - INGREDIENT : `unite = '%'` toujours, `valeur` ∈ [0, 100]
+ *  - ADDITIF    : `unite = 'kg/T' | 'g/T'`, `valeur` = dose
+ */
+export interface FormuleRowSheets {
+  /** Code machine de la phase : DEMARRAGE_1, CROISSANCE, FINITION, TRUIE_GESTATION, TRUIE_LACTATION. */
+  codePhase: string;
+  /** Libellé affichable (ex. "Porcelets — Démarrage 1"). */
+  nomPhase: string;
+  /** Plage de poids (ex. "7 → 15 kg"). */
+  poidsRange: string;
+  /** Sépare ingrédients (composition base) et additifs (dosés). */
+  typeComposant: 'INGREDIENT' | 'ADDITIF';
+  /** Nom du composant (ex. "Romelko", "Lysine"). */
+  nom: string;
+  /** Valeur numérique — pourcent si INGREDIENT, dose si ADDITIF. */
+  valeur: number;
+  /** Unité d'expression. */
+  unite: '%' | 'kg/T' | 'g/T';
+  /** Ordre d'affichage intra-phase (1, 2, 3…). */
+  ordre: number;
+  /** Notes libres (optionnel). */
+  notes?: string;
+}
+
+/**
+ * Synthèse financière agrégée sur une période donnée (ex: "2026-04" ou "all").
+ * Utilisée par l'UI FinancesView pour les KpiCard + bar chart par catégorie.
+ */
+export interface FinanceSummary {
+  /** Identifiant de période : "YYYY-MM" ou "all". */
+  periode: string;
+  totalDepenses: number;
+  totalRevenus: number;
+  /** totalRevenus - totalDepenses. Peut être négatif. */
+  margeNette: number;
+  /** Détail par catégorie — dépenses et revenus séparés. */
+  parCategorie: Record<string, { depenses: number; revenus: number }>;
+}
