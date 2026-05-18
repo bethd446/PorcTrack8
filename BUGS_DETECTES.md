@@ -17,6 +17,39 @@
 
 ## Bugs
 
+### 2026-05-18 · Lot 6 · 3 DetailViews (entités cœur métier) — démolition fine déléguée designer
+- **Fichiers** :
+  - `src/features/troupeau/TruieDetailView.tsx` (1556L)
+  - `src/features/tables/bandes/BandeDetailView.tsx` (1302L)
+  - `src/features/troupeau/VerratDetailView.tsx` (757L)
+- **Sévérité** : 🔴 CRITIQUE pour le travail designer — ces 3 fichiers sont les fiches détail des entités cœur métier (truie/bande/verrat). Le designer DOIT les traiter en priorité (visibles dès le premier clic utilisateur).
+- **Approche recommandée pour le designer** :
+  1. Lire chaque fichier intégralement AVANT de toucher
+  2. Identifier les sections : (a) imports, (b) hooks data (useQuery, useState, useEffect) = INTOUCHABLES, (c) helpers transformation = INTOUCHABLES, (d) JSX rendering = CIBLE design, (e) sous-composants inline
+  3. Démolir cosmétique uniquement (classes, inline styles visuels)
+  4. Préserver : props, handlers, hooks, accessibility (`aria-*`, `data-testid`), `safeDate`, `formatDate`, helpers métier
+  5. Tester chaque fichier individuellement (Vitest ciblé sur les test.tsx adjacents)
+- **Pourquoi pas démoli pendant le design reset Claude** : ces fichiers sont trop critiques pour une démolition cosmétique en masse via grep+replace IDE. Le designer doit voir le rendu en context (truie réelle, bande réelle, verrat réel) pour décider de la structure visuelle finale. Notre démolition aveugle aurait été contre-productive.
+
+---
+
+### 2026-05-18 · Lot 5d · Landing publique — inline cosmétiques résiduels
+- **Fichiers** (1822L cumulé, 223 inline cosmétiques) :
+  - `src/pages/Landing.tsx` (798L, 79 inline) — landing v1 legacy
+  - `src/pages/landing-v2/LandingScrollytelling.tsx` (94L, 1) — orchestrateur
+  - `src/pages/landing-v2/scenes/SceneHero.tsx` (232L, 28)
+  - `src/pages/landing-v2/scenes/SceneCta.tsx` (120L, 29)
+  - `src/pages/landing-v2/scenes/SectionMarius.tsx` (94L, 23)
+  - `src/pages/landing-v2/scenes/SectionWorkflow.tsx` (146L, 23)
+  - `src/pages/landing-v2/scenes/SectionPourQui.tsx` (139L, 20)
+  - `src/pages/landing-v2/scenes/FloatingCardsStack.tsx` (153L, 18)
+  - `src/pages/landing-v2/scenes/SceneVideoBreak.tsx` (46L, 2)
+  - `src/pages/landing-v2/hooks/useLenisScroll.ts` (logique animations)
+- **Sévérité** : 🟢 mineur — la landing publique est isolée du reste de l'app authentifiée. Démolissable par designer en 2h.
+- **Note** : `<video>`, `<img>`, GSAP/Lenis hooks préservés (libs installées). Le designer redéfinira l'identité marketing.
+
+---
+
 ### 2026-05-18 · Lot 5a · 13 pages V70 — inline cosmétiques résiduels
 - **Volume total** : ~542 inline cosmétiques sur 13 pages
 - **Top** : OnboardingEduPage 97, MonEquipeV70 88, EngraissementV70 64, PerformanceV70 62, MaFermeV70 61, SynchronisationV70 53, AnimalsV70 49, TodayV70 20, NotFoundV70 19, DiagnosticView 16, ReproV70 10, ReglagesV70 3, EncyclopediaPage 0
